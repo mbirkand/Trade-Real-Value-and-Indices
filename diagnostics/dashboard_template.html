@@ -1,0 +1,1958 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Trade Indices Diagnostics</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f8f8f6; --surface: #ffffff; --surface-2: #f3f3f0; --surface-3: #ebeae6;
+  --border: #e5e4df; --border-strong: #d2d0c8;
+  --text: #17171a; --text-2: #3d3d42; --muted: #6b6b70;
+  --accent: #2a6fc9; --accent-soft: #eaf1fb;
+  --crit: #d03b3b; --crit-tint: #fbe4e2;
+  --warn: #f0a500; --warn-tint: #fff1cf;
+  --good: #1a8a1a;
+  --base-col: #f1f6fd;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --chip: #ecebe6; --chip-text: #55554f;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); }
+body { color: var(--text); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+.num { font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+button, select, input { font: inherit; color: inherit; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+b, strong { font-weight: 600; }
+
+/* ---------- shell ---------- */
+header.top { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; }
+.top-inner { max-width: 1320px; margin: 0 auto; padding: 18px 40px 0; }
+.title-row { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+.title-row h1 { font-size: 19px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+.title-row .meta { color: var(--muted); font-size: 13px; }
+nav.tabs { display: flex; gap: 6px; margin-top: 12px; overflow-x: auto; }
+nav.tabs button { border: 0; background: none; padding: 10px 16px 13px; cursor: pointer; color: var(--text-2); border-bottom: 2px solid transparent; font-weight: 550; white-space: nowrap; font-size: 15px; }
+nav.tabs button:hover:not(:disabled) { color: var(--text); }
+nav.tabs button.on { color: var(--text); border-bottom-color: var(--accent); }
+nav.tabs button:disabled { color: #a3a3a6; cursor: default; font-weight: 450; }
+nav.tabs .soon { font-size: 11px; background: var(--chip); color: var(--chip-text); border-radius: 6px; padding: 1px 7px; margin-left: 6px; }
+main { max-width: 1320px; margin: 0 auto; padding: 36px 40px 48px; }
+.page { display: none; } .page.on { display: block; }
+section.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px 36px; margin-bottom: 28px; }
+h2 { font-size: 19px; margin: 0 0 6px; font-weight: 650; letter-spacing: -.01em; }
+h3 { font-size: 13px; margin: 26px 0 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; }
+h3:first-child { margin-top: 0; }
+.sub { color: var(--text-2); margin: 0 0 22px; }
+ul.tight { margin: 0; padding-left: 20px; } ul.tight li { margin: 6px 0; }
+.note { color: var(--text-2); }
+
+/* ---------- methodology ---------- */
+.doc { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 56px; align-items: start; }
+.toc { position: sticky; top: 140px; font-size: 14px; }
+.toc .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; margin-bottom: 10px; }
+.toc a { display: block; color: var(--text-2); text-decoration: none; padding: 5px 0 5px 12px; border-left: 2px solid var(--border); }
+.toc a:hover { color: var(--text); border-left-color: var(--accent); }
+.doc-body { max-width: 860px; }
+.doc-body .lead { font-size: 17px; color: var(--text-2); margin: 0 0 12px; line-height: 1.65; }
+.doc-sec { padding-top: 44px; margin-top: 44px; border-top: 1px solid var(--border); scroll-margin-top: 130px; }
+.doc-sec:first-of-type { border-top: 0; margin-top: 8px; padding-top: 16px; }
+.doc-sec h2 { font-size: 21px; margin-bottom: 14px; display: flex; gap: 12px; align-items: baseline; }
+.doc-sec h2 .n { color: var(--accent); font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 600; }
+.doc-sec h4 { font-size: 15.5px; margin: 26px 0 8px; font-weight: 650; }
+.doc-sec p { margin: 0 0 12px; }
+.doc-sec ul { margin: 0 0 12px; padding-left: 22px; } .doc-sec li { margin: 7px 0; }
+.eq { background: var(--surface-2); border-radius: 10px; padding: 14px 20px; margin: 14px 0 18px; font-size: 16px; line-height: 2; font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+.eq .row { display: block; }
+.eq .lhs { font-weight: 600; }
+.eq .c { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; color: var(--muted); margin-left: 10px; }
+.steps { counter-reset: st; list-style: none; padding: 0 !important; }
+.steps li { counter-increment: st; position: relative; padding-left: 40px; margin: 12px 0 !important; }
+.steps li::before { content: counter(st); position: absolute; left: 0; top: 1px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 650; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.callout { border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 10px 10px 0; padding: 12px 18px; margin: 16px 0; color: var(--text-2); }
+table.plain { border-collapse: collapse; width: 100%; font-size: 14.5px; margin: 8px 0 12px; }
+table.plain th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; padding: 10px 14px; border-bottom: 1px solid var(--border-strong); }
+table.plain td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+table.plain td:first-child { font-weight: 550; }
+@media (min-width: 701px) { table.plain td:first-child { white-space: nowrap; } }
+table.plain code { overflow-wrap: anywhere; }
+@media (max-width: 1000px) { .doc { grid-template-columns: minmax(0, 1fr); } .toc { display: none; } }
+.doc-body, .cause, .tile { min-width: 0; }
+
+/* ---------- tiles ---------- */
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-bottom: 28px; }
+@media (max-width: 900px) { .tiles { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; }
+.tile .k { font-size: 13.5px; color: var(--text-2); }
+.tile .val { font-size: 30px; font-weight: 650; letter-spacing: -.02em; margin-top: 4px; line-height: 1.25; }
+.tile .hint { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+/* ---------- chips ---------- */
+.sev { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; border-radius: 999px; padding: 2px 10px 2px 8px; white-space: nowrap; }
+.sev::before { content: ""; width: 8px; height: 8px; }
+.sev.c { background: var(--crit-tint); } .sev.c::before { background: var(--crit); transform: rotate(45deg); border-radius: 1px; }
+.sev.w { background: var(--warn-tint); } .sev.w::before { background: var(--warn); border-radius: 50%; }
+.drv { font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .05em; color: var(--chip-text); background: var(--chip); border-radius: 5px; padding: 2px 7px; }
+.tag { display: inline-block; font-size: 12px; color: var(--chip-text); background: var(--chip); border-radius: 5px; padding: 0 7px; margin-right: 4px; }
+
+/* ---------- cause cards ---------- */
+.cause-group { margin-top: 30px; }
+.cause-group:first-of-type { margin-top: 6px; }
+.gnote { border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 10px 10px 0; padding: 12px 18px; margin: 0 0 16px; color: var(--text-2); font-size: 14.5px; }
+.gnote b { color: var(--text); }
+.cause-group > .gh { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.cause-group > .gh .t { font-size: 15px; font-weight: 650; }
+.cause-group > .gh .d { color: var(--muted); font-size: 14px; }
+.causes { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
+.cause { border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); }
+.cause .hd { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cause .hd .name { font-size: 17px; font-weight: 650; }
+.cause .hd .spacer { flex: 1; }
+.cause .cnt { font-size: 13.5px; color: var(--text-2); }
+.cause .cnt b { color: var(--text); }
+.cause p { margin: 0; }
+.cause .rule { color: var(--text); }
+.cause .means { color: var(--text-2); font-size: 14.5px; }
+.cause .exl { font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; margin-top: 6px; }
+.cause .ex { overflow-x: auto; border: 1px solid var(--border); border-radius: 9px; }
+.cause .ex table { border-collapse: collapse; font-size: 13px; width: 100%; }
+.cause .ex th, .cause .ex td { padding: 6px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.cause .ex tr:last-child td { border-bottom: 0; }
+.cause .ex th { background: var(--surface-2); font-weight: 600; }
+.cause .ex th:first-child, .cause .ex td:first-child { text-align: left; color: var(--text-2); font-weight: 500; }
+.cause .ex .b { background: var(--base-col); }
+.cause .ex th.b { background: #e6eefa; color: var(--accent); }
+.cause .ex .hc { background: var(--crit-tint); font-weight: 650; }
+.cause .ex .hw { background: var(--warn-tint); font-weight: 650; }
+.cause .exn { font-size: 13.5px; color: var(--text-2); }
+.cause .foot { margin-top: auto; padding-top: 4px; }
+
+/* ---------- lists ---------- */
+.tblx { overflow-x: auto; }
+.seg { display: inline-flex; background: var(--surface-3); border-radius: 9px; padding: 3px; gap: 2px; margin-bottom: 14px; }
+.seg button { border: 0; background: none; padding: 5px 14px; border-radius: 7px; cursor: pointer; color: var(--text-2); font-size: 13.5px; font-weight: 550; }
+.seg button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+table.dg { border-collapse: separate; border-spacing: 0; font-size: 13px; min-width: 100%; }
+table.dg th, table.dg td { padding: 7px 9px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+table.dg thead th { background: var(--surface-2); font-weight: 600; border-bottom: 1px solid var(--border-strong); }
+table.dg .lab { position: sticky; left: 0; background: var(--surface); text-align: left; font-weight: 550; border-right: 1px solid var(--border); z-index: 1; }
+table.dg thead .lab { background: var(--surface-2); }
+table.dg tr.tot td { font-weight: 650; border-top: 2px solid var(--border-strong); }
+table.dg td.rt { border-left: 2px solid var(--border-strong); font-weight: 650; }
+table.dg td.dk { color: #fff; }
+.dg-legend { display: flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--text-2); margin-top: 10px; flex-wrap: wrap; }
+.dg-legend i { display: inline-block; width: 26px; height: 12px; border-radius: 2px; border: 1px solid var(--border); }
+.dg-legend span { margin: 0 8px 0 3px; }
+table.list { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.list th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12.5px; padding: 10px 14px; border-bottom: 1px solid var(--border-strong); white-space: nowrap; }
+table.list td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.list td.r, table.list th.r { text-align: right; }
+table.list tbody tr { cursor: pointer; } table.list tbody tr:hover td { background: #f6f8fc; }
+table.list .code { color: var(--muted); font-size: 12.5px; margin-left: 6px; }
+table.list .area { font-weight: 550; }
+table.list td:nth-child(3) { white-space: nowrap; }
+
+/* ---------- series table (FAOSTAT style) ---------- */
+.ts-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+table.ts { border-collapse: separate; border-spacing: 0; font-size: 14px; min-width: 100%; }
+table.ts th, table.ts td { padding: 10px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+table.ts tbody tr:last-child td { border-bottom: 0; }
+table.ts thead th { font-weight: 600; text-align: right; background: var(--surface-2); border-bottom: 1px solid var(--border-strong); }
+table.ts .lab { position: sticky; left: 0; background: var(--surface); z-index: 2; text-align: left; min-width: 240px; border-right: 1px solid var(--border); font-weight: 500; }
+table.ts thead .lab { background: var(--surface-2); text-align: left; }
+table.ts td.v { text-align: right; min-width: 104px; font-variant-numeric: tabular-nums; }
+table.ts .bcol { background: var(--base-col); }
+table.ts thead th.bcol { color: var(--accent); background: #e6eefa; }
+table.ts tr.grp td { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; padding: 7px 14px; }
+table.ts td.v.cc { background: var(--crit-tint); }
+table.ts td.v.cw { background: var(--warn-tint); }
+table.ts td.v.focus { box-shadow: inset 0 0 0 2px var(--text); }
+table.ts .fl { display: inline-block; min-width: 16px; text-align: center; font-size: 11px; line-height: 17px; background: var(--chip); color: var(--chip-text); border-radius: 4px; margin-left: 4px; padding: 0 4px; font-family: ui-monospace, Menlo, monospace; }
+table.ts td.lab .u { color: var(--muted); font-weight: 400; }
+table.ts td.v[title] { cursor: help; }
+
+/* ---------- detail ---------- */
+.dd-head { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+.dd-head .t { font-size: 20px; font-weight: 650; letter-spacing: -.01em; }
+.dd-head .t .code { color: var(--muted); font-weight: 500; }
+.dd-head .spacer { flex: 1; }
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px 28px; margin: 0 0 22px; padding: 18px 22px; background: var(--surface-2); border-radius: 12px; }
+.kv .k { font-size: 12.5px; color: var(--muted); }
+.kv .v { font-size: 15px; font-weight: 600; }
+.kv .v span { font-weight: 400; color: var(--text-2); font-size: 13.5px; }
+.why { display: grid; gap: 14px; margin-bottom: 24px; }
+.why .item { border: 1px solid var(--border); border-left: 4px solid var(--border-strong); border-radius: 10px; padding: 16px 20px; background: var(--surface); }
+.why .item.c { border-left-color: var(--crit); } .why .item.w { border-left-color: var(--warn); }
+.why .item .hd { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.why .item .hd b { font-weight: 650; font-size: 15.5px; }
+.why .item .hd .yrs { color: var(--muted); font-size: 13.5px; }
+.why .item p { margin: 0; font-size: 15px; line-height: 1.65; }
+.split { display: flex; align-items: center; gap: 12px; margin-top: 10px; font-size: 13px; color: var(--text-2); flex-wrap: wrap; }
+.split .bar { display: flex; width: 160px; height: 8px; border-radius: 4px; overflow: hidden; background: var(--surface-3); gap: 2px; }
+.split .bar i { display: block; height: 100%; }
+.split .lg i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 5px 0 12px; }
+.p-base { background: var(--s1); } .p-one { background: var(--s2); } .p-sus { background: var(--s3); }
+.back { margin-bottom: 22px; }
+
+/* ---------- real examples: one distinct section per cause ---------- */
+.g-base { --gc: #2a78d6; --gt: #eef4fc; }
+.g-year { --gc: #6250d6; --gt: #f1effc; }
+.g-level { --gc: #13936a; --gt: #eaf6f1; }
+.g-coverage { --gc: #4d6a86; --gt: #edf2f6; }
+.g-member { --gc: #b0447e; --gt: #fbeff5; }
+.inside { margin-top: 12px; }
+.inside .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; margin-bottom: 6px; }
+.inside table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+.inside th { text-align: right; font-weight: 600; color: var(--muted); font-size: 12px; padding: 6px 10px; border-bottom: 1px solid var(--border-strong); white-space: nowrap; }
+.inside th:first-child, .inside td:first-child { text-align: left; }
+.inside td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.inside td:first-child { white-space: normal; }
+.inside tr.top1 td { background: #fbf6e9; font-weight: 600; }
+.inside a { cursor: pointer; }
+.jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.jump button { border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 5px 14px 5px 6px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; color: var(--text); }
+.jump button:hover { border-color: var(--gc); background: var(--gt); }
+.jump .no { width: 22px; height: 22px; border-radius: 50%; background: var(--gc); color: #fff; font-size: 12px; font-weight: 650; display: inline-flex; align-items: center; justify-content: center; }
+section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid var(--gc); scroll-margin-top: calc(var(--hdr, 110px) + 12px); }
+.cs-head { position: sticky; top: var(--hdr, 110px); z-index: 5; background: var(--gt); border-bottom: 1px solid var(--border); border-radius: 0 13px 0 0; padding: 16px 30px; box-shadow: 0 1px 0 var(--border); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.cs-head .no { width: 34px; height: 34px; border-radius: 50%; background: var(--gc); color: #fff; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none; }
+.cs-head .ttl { display: flex; flex-direction: column; line-height: 1.25; }
+.cs-head .grp { font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--gc); font-weight: 700; }
+.cs-head .name { font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.cs-head .cnt { color: var(--text-2); font-size: 14px; }
+.cs-head .cnt b { color: var(--text); }
+.cs-head .spacer { flex: 1; }
+.cs-body { padding: 26px 30px 32px; }
+.cs-what { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 32px; align-items: start; margin-bottom: 28px; }
+.cs-what .rule { font-size: 16px; font-weight: 550; margin: 0 0 8px; }
+.cs-what .means { color: var(--text-2); margin: 0; }
+.cs-what .exl, .cs-real { font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+.cs-real { display: flex; align-items: center; gap: 10px; margin: 34px 0 14px; padding-top: 22px; border-top: 1px dashed var(--border-strong); color: var(--gc) !important; }
+.cs-what + .cs-real { margin-top: 0; }
+.cs-what .ex { overflow-x: auto; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.cs-what .ex table { border-collapse: collapse; font-size: 13px; width: 100%; }
+.cs-what .ex th, .cs-what .ex td { padding: 6px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.cs-what .ex tr:last-child td { border-bottom: 0; }
+.cs-what .ex th { background: var(--surface-2); font-weight: 600; }
+.cs-what .ex th:first-child, .cs-what .ex td:first-child { text-align: left; color: var(--text-2); font-weight: 500; }
+.cs-what .ex .b { background: var(--base-col); } .cs-what .ex th.b { background: #e6eefa; color: var(--accent); }
+.cs-what .ex .hc { background: var(--crit-tint); font-weight: 650; } .cs-what .ex .hw { background: var(--warn-tint); font-weight: 650; }
+.cs-what .exn { font-size: 13.5px; color: var(--text-2); margin-top: 6px; }
+@media (max-width: 900px) { .cs-what { grid-template-columns: minmax(0, 1fr); } .cs-head, .cs-body { padding-left: 18px; padding-right: 18px; } }
+
+/* ---------- groups ---------- */
+.cat-sec { border-top: 1px solid var(--border); padding-top: 36px; margin-top: 36px; }
+.cat-sec:first-of-type { border-top: 0; margin-top: 8px; padding-top: 8px; }
+.cat-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.cat-head .name { font-size: 18px; font-weight: 650; }
+.cat-head .cnt { color: var(--text-2); font-size: 14px; }
+.cat-head .spacer { flex: 1; }
+.cat-def { color: var(--text-2); margin: 0 0 20px; max-width: 900px; }
+.btn { border: 1px solid var(--border-strong); background: var(--surface); border-radius: 9px; padding: 6px 14px; cursor: pointer; font-size: 14px; color: var(--text); white-space: nowrap; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.link { border: 0; padding: 0; background: none; color: var(--accent); font-weight: 550; }
+.btn.link:hover { background: none; text-decoration: underline; }
+
+/* ---------- filters ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; margin-bottom: 20px; }
+.filters label { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.filters select { border: 1px solid var(--border-strong); background: var(--surface); border-radius: 9px; padding: 7px 10px; font-size: 14px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text); min-width: 130px; max-width: 280px; }
+.pager { display: flex; gap: 12px; align-items: center; justify-content: flex-end; margin-top: 18px; color: var(--text-2); font-size: 14px; }
+.count-line { color: var(--text-2); font-size: 14px; margin-bottom: 12px; }
+.subnav { display: inline-flex; background: var(--surface-3); border-radius: 11px; padding: 4px; margin-bottom: 28px; gap: 2px; flex-wrap: wrap; }
+.subnav button { border: 0; background: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; color: var(--text-2); font-weight: 550; font-size: 14.5px; }
+.subnav button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.sp { display: none; } .sp.on { display: block; }
+
+/* ---------- bars ---------- */
+.hbar { display: grid; grid-template-columns: 220px 1fr 90px; gap: 12px 16px; align-items: center; font-size: 14.5px; }
+.hbar .lbl { cursor: pointer; } .hbar .lbl:hover { color: var(--accent); }
+.hbar .track { display: flex; height: 14px; gap: 2px; cursor: pointer; }
+.hbar .track i { display: block; height: 100%; }
+.hbar .track i:last-child { border-radius: 0 4px 4px 0; }
+.hbar .n { text-align: right; color: var(--text-2); }
+.legend-row { display: flex; gap: 20px; font-size: 13.5px; color: var(--text-2); margin: 0 0 18px; }
+.legend-row i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 7px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.grid2 > * { min-width: 0; }
+@media (max-width: 960px) { .grid2 { grid-template-columns: 1fr; } }
+.foot-meta { max-width: 1320px; margin: 0 auto; padding: 0 40px 40px; color: var(--muted); font-size: 12.5px; text-align: right; }
+@media (max-width: 700px) { .foot-meta { padding: 0 16px 28px; text-align: left; } }
+.loading { padding: 120px 0; text-align: center; color: var(--muted); display: none; }
+@media (max-width: 700px) {
+  .top-inner, main { padding-left: 16px; padding-right: 16px; }
+  main { padding-top: 22px; }
+  section.card { padding: 22px 18px; }
+  .hbar { grid-template-columns: 130px 1fr 60px; }
+  .causes { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-inner">
+  <div class="title-row">
+    <h1>Trade Real Values &amp; Indices</h1>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-p="method" class="on">Methodology</button>
+    <button data-p="items">Item indices</button>
+    <button data-p="agg">Aggregates</button>
+    <button data-p="rv">Real values</button>
+  </nav>
+</div></header>
+
+<main>
+  <!-- =============================== METHODOLOGY =============================== -->
+  <div class="page on" id="p-method">
+    <section class="card">
+    <div class="doc">
+      <nav class="toc">
+        <div class="lbl">Contents</div>
+        <a href="#m-overview">Overview</a>
+        <a href="#m-data">1 · Data and scope</a>
+        <a href="#m-prep">2 · Preparing the data</a>
+        <a href="#m-buv">3 · Base unit value</a>
+        <a href="#m-idx">4 · Item indices</a>
+        <a href="#m-rv">5 · Real values</a>
+        <a href="#m-agg">6 · Aggregates</a>
+        <a href="#m-dec">7 · Decisions at a glance</a>
+      </nav>
+      <div class="doc-body">
+        <div class="doc-sec" id="m-overview">
+          <h2>How indices and real values are calculated</h2>
+          <p class="lead">The pipeline turns FAO trade data into value, quantity and unit value indices and into real values — trade at constant 2014–2016 prices — for every country and item, and then for item groups and regions.</p>
+          <ul>
+            <li>Base period <b>2014–2016 = 100</b>.</li>
+            <li>Imports and exports are calculated separately throughout. A country can have results for one flow and not the other.</li>
+            <li>Values are in thousand USD, quantities in tonnes, unit values in thousand USD per tonne (shown as $/t on the other pages).</li>
+          </ul>
+        </div>
+
+        <div class="doc-sec" id="m-data">
+          <h2><span class="n">1</span>Data and scope</h2>
+          <ul>
+            <li><b>Source:</b> FAO trade data, 2000–2024: import and export quantity and value by country × CPC item × year.</li>
+          </ul>
+        </div>
+
+        <div class="doc-sec" id="m-prep">
+          <h2><span class="n">2</span>Preparing the data</h2>
+          <ol class="steps">
+            <li>Reshape to one row per country × item × year with four columns: import Q, import V, export Q, export V.</li>
+            <li>Remove live animals (CPC 021…). They are reported in head, not tonnes, so their unit values are not comparable.</li>
+            <li>Fix one-sided zeros: if Q = 0 but V &gt; 0, Q is set to missing; if V = 0 but Q &gt; 0, V is set to missing. The other side still counts in its own index.</li>
+            <li>A <b>valid observation</b> is one with Q &gt; 0 and V &gt; 0 — enough to compute a unit value.</li>
+          </ol>
+          <div class="callout">Nothing is filtered out for size. Very small records (Q &lt; 10 t or V &lt; 10 thousand USD) are counted and reported but kept. There is no coverage rule and no minimum number of base years.</div>
+        </div>
+
+        <div class="doc-sec" id="m-buv">
+          <h2><span class="n">3</span>Base unit value (2014–2016)</h2>
+          <p>The base unit value is the price used to turn quantities into real values, and the denominator of the unit value index. It is built one year at a time and then averaged.</p>
+          <div class="eq">
+            <span class="row"><span class="lhs">UV<sub>t</sub></span> = V<sub>t</sub> ÷ Q<sub>t</sub></span>
+            <span class="row"><span class="lhs">base UV</span> = (UV<sub>2014</sub> + UV<sub>2015</sub> + UV<sub>2016</sub>) ÷ 3<span class="c">simple average of the three yearly unit values</span></span>
+          </div>
+          <h4>When a base year is missing</h4>
+          <p>A missing year is rebuilt from the country's nearest own year, moved by the parent group's rate of change. Only the change is borrowed; the country keeps its own price level.</p>
+          <div class="eq"><span class="row"><span class="lhs">UV<sub>missing</sub></span> = UV<sub>anchor</sub> × (parent UV<sub>missing</sub> ÷ parent UV<sub>anchor</sub>)</span></div>
+          <ol class="steps">
+            <li>Fill <b>2015</b> first — from 2016 if the country has it, otherwise from 2014.</li>
+            <li>Then fill <b>2014</b> and <b>2016</b> from 2015. Every remaining gap is a single step.</li>
+            <li>If no parent group has a unit value for both years of a step, the parent's own unit value for the missing year is used.</li>
+            <li>If the country has <b>no base-year data at all</b>, the parent group's base UV is used as it is.</li>
+          </ol>
+          <div class="callout">This filling applies <b>only to the base unit value</b> — and so to the unit value index and to real values. The value and quantity indices are never filled from larger areas (section 4).</div>
+          <h4>Parent groups</h4>
+          <ul>
+            <li>The country's regional groups, smallest first: tier 1 → tier 2 → tier 3 → global (all countries).</li>
+            <li>A group's unit value for a year is pooled: ΣV ÷ ΣQ over its member countries.</li>
+            <li>Not used as parents: EU (27), Australia and New Zealand, LDCs, landlocked and small-island developing states, LIFDCs, net food-importing developing countries, and all "excluding intra-trade" groups.</li>
+            <li>No outlier filtering is applied to base unit values.</li>
+          </ul>
+          <p>Every flow records where its base UV came from: <b>country</b> (all three years own data), <b>imputed</b> (some years rebuilt) or the <b>group name</b> / <b>global</b> (taken from a group).</p>
+        </div>
+
+        <div class="doc-sec" id="m-idx">
+          <h2><span class="n">4</span>Item indices</h2>
+          <div class="eq">
+            <span class="row"><span class="lhs">Value index<sub>t</sub></span> = V<sub>t</sub> ÷ mean(V<sub>2014–16</sub>) × 100</span>
+            <span class="row"><span class="lhs">Quantity index<sub>t</sub></span> = Q<sub>t</sub> ÷ mean(Q<sub>2014–16</sub>) × 100</span>
+            <span class="row"><span class="lhs">Unit value index<sub>t</sub></span> = UV<sub>t</sub> ÷ base UV × 100</span>
+          </div>
+          <ul>
+            <li>The value and quantity denominators are the average of the country's <b>own valid base years</b> (one, two or three of them). A country with none gets no value or quantity index.</li>
+            <li>The unit value denominator is the base UV from section 3, which may be rebuilt.</li>
+            <li>There is no real value index at item level: with a fixed base UV it would equal the quantity index.</li>
+          </ul>
+          <div class="callout"><b>Missing base years are not filled for value and quantity.</b> Only the base unit value borrows from larger areas (section 3). If a country has only 2014, the value and quantity base is 2014 alone; if that single record is small, an ordinary later year produces a very large index. Example: Bangladesh soya bean oil exports have only 2014 (0.002 t), so 22,000 t in 2019 gives a quantity index of 1,100,000,000 — while the rebuilt base unit value (6,330 $/t) keeps the unit value index near 13. The <b>Item indices</b> tab explains these cases.</div>
+        </div>
+
+        <div class="doc-sec" id="m-rv">
+          <h2><span class="n">5</span>Real values</h2>
+          <div class="eq"><span class="row"><span class="lhs">Real value<sub>t</sub></span> = Q<sub>t</sub> × base UV<span class="c">thousand USD at 2014–16 prices</span></span></div>
+          <ul>
+            <li>Current volumes priced at base-period prices, so price changes are removed.</li>
+            <li>Calculated wherever the quantity and a base UV exist — including flows whose base UV came from a group.</li>
+          </ul>
+        </div>
+
+        <div class="doc-sec" id="m-agg">
+          <h2><span class="n">6</span>Aggregates</h2>
+          <p>Items are summed into item groups, and countries into regions.</p>
+          <h4>Country × item group</h4>
+          <div class="eq">
+            <span class="row"><span class="lhs">Value</span> = Σ V<sub>i</sub></span>
+            <span class="row"><span class="lhs">Quantity</span> = Σ Q<sub>i</sub> × factor<sub>i</sub></span>
+            <span class="row"><span class="lhs">Real value</span> = Σ Q<sub>i</sub> × factor<sub>i</sub> × base UV<sub>i</sub></span>
+          </div>
+          <ul>
+            <li>The item factor applies to quantity and real value, not to value.</li>
+            <li>An item can belong to more than one group.</li>
+            <li>An item with no data in a year drops out of that year's sum.</li>
+          </ul>
+          <h4>Region × item group</h4>
+          <ul>
+            <li>Sum of the country × item group results over member countries with Aggregation = TRUE.</li>
+          </ul>
+          <h4>Aggregate indices</h4>
+          <div class="eq">
+            <span class="row"><span class="lhs">Value / Quantity / Real value index<sub>t</sub></span> = aggregate<sub>t</sub> ÷ mean(aggregate<sub>2014–16</sub>) × 100</span>
+            <span class="row"><span class="lhs">Unit value index<sub>t</sub></span> = Value index<sub>t</sub> ÷ Real value index<sub>t</sub> × 100</span>
+          </div>
+          <ul>
+            <li>Each aggregate is rebased on its own 2014–16 average.</li>
+            <li>The <b>real value index</b> is the volume index for a group: it weights items by base-period prices, so different commodities can be added up.</li>
+            <li>The <b>unit value index</b> is the price change at constant item mix. Dividing group value by group tonnes would mix price changes with shifts between cheap and expensive items, so it is not used.</li>
+          </ul>
+        </div>
+
+        <div class="doc-sec" id="m-dec">
+          <h2><span class="n">7</span>Decisions at a glance</h2>
+          <table class="plain">
+            <tbody>
+              <tr><td>Base period</td><td>2014–2016 = 100</td></tr>
+              <tr><td>Live animals</td><td>Excluded</td></tr>
+              <tr><td>One-sided zeros</td><td>Zero side set to missing</td></tr>
+              <tr><td>Valid observation</td><td>Q &gt; 0 and V &gt; 0</td></tr>
+              <tr><td>Small-record filter</td><td>Not applied, only reported</td></tr>
+              <tr><td>Minimum base years</td><td>None</td></tr>
+              <tr><td>Base UV</td><td>Per-year unit values, simple average</td></tr>
+              <tr><td>Missing base year</td><td>Parent group's rate of change; 2015 first, then 2014 and 2016</td></tr>
+              <tr><td>No base-year data</td><td>Parent group's base UV</td></tr>
+              <tr><td>Parent order</td><td>Tier 1 → tier 2 → tier 3 → global</td></tr>
+              <tr><td>Item factor</td><td>Quantity and real value only</td></tr>
+              <tr><td>Aggregate UV index</td><td>Value index ÷ real value index × 100</td></tr>
+              <tr><td>Outlier rule</td><td>Index &gt; 5,000, informational</td></tr>
+              <tr><td>Output scope</td><td>Disseminated areas; ItemList items at item level, all items in aggregates</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </section>
+  </div>
+
+  <div class="loading" id="loading">Loading data…</div>
+
+  <!-- =============================== SUMMARY =============================== -->
+  <!-- =============================== ITEM INDICES =============================== -->
+  <div class="page" id="p-items">
+    <div class="subnav" id="subnav">
+      <button data-s="summary" class="on">Summary</button>
+      <button data-s="groups">Real examples by cause</button>
+      <button data-s="list">All issues</button>
+      <button data-s="lookup">Look up a series</button>
+    </div>
+
+    <div class="sp on" id="s-summary">
+    <div class="tiles" id="sumTiles"></div>
+      <section class="card">
+        <h2>Data points by year</h2>
+        <p class="sub">Every calculated value, by flow and index (rows) and year (columns). Shading shows the share that is problematic (critical or warning).</p>
+        <div class="seg" data-grid="gridItems"><button data-m="pct" class="on">% problematic</button><button data-m="bad">Problematic</button><button data-m="all">All data points</button></div>
+        <div id="gridItems"></div>
+      </section>
+
+    <section class="card">
+      <h2>Causes of extreme values</h2>
+      <p class="sub">Every flagged index value is assigned one cause. Each card shows the rule, what it usually means and a simple made-up example.</p>
+      <div id="causeCards"></div>
+    </section>
+
+    <section class="card">
+      <h2>Start here — most important issues</h2>
+      <p class="sub">Critical issues in order of importance: base problems first (they distort every year of a series), then larger trade. Click a row to see the data behind it.</p>
+      <div id="topTable"></div>
+    </section>
+
+    <section class="card">
+      <h2>Issues by cause</h2>
+      <p class="sub">One issue = one country × item × flow with one cause. Click a cause to open the list.</p>
+      <div class="legend-row"><span><i style="background:var(--crit)"></i>Critical</span><span><i style="background:var(--warn)"></i>Warning</span></div>
+      <div class="hbar" id="catBars"></div>
+    </section>
+
+    <section class="card">
+      <h2>How the checks work</h2>
+      <p class="sub">Applied to every item index value: quantity, value and unit value.</p>
+      <div class="grid2">
+        <div>
+          <h3>Reproduction</h3>
+          <ul class="tight" id="verifyList"></ul>
+          <h3>Flags</h3>
+          <ul class="tight">
+            <li><span class="sev c">Critical</span>&nbsp; index above <b id="cfgCh"></b> or below <b id="cfgCl"></b></li>
+            <li><span class="sev w">Warning</span>&nbsp; index above <b id="cfgWh"></b> or below <b id="cfgWl"></b>, or a year-on-year change of more than <b id="cfgY"></b>×</li>
+            <li>Index = 0 (no trade) is not flagged.</li>
+          </ul>
+          <h3>Order of importance</h3>
+          <ul class="tight">
+            <li>Critical before warning.</li>
+            <li>Then base problems → one-off years → negligible flows → sustained change.</li>
+            <li>Then larger trade first (average value of the latest five years).</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Finding the cause</h3>
+          <ul class="tight">
+            <li>Each flagged value is split into three parts:
+              <ul class="tight">
+                <li><b>Base</b> — base average vs the level around it (2011–13 and 2017–19).</li>
+                <li><b>One-off</b> — this year vs the surrounding years (±3).</li>
+                <li><b>Sustained</b> — the surrounding years vs the level around the base.</li>
+              </ul></li>
+            <li>Unit values are compared with other countries instead (median of the same item and year, at least 5 countries).</li>
+            <li>The largest part names the cause.</li>
+            <li>Negligible = quantity below <b id="cfgFq"></b> t or value below <b id="cfgFv"></b> thousand USD.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Data note — zero indices</h2>
+      <p class="note" id="zeroNote" style="margin:0"></p>
+    </section>
+      </div>
+
+    <div class="sp" id="s-groups"><div id="groupsCard"></div></div>
+
+    <div class="sp" id="s-list">
+      <section class="card">
+        <div class="filters">
+          <label>Severity<select id="fSev"><option value="">All</option><option value="2">Critical</option><option value="1">Warning</option></select></label>
+          <label>Cause<select id="fCat"><option value="">All</option></select></label>
+          <label>Flow<select id="fFlow"><option value="">All</option><option value="0">Import</option><option value="1">Export</option></select></label>
+          <label>Index<select id="fType"><option value="">All</option><option value="Q">Quantity</option><option value="V">Value</option><option value="UV">Unit value</option></select></label>
+          <label>Area<select id="fArea"><option value="">All</option></select></label>
+          <label>Item<select id="fItem"><option value="">All</option></select></label>
+          <label>Sort<select id="fSort"><option value="rank">Importance</option><option value="mag">Most extreme index</option><option value="size">Trade size</option><option value="n">Most flagged values</option></select></label>
+          <button class="btn" id="fReset" type="button">Reset</button>
+        </div>
+        <div class="count-line" id="listCount"></div>
+        <div id="listTable"></div>
+        <div class="pager" id="pager"></div>
+      </section>
+    </div>
+
+    <div class="sp" id="s-lookup">
+      <section class="card">
+        <div class="filters">
+          <label>Area<select id="lArea"></select></label>
+          <label>Item<select id="lItem"></select></label>
+          <label>Flow<select id="lFlow"><option value="0">Import</option><option value="1">Export</option></select></label>
+          <button class="btn primary" id="lGo" type="button">Show</button>
+        </div>
+        <div id="lookupOut"><p class="note">Pick an area, item and flow. Every series in the item-level outputs can be shown, flagged or not.</p></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- =============================== AGGREGATES =============================== -->
+  <div class="page" id="p-agg">
+    <div class="subnav" id="aSubnav">
+      <button data-s="summary" class="on">Summary</button>
+      <button data-s="groups">Real examples by cause</button>
+      <button data-s="list">All issues</button>
+      <button data-s="lookup">Look up a series</button>
+    </div>
+
+    <div class="sp on" id="as-summary">
+      <div class="tiles" id="aTiles"></div>
+      <section class="card">
+        <h2>Data points by year</h2>
+        <p class="sub">Every calculated value, by flow and index (rows) and year (columns). Shading shows the share that is problematic (critical or warning).</p>
+        <div class="seg" data-grid="gridAgg"><button data-m="pct" class="on">% problematic</button><button data-m="bad">Problematic</button><button data-m="all">All data points</button></div>
+        <div id="gridAgg"></div>
+      </section>
+      <section class="card">
+        <h2>Causes of extreme values</h2>
+        <p class="sub">Every flagged aggregate index value is assigned one cause. Each card shows the rule, what it usually means and a simple made-up example.</p>
+        <div id="aCauseCards"></div>
+      </section>
+      <section class="card">
+        <h2>Start here — most important issues</h2>
+        <p class="sub">Critical issues in order of importance: base problems first, then coverage and single-member causes, then larger trade. Click a row to see the data behind it.</p>
+        <div id="aTop"></div>
+      </section>
+      <section class="card">
+        <h2>Issues by cause</h2>
+        <p class="sub">One issue = one aggregate (country or region × item group × flow) with one cause. Click a cause to open the list.</p>
+        <div class="legend-row"><span><i style="background:var(--crit)"></i>Critical</span><span><i style="background:var(--warn)"></i>Warning</span></div>
+        <div class="hbar" id="aBars"></div>
+      </section>
+      <section class="card">
+        <h2>How the checks work</h2>
+        <p class="sub">Applied to every aggregate index value: value, quantity, real value and unit value.</p>
+        <div class="grid2">
+          <div>
+            <h3>Reproduction</h3>
+            <ul class="tight" id="aVerify"></ul>
+            <h3>Flags</h3>
+            <ul class="tight">
+              <li>Same thresholds as for items: critical above 5,000 or below 1; warning above 1,000, below 10, or a year-on-year change of more than 10×.</li>
+              <li>Index = 0 (no trade) is not flagged.</li>
+            </ul>
+            <h3>Members</h3>
+            <ul class="tight">
+              <li>Country aggregate = its items. Region aggregate = its member countries.</li>
+              <li>The change between the 2014–16 average and the flagged year is split across members.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Finding the cause — in this order</h3>
+            <ul class="tight">
+              <li><b>Negligible base:</b> the group's 2014–16 average is below 10 t or 10 thousand USD.</li>
+              <li><b>Coverage:</b> at least half of the year's total comes from members with no 2014–16 data, or at least half of the base comes from members missing that year.</li>
+              <li><b>One member:</b> a single item or country explains at least half of the change. Its own diagnosis is shown.</li>
+              <li>Otherwise the aggregate series itself is split into base / one-off / sustained parts, as for items.</li>
+            </ul>
+            <h3>Order of importance</h3>
+            <ul class="tight">
+              <li>Critical before warning → base → coverage → one member → one-off years → sustained change → larger trade.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="sp" id="as-groups"><div id="aGroupsCard"></div></div>
+
+    <div class="sp" id="as-list">
+      <section class="card">
+        <div class="filters">
+          <label>Severity<select id="aSev"><option value="">All</option><option value="2">Critical</option><option value="1">Warning</option></select></label>
+          <label>Cause<select id="aCat"><option value="">All</option></select></label>
+          <label>Level<select id="aLvl"><option value="">All</option><option value="0">Country</option><option value="1">Region</option></select></label>
+          <label>Flow<select id="aFlow"><option value="">All</option><option value="0">Import</option><option value="1">Export</option></select></label>
+          <label>Index<select id="aType"><option value="">All</option><option value="V">Value</option><option value="Q">Quantity</option><option value="R">Real value</option><option value="U">Unit value</option></select></label>
+          <label>Area<select id="aArea"><option value="">All</option></select></label>
+          <label>Item group<select id="aGrp"><option value="">All</option></select></label>
+          <label>Sort<select id="aSort"><option value="rank">Importance</option><option value="mag">Most extreme index</option><option value="size">Trade size</option><option value="n">Most flagged values</option></select></label>
+          <button class="btn" id="aReset" type="button">Reset</button>
+        </div>
+        <div class="count-line" id="aListCount"></div>
+        <div id="aListTable"></div>
+        <div class="pager" id="aPager"></div>
+      </section>
+    </div>
+
+    <div class="sp" id="as-lookup">
+      <section class="card">
+        <div class="filters">
+          <label>Area<select id="aLArea"></select></label>
+          <label>Item group<select id="aLGrp"></select></label>
+          <label>Flow<select id="aLFlow"><option value="0">Import</option><option value="1">Export</option></select></label>
+          <button class="btn primary" id="aLGo" type="button">Show</button>
+        </div>
+        <div id="aLookupOut"><p class="note">Pick a country or region, an item group and a flow.</p></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- =============================== REAL VALUES =============================== -->
+  <div class="page" id="p-rv">
+    <div class="subnav" id="rSubnav">
+      <button data-s="summary" class="on">Summary</button>
+      <button data-s="groups">Real examples by cause</button>
+      <button data-s="list">All issues</button>
+      <button data-s="lookup">Look up a series</button>
+    </div>
+    <div class="sp on" id="rs-summary">
+      <div class="tiles" id="rTiles"></div>
+      <section class="card">
+        <h2>Data points by year</h2>
+        <p class="sub">Every calculated value, by flow and index (rows) and year (columns). Shading shows the share that is problematic (critical or warning).</p>
+        <div class="seg" data-grid="gridRV"><button data-m="pct" class="on">% problematic</button><button data-m="bad">Problematic</button><button data-m="all">All data points</button></div>
+        <div id="gridRV"></div>
+      </section>
+      <section class="card">
+        <h2>Why real value and value diverge</h2>
+        <p class="sub">Real value = quantity × 2014–16 base unit value, so real value ÷ value = base unit value ÷ this year's unit value. A large gap means either the base unit value or that year's quantity/value is off — or prices really moved.</p>
+        <div id="rCauseCards"></div>
+      </section>
+      <section class="card">
+        <h2>Start here — most important issues</h2>
+        <p class="sub">Critical first, then base unit value problems (they affect every year), then the largest gap between real value and value in thousand USD. Click a row to see the core data and the real value it produces.</p>
+        <div id="rTop"></div>
+      </section>
+      <section class="card">
+        <h2>How the checks work</h2>
+        <div class="grid2">
+          <div>
+            <h3>Rules</h3>
+            <ul class="tight">
+              <li><span class="sev c">Critical</span>&nbsp; real value more than 100× the value, or less than 1/50 of it.</li>
+              <li><span class="sev w">Warning</span>&nbsp; real value more than 10× the value or less than 1/10 of it, or a 10× jump in the ratio from one year to the next.</li>
+              <li>These are exactly the unit value index flags seen from the real value side (ratio = 100 ÷ unit value index).</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Cause</h3>
+            <ul class="tight">
+              <li>The base unit value is compared with other countries' base unit value for the item.</li>
+              <li>The year's unit value is compared with other countries' unit value that year.</li>
+              <li>Whichever is further off names the cause; if other countries moved too, it is a real price change.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div class="sp" id="rs-groups"><div id="rGroupsCard"></div></div>
+    <div class="sp" id="rs-list">
+      <section class="card">
+        <div class="filters">
+          <label>Severity<select id="rSev"><option value="">All</option><option value="2">Critical</option><option value="1">Warning</option></select></label>
+          <label>Cause<select id="rCat"><option value="">All</option></select></label>
+          <label>Flow<select id="rFlow"><option value="">All</option><option value="0">Import</option><option value="1">Export</option></select></label>
+          <label>Area<select id="rArea"><option value="">All</option></select></label>
+          <label>Item<select id="rItem"><option value="">All</option></select></label>
+          <label>Sort<select id="rSort"><option value="rank">Importance</option><option value="gap">Largest gap (1000 USD)</option><option value="ratio">Largest ratio</option></select></label>
+          <button class="btn" id="rReset" type="button">Reset</button>
+        </div>
+        <div class="count-line" id="rListCount"></div>
+        <div id="rListTable"></div>
+        <div class="pager" id="rPager"></div>
+      </section>
+    </div>
+    <div class="sp" id="rs-lookup">
+      <section class="card">
+        <div class="filters">
+          <label>Area<select id="rLArea"></select></label>
+          <label>Item<select id="rLItem"></select></label>
+          <label>Flow<select id="rLFlow"><option value="0">Import</option><option value="1">Export</option></select></label>
+          <button class="btn primary" id="rLGo" type="button">Show</button>
+        </div>
+        <div id="rLookupOut"><p class="note">Pick an area, item and flow to see quantity, value, base unit value and the real value they produce.</p></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- =============================== DETAIL (full page) =============================== -->
+  <div class="page" id="p-detail">
+    <button class="btn back" id="dBack" type="button">← Back</button>
+    <section class="card" id="dBody"></section>
+  </div>
+</main>
+<footer class="foot-meta" id="meta"></footer>
+
+<script>
+const PAYLOAD = "__PAYLOAD__";
+const PAYLOAD_AGG = "__PAYLOAD_AGG__";
+let D, NY, Y0, ISS, CBS, CAT_ORDER, READY = false;
+let AD = null, AISS, ACBS, AISSIDX, ACAT_ORDER, AGROUPS_DRAWN = false, APAGE = 0, AD_PROMISE = null;
+const TYPES = ["Q", "V", "UV"];
+const TYPE_NAME = ["Quantity", "Value", "Unit value"];
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ---------------------------------------------------------------- causes: text and made-up examples
+const CAT_DEF = {
+  tiny_base: ["Base average is below the negligible level (10 t or 10 thousand USD).", "Any normal year divided by it explodes. Usually a single tiny base-year record."],
+  low_base: ["Base average is far below the level just around it.", "The base years were unusually low — often only one usable base year."],
+  high_base: ["Base average is far above the level just around it.", "A base-year spike: every other year looks tiny."],
+  base_uv_off: ["Base unit value is far from other countries' base unit value for the item.", "Base UV borrowed from a group, or one base-year record with a wrong Q or V."],
+  spike: ["One year is far above the surrounding years.", "A one-off record — check that year's source value and flags."],
+  dip: ["One year is far below the surrounding years.", "A one-off record — check that year's source value and flags."],
+  qv_mismatch: ["One year's unit value is far from other countries' that year.", "The quantity or the value of that year is probably mis-recorded."],
+  tiny_flow: ["The flagged year (or the year before) is a negligible flow.", "Small numbers swing wildly; the index carries little information."],
+  trend: ["The level moved away from the base and stayed there.", "Probably a real change: trade started, stopped, grew or collapsed."]
+};
+// cols: header labels; b: base columns; rows: [label, cells]; hl: [row, col, "c"|"w"]
+const EX = {
+  tiny_base: { cols: ["2013", "2014", "2015", "2016", "2019"], b: [1, 2, 3],
+    rows: [["Quantity (t)", ["18,000", "0.5", "–", "–", "20,000"]], ["Quantity index", ["", "100", "", "", "4,000,000"]]], hl: [1, 4, "c"],
+    note: "Only 2014 is usable and it is 0.5 t, so the base is 0.5 t." },
+  low_base: { cols: ["2013", "2014", "2015", "2016", "2017", "2019"], b: [1, 2, 3],
+    rows: [["Quantity (t)", ["50,000", "2,000", "–", "–", "48,000", "55,000"]], ["Quantity index", ["2,500", "100", "", "", "2,400", "2,750"]]], hl: [1, 5, "w"],
+    note: "The base (2,000 t) is 25× below the years around it (~50,000 t)." },
+  high_base: { cols: ["2013", "2014", "2015", "2016", "2017", "2019"], b: [1, 2, 3],
+    rows: [["Quantity (t)", ["1,000", "300,000", "1,200", "900", "1,100", "1,000"]], ["Quantity index", ["0.99", "298", "1.2", "0.89", "1.1", "0.99"]]], hl: [1, 5, "c"],
+    note: "One 300,000 t record lifts the base to 100,700 t; normal years are ~1,000 t." },
+  base_uv_off: { cols: ["Base", "2017", "2018", "2019"], b: [0],
+    rows: [["Unit value ($/t)", ["9,000", "450", "470", "480"]], ["Other countries ($/t)", ["520", "470", "490", "500"]], ["Unit value index", ["100", "5.0", "5.2", "5.3"]]], hl: [2, 3, "w"],
+    note: "Base UV came from a group (9,000 $/t) — 17× other countries' 520 $/t." },
+  spike: { cols: ["Base", "2017", "2018", "2019", "2020"], b: [0],
+    rows: [["Quantity (t)", ["3,000", "3,100", "3,200", "410,000", "3,000"]], ["Quantity index", ["100", "103", "107", "13,667", "100"]]], hl: [1, 3, "c"],
+    note: "2019 is 130× its neighbours — likely an extra digit or a wrong unit." },
+  dip: { cols: ["Base", "2017", "2018", "2019", "2020"], b: [0],
+    rows: [["Quantity (t)", ["5,000", "4,900", "5,100", "12", "5,200"]], ["Quantity index", ["100", "98", "102", "0.24", "104"]]], hl: [1, 3, "c"],
+    note: "2019 is 1/400 of its neighbours, then trade returns to normal." },
+  qv_mismatch: { cols: ["Base", "2018", "2019", "2020"], b: [0],
+    rows: [["Quantity (t)", ["2,000", "2,100", "2,050", "2,200"]], ["Value (1000 $)", ["4,000", "4,300", "4,100,000", "4,500"]], ["Unit value ($/t)", ["2,000", "2,048", "2,000,000", "2,045"]], ["Unit value index", ["100", "102", "100,000", "102"]]], hl: [3, 2, "c"],
+    note: "The 2019 value has three extra zeros; the quantity is normal." },
+  tiny_flow: { cols: ["Base", "2018", "2019", "2020"], b: [0],
+    rows: [["Quantity (t)", ["8,000", "7,500", "0.4", "7,900"]], ["Quantity index", ["100", "94", "0.005", "99"]]], hl: [1, 2, "c"],
+    note: "0.4 t is a negligible shipment, so its index means little." },
+  trend: { cols: ["Base", "2017", "2018", "2019", "2020"], b: [0],
+    rows: [["Quantity (t)", ["1,000", "9,000", "14,000", "18,000", "21,000"]], ["Quantity index", ["100", "900", "1,400", "1,800", "2,100"]]], hl: [1, 4, "w"],
+    note: "Trade grew year after year and stayed high — most likely real." }
+};
+const GROUPS = [
+  { d: "Base", t: "Base problems", s: "the 2014–16 denominator is wrong, so every year of the series is affected",
+    note: `<b>Missing base years are filled only for the base unit value.</b> A missing 2015 or 2016 unit value is rebuilt from the country's own unit value, moved by the parent region's rate of change (or the region's base unit value is used when the country has no base data at all). The <b>value and quantity indices are not filled</b>: their base is the average of the country's own usable base years — if only 2014 exists, 2014 alone is the base. That is why “Negligible base” and “Base unusually low/high” occur in value and quantity indices, while sparse base years in unit values show up as “Base unit value off”.` },
+  { d: "Year", t: "One-off years", s: "a single year's record is out of line" },
+  { d: "Level", t: "Real change", s: "no data problem found" }
+];
+function exampleTable(id, src = EX) {
+  const e = src[id]; if (!e) return "";
+  let h = `<div class="ex"><table><thead><tr><th></th>${e.cols.map((c, j) => `<th class="${e.b.includes(j) ? "b" : ""}">${c}</th>`).join("")}</tr></thead><tbody>`;
+  e.rows.forEach(([lab, vals], i) => {
+    h += `<tr><td>${lab}</td>${vals.map((v, j) => { let cl = e.b.includes(j) ? "b" : ""; if (e.hl[0] === i && e.hl[1] === j) cl = e.hl[2] === "c" ? "hc" : "hw"; return `<td class="${cl}">${v}</td>`; }).join("")}</tr>`;
+  });
+  return h + `</tbody></table></div><div class="exn">${e.note}</div>`;
+}
+function causeCards(el) {
+  let h = "";
+  for (const g of GROUPS) {
+    const cis = CAT_ORDER.filter(ci => D.cats.driver[ci] === g.d); if (!cis.length) continue;
+    h += `<div class="cause-group"><div class="gh"><span class="t">${g.t}</span><span class="d">— ${g.s}</span></div>${g.note ? `<div class="gnote">${g.note}</div>` : ""}<div class="causes">`;
+    for (const ci of cis) {
+      const id = D.cats.id[ci], L = ISS.filter(o => o.c === ci), crit = L.filter(o => o.sev === 2).length;
+      h += `<div class="cause"><div class="hd"><span class="name">${esc(catLabel(ci))}</span><span class="spacer"></span><span class="cnt"><b>${fmtN(L.length)}</b> issues · <b>${fmtN(crit)}</b> critical</span></div>
+        <p class="rule">${CAT_DEF[id][0]}</p><p class="means">${CAT_DEF[id][1]}</p>
+        <div class="exl">Example (illustrative)</div>${exampleTable(id)}
+        <div class="foot"><button class="btn link" data-go="${ci}">See the ${fmtN(L.length)} issues →</button>&nbsp;&nbsp;<button class="btn link" data-real="${ci}">Real example →</button></div></div>`;
+    }
+    h += `</div></div>`;
+  }
+  el.innerHTML = h;
+  el.querySelectorAll("[data-go]").forEach(b => b.onclick = () => goList({ fCat: b.dataset.go }));
+  el.querySelectorAll("[data-real]").forEach(b => b.onclick = () => {
+    const ci = +b.dataset.real, ex = ISS.find(o => o.c === ci && o.sev === 2 && D.series.size[o.s] > 0) || ISS.find(o => o.c === ci);
+    if (ex) openSeries(ex.s, { cat: ci });
+  });
+}
+
+// ---------------------------------------------------------------- formatting
+function fmt(x, kind) {
+  if (x === null || x === undefined || Number.isNaN(x)) return "";
+  if (x === 0) return "0";
+  const a = Math.abs(x);
+  if (a >= 1000) return Math.round(x).toLocaleString("en-US");
+  if (a >= 100) return (kind === "idx" ? x.toFixed(0) : x.toLocaleString("en-US", { maximumFractionDigits: 1 }));
+  if (a >= 10) return x.toFixed(1);
+  if (a >= 1) return x.toFixed(2).replace(/\.?0+$/, "");
+  if (a >= 0.001) return x.toPrecision(2).replace(/\.?0+$/, "");
+  return x.toExponential(1);
+}
+const fmtN = n => n.toLocaleString("en-US");
+const ratio = r => { if (!isFinite(r) || r <= 0) return "?"; return r >= 100 ? fmt(r) : r.toFixed(r >= 10 ? 0 : 1); };
+
+// ---------------------------------------------------------------- data access
+function raw(sid, yi) { const k = sid * NY + yi; return { q: D.q[k], v: D.v[k], qf: D.qf[k], vf: D.vf[k] }; }
+function clean(sid, yi) {
+  let { q, v } = raw(sid, yi);
+  if (q === 0 && v > 0) q = null;
+  if (v === 0 && q > 0) v = null;
+  return { q, v };
+}
+function idxVals(sid, yi) {
+  const S = D.series; const { q, v } = clean(sid, yi);
+  const bq = S.bq[sid], bv = S.bv[sid], buv = S.buv[sid];
+  const has = x => x !== null && x !== undefined;
+  const uv = (q > 0 && has(v)) ? v / q : null;
+  return { q, v, uv,
+    xq: (has(q) && bq > 0) ? q / bq * 100 : null,
+    xv: (has(v) && bv > 0) ? v / bv * 100 : null,
+    xu: (uv !== null && buv > 0) ? uv / buv * 100 : null };
+}
+function flagStr(fi) { return (fi === null || fi === undefined) ? null : D.flags[fi]; }
+function flagChips(fi) {
+  const f = flagStr(fi); if (!f) return "";
+  const [o, m] = f.split("|");
+  return (o ? `<span class="fl">${esc(o)}</span>` : "") + (m && m !== "-" ? `<span class="fl">${esc(m)}</span>` : "");
+}
+function flagText(fi) { const f = flagStr(fi); if (!f) return "none"; const [o, m] = f.split("|"); return [o || "official", m && m !== "-" ? m : ""].filter(Boolean).join(" "); }
+function seriesName(sid) {
+  const S = D.series;
+  return { area: D.areas.name[S.a[sid]], acode: D.areas.code[S.a[sid]], item: D.items.name[S.i[sid]], icode: D.items.code[S.i[sid]], flow: S.f[sid] ? "Export" : "Import" };
+}
+const catLabel = ci => D.cats.label[ci];
+
+// ---------------------------------------------------------------- explanations
+const UNIT = ["t", "thousand USD", "$/t"];
+function cellNums(sid, c) {
+  const S = D.series, t = D.cells.t[c], y = D.cells.y[c], yi = y - Y0;
+  const iv = idxVals(sid, yi);
+  const cur = t === 0 ? iv.q : t === 1 ? iv.v : (iv.uv !== null ? iv.uv * 1000 : null);
+  const base = t === 0 ? S.bq[sid] : t === 1 ? S.bv[sid] : S.buv[sid] * 1000;
+  const w = D.cells.w[c] === 1;
+  const tu = w ? S.gb[sid] : S.tu[sid];
+  const typ = t === 0 ? S.tq[sid] : t === 1 ? S.tv[sid] : (tu !== null ? tu * 1000 : null);
+  let nbm = D.cells.nbm[c]; if (t === 2 && nbm !== null) nbm *= 1000;
+  const x = t === 0 ? iv.xq : t === 1 ? iv.xv : iv.xu;
+  return { t, y, yi, cur, base, typ, nbm, x, w, r: raw(sid, yi) };
+}
+function baseYearsText(sid) {
+  const out = [];
+  for (const y of D.base_years) { const { q, v } = clean(sid, y - Y0); if (q > 0 && v > 0) out.push(y); }
+  return out.length ? out.join(", ") : "none";
+}
+function srcText(sid) {
+  const S = D.series, src = D.srcs[S.src[sid]];
+  if (src === undefined || src === null) return "no base unit value";
+  if (src === "country") return "all three base years are the country's own data";
+  if (src === "imputed") return `${S.own[sid]} own base year(s), ${S.nimp[sid]} rebuilt from a parent group's trend, ${S.ndir[sid]} taken from a group`;
+  return `taken directly from <b>${esc(src)}</b> — the country has no usable base-year data`;
+}
+function explain(sid, c) {
+  const ci = D.cells.c[c], id = D.cats.id[ci];
+  const n = cellNums(sid, c), m = TYPE_NAME[n.t].toLowerCase(), u = UNIT[n.t];
+  const op = D.cells.op[c] === 1, py = n.y - 1;
+  const pv = yy => { const iv = idxVals(sid, yy - Y0); return n.t === 0 ? iv.q : n.t === 1 ? iv.v : (iv.uv !== null ? iv.uv * 1000 : null); };
+  const fl = yy => { const r = raw(sid, yy - Y0); return `Q ${flagText(r.qf)}, V ${flagText(r.vf)}`; };
+  const idxTxt = `${TYPE_NAME[n.t]} index ${n.y} = <b>${fmt(n.x, "idx")}</b>.`;
+  switch (id) {
+    case "tiny_base":
+      return `Base ${m} is only <b>${fmt(n.base)} ${u}</b> (base years used: ${baseYearsText(sid)}). Around the base period the series usually runs at ${fmt(n.typ)} ${u}. Every year is divided by this tiny base. ${idxTxt}`;
+    case "low_base":
+      return `Base ${m} (<b>${fmt(n.base)} ${u}</b>, years used: ${baseYearsText(sid)}) is ${ratio(n.typ / n.base)}× lower than the level around it (${fmt(n.typ)} ${u}). Every other year is inflated by the same factor. ${idxTxt}`;
+    case "high_base":
+      return `Base ${m} (<b>${fmt(n.base)} ${u}</b>, years used: ${baseYearsText(sid)}) is ${ratio(n.base / n.typ)}× higher than the level around it (${fmt(n.typ)} ${u}). Every other year looks small against it. ${idxTxt}`;
+    case "base_uv_off": {
+      const hi = n.base > n.typ;
+      const ref = n.w ? `the median base UV of other countries for this item (${fmt(n.typ)} $/t)` : `this series' unit value around the base period (${fmt(n.typ)} $/t)`;
+      return `Base unit value is <b>${fmt(n.base)} $/t</b>, ${ratio(hi ? n.base / n.typ : n.typ / n.base)}× ${hi ? "above" : "below"} ${ref}. Built from: ${srcText(sid)}. Every year's UV index is shifted by this factor. ${idxTxt}`;
+    }
+    case "spike":
+      if (op) return `${py} ${m} (${fmt(pv(py))} ${u}) is ${ratio(pv(py) / n.nbm)}× the surrounding years (${fmt(n.nbm)} ${u}), so ${n.y} drops back sharply. The one-off is in <b>${py}</b> (flags: ${fl(py)}).`;
+      return `${n.y} ${m} (<b>${fmt(n.cur)} ${u}</b>) is ${ratio(n.cur / n.nbm)}× the median of the surrounding years (${fmt(n.nbm)} ${u}). A one-off in this year (flags: ${fl(n.y)}). ${idxTxt}`;
+    case "dip":
+      if (op) return `${py} ${m} (${fmt(pv(py))} ${u}) is only 1/${ratio(n.nbm / pv(py))} of the surrounding years (${fmt(n.nbm)} ${u}), so ${n.y} jumps back up. The one-off is in <b>${py}</b> (flags: ${fl(py)}).`;
+      return `${n.y} ${m} (<b>${fmt(n.cur)} ${u}</b>) is only 1/${ratio(n.nbm / n.cur)} of the surrounding years (${fmt(n.nbm)} ${u}). A one-off in this year (flags: ${fl(n.y)}). ${idxTxt}`;
+    case "qv_mismatch": {
+      const yy = op ? py : n.y, val = op ? pv(py) : n.cur, hi = val > n.nbm;
+      const ref = n.w ? `the median of other countries for this item that year` : `the surrounding years`;
+      return `${yy} unit value (<b>${fmt(val)} $/t</b> = value ÷ quantity) is ${ratio(hi ? val / n.nbm : n.nbm / val)}× ${hi ? "above" : "below"} ${ref} (${fmt(n.nbm)} $/t). The quantity or the value of ${yy} is probably wrong (flags: ${fl(yy)}). ${op ? "" : idxTxt}`;
+    }
+    case "tiny_flow": {
+      if (n.t === 2) return `${n.y} is a negligible record (Q ${fmt(n.r.q)} t, V ${fmt(n.r.v)} thousand USD). Unit values from records this small are unreliable. ${idxTxt}`;
+      const small = (n.cur !== null && n.cur < (n.t === 0 ? D.cfg.floor_q : D.cfg.floor_v)) ? n.y : py;
+      return `${small} ${m} is only <b>${fmt(small === n.y ? n.cur : pv(py))} ${u}</b> — a negligible flow, so index moves around it are not meaningful. ${idxTxt}`;
+    }
+    default: {
+      if (n.t === 2 && n.w) return `Other countries' unit value for this item moved from ${fmt(n.typ)} $/t in the base to ${fmt(n.nbm)} $/t in ${n.y}, and this series moves with it — a real price change. ${idxTxt}`;
+      const lvl = n.nbm !== null ? n.nbm : n.cur;
+      return `Around ${n.y} the series runs at ${fmt(lvl)} ${u}, against ${fmt(n.typ)} ${u} around the base. The level itself has moved and stayed there — most likely a real change (trade started, stopped, grew or collapsed). ${idxTxt}`;
+    }
+  }
+}
+function splitBar(c) {
+  const g = k => D.cells[k][c] || 0;
+  const sg = Math.sign(g("cb") + g("co") + g("cp") + g("cs")) || 1;
+  const b = Math.max(0, g("cb") * sg), o = Math.max(0, Math.max(g("co") * sg, g("cp") * sg)), s = Math.max(0, g("cs") * sg);
+  const tot = b + o + s; if (!(tot > 0)) return "";
+  const p = v => Math.round(v / tot * 100);
+  const w = D.cells.t[c] === 2 && D.cells.w[c] === 1;
+  const lab = w ? ["base UV vs other countries", "this record vs other countries", "world price change"] : ["base", "one-off", "sustained"];
+  return `<div class="split"><span>What drives it:</span><span class="bar">${b ? `<i class="p-base" style="width:${p(b)}%"></i>` : ""}${o ? `<i class="p-one" style="width:${p(o)}%"></i>` : ""}${s ? `<i class="p-sus" style="width:${p(s)}%"></i>` : ""}</span>
+    <span class="lg"><i class="p-base"></i>${lab[0]} ${p(b)}%<i class="p-one"></i>${lab[1]} ${p(o)}%<i class="p-sus"></i>${lab[2]} ${p(s)}%</span></div>`;
+}
+
+// ---------------------------------------------------------------- series view
+function yrsRange(yrs) {
+  if (!yrs.length) return ""; if (yrs.length === 1) return String(yrs[0]);
+  const parts = []; let s = yrs[0], p = yrs[0];
+  for (let i = 1; i <= yrs.length; i++) { const y = yrs[i]; if (y === p + 1) { p = y; continue; } parts.push(s === p ? `${s}` : `${s}–${p}`); s = p = y; }
+  return parts.length > 4 ? `${parts.slice(0, 4).join(", ")} …` : parts.join(", ");
+}
+function renderSeries(sid, focus) {
+  const S = D.series, nm = seriesName(sid), cells = CBS.get(sid) || [];
+  const cellAt = new Map(); for (const c of cells) cellAt.set(D.cells.t[c] + "|" + D.cells.y[c], c);
+  const byCat = new Map();
+  for (const c of cells) {
+    const ci = D.cells.c[c], cur = byCat.get(ci);
+    const t = D.cells.t[c], iv = idxVals(sid, D.cells.y[c] - Y0);
+    const x = t === 0 ? iv.xq : t === 1 ? iv.xv : iv.xu, mag = Math.abs(Math.log10(x / 100)) + D.cells.sev[c] * 100;
+    if (!cur) byCat.set(ci, { worst: c, mag, cells: [c], sev: D.cells.sev[c] });
+    else { cur.cells.push(c); if (mag > cur.mag) { cur.mag = mag; cur.worst = c; } cur.sev = Math.max(cur.sev, D.cells.sev[c]); }
+  }
+  let cats = [...byCat.entries()].sort((a, b) => b[1].sev - a[1].sev || (D.cats.artefact[b[0]] - D.cats.artefact[a[0]]) || b[1].mag - a[1].mag);
+  if (focus && focus.cat !== undefined) cats.sort((a, b) => (b[0] === focus.cat) - (a[0] === focus.cat));
+  const compact = !!(focus && focus.compact);
+  const otherN = compact ? cats.length - 1 : 0;
+  if (compact) cats = cats.slice(0, 1);
+  const worstFocus = cats[0] ? cats[0][1].worst : null;
+
+  let h = `<div class="dd-head"><div class="t"><span class="code">[${esc(nm.acode)}]</span> ${esc(nm.area)}, <span class="code">[${esc(nm.icode)}]</span> ${esc(nm.item)} — ${nm.flow}</div>
+    ${compact ? `<span class="spacer"></span><button class="btn" data-open="${sid}" data-oc="${focus.cat}">Open full view${otherN ? ` · ${otherN} more cause${otherN > 1 ? "s" : ""}` : ""} →</button>` : ""}</div>`;
+  const src = D.srcs[S.src[sid]];
+  const srcShort = !src ? "none" : src === "country" ? "own data" : src === "imputed" ? `${S.own[sid]} own, ${S.nimp[sid]} rebuilt, ${S.ndir[sid]} from group` : "from " + esc(src);
+  h += `<div class="kv">
+    <div><div class="k">Base years used</div><div class="v">${baseYearsText(sid)} <span>(${S.nb[sid] || 0} of 3)</span></div></div>
+    <div><div class="k">Base quantity</div><div class="v">${fmt(S.bq[sid]) || "—"} <span>t</span></div></div>
+    <div><div class="k">Base value</div><div class="v">${fmt(S.bv[sid]) || "—"} <span>thousand USD</span></div></div>
+    <div><div class="k">Base unit value</div><div class="v">${S.buv[sid] !== null ? fmt(S.buv[sid] * 1000) : "—"} <span>$/t · ${srcShort}</span></div></div>
+    <div><div class="k">Other countries' base UV (median)</div><div class="v">${S.gb[sid] !== null ? fmt(S.gb[sid] * 1000) : "—"} <span>$/t</span></div></div>
+    <div><div class="k">Level around base (2011–13, 2017–19)</div><div class="v">${fmt(S.tq[sid]) || "—"} <span>t ·</span> ${fmt(S.tv[sid]) || "—"} <span>thousand USD</span></div></div>
+    <div><div class="k">Trade size</div><div class="v">${fmt(S.size[sid]) || "—"} <span>thousand USD / year</span></div></div>
+  </div>`;
+  if (cats.length) {
+    h += `<div class="why">`;
+    for (const [ci, g] of cats) {
+      const yrs = [...new Set(g.cells.map(c => D.cells.y[c]))].sort((a, b) => a - b);
+      const tys = [...new Set(g.cells.map(c => D.cells.t[c]))].sort().map(t => TYPE_NAME[t].toLowerCase()).join(", ");
+      h += `<div class="item ${g.sev === 2 ? "c" : "w"}"><div class="hd"><span class="sev ${g.sev === 2 ? "c" : "w"}">${g.sev === 2 ? "Critical" : "Warning"}</span><b>${esc(catLabel(ci))}</b><span class="drv">${D.cats.driver[ci]}</span><span class="yrs">${tys} index · ${yrs.length} value${yrs.length > 1 ? "s" : ""} · ${yrsRange(yrs)}</span></div>
+        <p>${explain(sid, g.worst)}</p>${D.cats.id[ci] === "tiny_flow" ? "" : splitBar(g.worst)}</div>`;
+    }
+    h += `</div>`;
+  } else h += `<p class="note" style="margin:0 0 22px">No flagged values in this series.</p>`;
+
+  const fy = worstFocus !== null ? D.cells.y[worstFocus] : null, ft = worstFocus !== null ? D.cells.t[worstFocus] : null;
+  const bc = y => D.base_years.includes(y) ? " bcol" : "";
+  h += `<div class="ts-wrap"><table class="ts"><thead><tr><th class="lab">${esc(nm.area)}, ${esc(nm.item)}</th>`;
+  for (let yi = 0; yi < NY; yi++) h += `<th class="${bc(Y0 + yi).trim()}">${Y0 + yi}</th>`;
+  h += `</tr></thead><tbody>`;
+  const row = (label, fn) => { let r = `<tr><td class="lab">${label}</td>`; for (let yi = 0; yi < NY; yi++) r += fn(yi, Y0 + yi); return r + `</tr>`; };
+  const has = x => x !== null && x !== undefined;
+  h += `<tr class="grp"><td class="lab">Source data</td><td colspan="${NY}"></td></tr>`;
+  h += row(`${nm.flow} Quantity <span class="u">[t]</span>`, (yi, y) => { const r = raw(sid, yi); return `<td class="v${bc(y)}">${has(r.q) ? fmt(r.q) : ""}${flagChips(r.qf)}</td>`; });
+  h += row(`${nm.flow} Value <span class="u">[1000 $]</span>`, (yi, y) => { const r = raw(sid, yi); return `<td class="v${bc(y)}">${has(r.v) ? fmt(r.v) : ""}${flagChips(r.vf)}</td>`; });
+  h += row(`${nm.flow} Unit Value <span class="u">[$/t]</span>`, (yi, y) => { const iv = idxVals(sid, yi); return `<td class="v${bc(y)}">${iv.uv === null ? "" : fmt(iv.uv * 1000)}</td>`; });
+  h += `<tr class="grp"><td class="lab">Calculated · 2014–16 = 100</td><td colspan="${NY}"></td></tr>`;
+  const keys = ["xq", "xv", "xu"];
+  for (let t = 0; t < 3; t++) {
+    h += row(`${TYPE_NAME[t]} index`, (yi, y) => {
+      const x = idxVals(sid, yi)[keys[t]], c = cellAt.get(t + "|" + y);
+      let cls = "v" + bc(y), tip = "";
+      if (c !== undefined) { cls += D.cells.sev[c] === 2 ? " cc" : " cw"; tip = ` title="${esc((D.cells.sev[c] === 2 ? "Critical" : "Warning") + " · " + catLabel(D.cells.c[c]))}"`; }
+      if (fy === y && ft === t) cls += " focus";
+      return `<td class="${cls}"${tip}>${x === null ? "" : fmt(x, "idx")}</td>`;
+    });
+  }
+  h += `</tbody></table></div>`;
+  return h;
+}
+function mountSeries(container, sid, focus) {
+  container.innerHTML = renderSeries(sid, focus);
+  const f = container.querySelector("td.focus"), wrap = container.querySelector(".ts-wrap");
+  if (f && wrap) wrap.scrollLeft = Math.max(0, f.offsetLeft - wrap.clientWidth / 2);
+  container.querySelectorAll("[data-open]").forEach(b => b.onclick = () => openSeries(+b.dataset.open, { cat: +b.dataset.oc }));
+}
+
+// ---------------------------------------------------------------- navigation (full-page detail)
+try { history.scrollRestoration = "manual"; } catch (e) {}
+const setHdr = () => document.documentElement.style.setProperty("--hdr", $("header.top").offsetHeight + "px");
+setHdr(); window.addEventListener("resize", setHdr);
+let CUR = { page: "method", sub: "summary", asub: "summary", rsub: "summary" }, RETURN = null, GROUPS_DRAWN = false;
+function showPage(p) {
+  CUR.page = p;
+  if (p === "agg" && !AD) {
+    document.querySelectorAll(".page").forEach(el => el.classList.remove("on"));
+    document.querySelectorAll("#tabs button[data-p]").forEach(b => b.classList.toggle("on", b.dataset.p === "agg"));
+    $("#loading").style.display = "block";
+    if (READY) loadAgg().then(() => { if (CUR.page === "agg") showPage("agg"); });
+    return;
+  }
+  const needsData = p === "summary" || p === "items" || p === "detail" || p === "rv";
+  $("#loading").style.display = (needsData && !READY) ? "block" : "none";
+  const tabOf = p === "detail" && RETURN ? RETURN.page : p;
+  document.querySelectorAll("#tabs button[data-p]").forEach(b => b.classList.toggle("on", b.dataset.p === tabOf));
+  document.querySelectorAll(".page").forEach(el => el.classList.toggle("on", el.id === "p-" + p && (!needsData || READY)));
+  if (READY && p === "items" && CUR.sub === "groups" && !GROUPS_DRAWN) drawGroups();
+  if (AD && p === "agg" && CUR.asub === "groups" && !AGROUPS_DRAWN) aDrawGroups();
+  if (READY && p === "rv") { initRV(); if (CUR.rsub === "groups" && !RGROUPS_DRAWN) rDrawGroups(); }
+}
+function showSub(s) {
+  CUR.sub = s;
+  document.querySelectorAll("#subnav button").forEach(b => b.classList.toggle("on", b.dataset.s === s));
+  document.querySelectorAll("#p-items .sp").forEach(el => el.classList.toggle("on", el.id === "s-" + s));
+  if (READY && s === "groups" && !GROUPS_DRAWN) drawGroups();
+}
+function openSeries(sid, focus) {
+  if (CUR.page !== "detail") RETURN = { page: CUR.page, sub: CUR.sub, asub: CUR.asub, rsub: CUR.rsub, y: window.scrollY };
+  showPage("detail");
+  window.scrollTo(0, 0);
+  mountSeries($("#dBody"), sid, focus);
+  history.pushState({ detail: { k: "i", id: sid, focus: focus || null } }, "");
+}
+function closeDetail() {
+  const r = RETURN || { page: "items", sub: "list", y: 0 };
+  RETURN = null;
+  if (r.page === "items") showSub(r.sub);
+  if (r.page === "agg") aShowSub(r.asub);
+  if (r.page === "rv") rShowSub(r.rsub);
+  showPage(r.page);
+  window.scrollTo(0, r.y || 0);
+}
+$("#dBack").onclick = () => history.back();
+window.addEventListener("popstate", e => {
+  const d = e.state && e.state.detail;
+  if (d) {
+    if (CUR.page !== "detail") showPage("detail");
+    (d.k === "a" ? aMount : d.k === "r" ? rMount : mountSeries)($("#dBody"), d.id, d.focus || undefined);
+    window.scrollTo(0, 0);
+  } else if (CUR.page === "detail") closeDetail();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && CUR.page === "detail") history.back(); });
+document.querySelectorAll("#tabs button[data-p]").forEach(b => b.onclick = () => {
+  if (CUR.page === "detail") { RETURN = null; history.replaceState(null, ""); }
+  showPage(b.dataset.p); window.scrollTo(0, 0);
+});
+document.querySelectorAll("#subnav button").forEach(b => b.onclick = () => showSub(b.dataset.s));
+document.querySelectorAll(".toc a").forEach(a => a.onclick = e => { e.preventDefault(); document.querySelector(a.getAttribute("href")).scrollIntoView({ behavior: "smooth" }); });
+
+// ---------------------------------------------------------------- issue list
+function issueRows(list) {
+  const S = D.series;
+  let h = `<div class="tblx"><table class="list"><thead><tr><th class="r">#</th><th>Severity</th><th>Cause</th><th>Area</th><th>Item</th><th>Flow</th><th>Indices</th><th>Years</th><th class="r">Most extreme</th><th class="r">Trade size, 1000 USD/yr</th></tr></thead><tbody>`;
+  for (const o of list) {
+    const nm = seriesName(o.s);
+    h += `<tr data-s="${o.s}" data-c="${o.c}"><td class="r num" style="color:var(--muted)">${o.rank}</td>
+      <td><span class="sev ${o.sev === 2 ? "c" : "w"}">${o.sev === 2 ? "Critical" : "Warning"}</span></td>
+      <td>${esc(catLabel(o.c))}</td>
+      <td><span class="area">${esc(nm.area)}</span><span class="code">${esc(nm.acode)}</span></td>
+      <td>${esc(nm.item)}<span class="code">${esc(nm.icode)}</span></td>
+      <td>${nm.flow}</td>
+      <td>${o.ty.split(" ").map(t => `<span class="tag">${t}</span>`).join("")}</td>
+      <td class="num">${o.y0 === o.y1 ? o.y0 : o.y0 + "–" + o.y1}<span class="code">(${o.n})</span></td>
+      <td class="r num">${TYPES[o.wt]} ${o.wy}: <b>${fmt(o.wx, "idx")}</b></td>
+      <td class="r num">${fmt(S.size[o.s])}</td></tr>`;
+  }
+  return h + `</tbody></table></div>`;
+}
+function bindRows(el) { el.querySelectorAll("tbody tr[data-s]").forEach(tr => tr.addEventListener("click", () => openSeries(+tr.dataset.s, { cat: +tr.dataset.c }))); }
+
+let PAGE = 0; const PER = 50;
+function filtered() {
+  const v = id => $("#" + id).value, S = D.series;
+  const sev = v("fSev"), cat = v("fCat"), fl = v("fFlow"), ty = v("fType"), ar = v("fArea"), it = v("fItem"), so = v("fSort");
+  let L = ISS.filter(o => (!sev || o.sev === +sev) && (cat === "" || o.c === +cat) && (fl === "" || S.f[o.s] === +fl) &&
+    (!ty || o.ty.split(" ").includes(ty)) && (ar === "" || S.a[o.s] === +ar) && (it === "" || S.i[o.s] === +it));
+  if (so === "mag") L = L.slice().sort((a, b) => Math.abs(Math.log10(b.wx / 100)) - Math.abs(Math.log10(a.wx / 100)));
+  else if (so === "size") L = L.slice().sort((a, b) => (S.size[b.s] || 0) - (S.size[a.s] || 0));
+  else if (so === "n") L = L.slice().sort((a, b) => b.n - a.n);
+  return L;
+}
+function renderList() {
+  const L = filtered(), pages = Math.max(1, Math.ceil(L.length / PER));
+  PAGE = Math.min(PAGE, pages - 1);
+  $("#listCount").textContent = `${fmtN(L.length)} issues · ${fmtN(L.reduce((a, o) => a + (o.sev === 2), 0))} critical`;
+  $("#listTable").innerHTML = issueRows(L.slice(PAGE * PER, PAGE * PER + PER)); bindRows($("#listTable"));
+  $("#pager").innerHTML = `<button class="btn" id="pPrev" ${PAGE ? "" : "disabled"}>‹ Previous</button><span>Page ${PAGE + 1} of ${fmtN(pages)}</span><button class="btn" id="pNext" ${PAGE < pages - 1 ? "" : "disabled"}>Next ›</button>`;
+  $("#pPrev").onclick = () => { PAGE--; renderList(); window.scrollTo(0, 0); };
+  $("#pNext").onclick = () => { PAGE++; renderList(); window.scrollTo(0, 0); };
+}
+function goList(filters) {
+  ["fSev", "fCat", "fFlow", "fType", "fArea", "fItem"].forEach(id => $("#" + id).value = "");
+  $("#fSort").value = "rank";
+  Object.entries(filters || {}).forEach(([k, v]) => $("#" + k).value = v);
+  PAGE = 0; renderList(); showSub("list"); showPage("items"); window.scrollTo(0, 0);
+}
+
+// ---------------------------------------------------------------- pages
+function drawSummary() {
+  const GI = itemGrid(); dataGrid("gridItems", GI);
+  const nCrit = new Set(ISS.filter(o => o.sev === 2).map(o => o.s)).size, nAny = new Set(ISS.map(o => o.s)).size;
+  const VR = D.verify.max_rel, VN = D.verify.na_mismatch, vOK = VR.every((r, i) => r < 1e-9 && VN[i] === 0);
+  $("#sumTiles").innerHTML = `
+    <div class="tile"><div class="k">Data points</div><div class="val">${fmtN(GI.all)}</div><div class="hint">item index values · ${fmtN(D.meta.n_series)} series (${D.meta.n_areas} areas × ${D.meta.n_items} items × flow)</div></div>
+    <div class="tile"><div class="k">Problematic data points</div><div class="val">${fmtN(GI.bad)}</div><div class="hint">${(GI.bad / GI.all * 100).toFixed(1)}% · ${fmtN(GI.crit)} critical</div></div>
+    <div class="tile"><div class="k">Series with a critical issue</div><div class="val">${fmtN(nCrit)}</div><div class="hint">${Math.round(nCrit / D.meta.n_series * 100)}% of series</div></div>
+    <div class="tile"><div class="k">Series with any issue</div><div class="val">${fmtN(nAny)}</div><div class="hint">${Math.round(nAny / D.meta.n_series * 100)}% of series</div></div>`;
+  causeCards($("#causeCards"));
+  $("#topTable").innerHTML = issueRows(ISS.slice(0, 10)); bindRows($("#topTable"));
+  const cnt = CAT_ORDER.map(ci => ({ ci, c: ISS.filter(o => o.c === ci && o.sev === 2).length, w: ISS.filter(o => o.c === ci && o.sev === 1).length }));
+  const mx = Math.max(...cnt.map(o => o.c + o.w));
+  $("#catBars").innerHTML = cnt.map(o => `<div class="lbl" data-c="${o.ci}">${esc(catLabel(o.ci))}</div>
+    <div class="track" data-c="${o.ci}" title="${fmtN(o.c)} critical · ${fmtN(o.w)} warning"><i style="width:${o.c / mx * 100}%;background:var(--crit)"></i><i style="width:${o.w / mx * 100}%;background:var(--warn)"></i></div>
+    <div class="n num">${fmtN(o.c + o.w)}</div>`).join("");
+  $("#catBars").querySelectorAll("[data-c]").forEach(el => el.onclick = () => goList({ fCat: el.dataset.c }));
+  const C = D.cfg;
+  $("#cfgCh").textContent = fmtN(C.crit_hi); $("#cfgCl").textContent = C.crit_lo; $("#cfgWh").textContent = fmtN(C.warn_hi); $("#cfgWl").textContent = C.warn_lo;
+  $("#cfgY").textContent = C.yoy; $("#cfgFq").textContent = C.floor_q; $("#cfgFv").textContent = C.floor_v;
+  $("#verifyList").innerHTML = `<li>Every item index is recomputed from <code>TradeData.rds</code> and <code>base_unit_values.csv</code>.</li>
+    <li>${vOK ? "Matches" : "<b>Does not match</b>"} <code>indices_items.csv</code> — largest relative difference ${Math.max(...VR).toExponential(1)}.</li>`;
+  const z = D.zeros, tot = z.N.reduce((a, b) => a + b, 0), nm2 = { "": "official", T: "unofficial", E: "estimated", I: "imputed", M: "missing", X: "international org." };
+  $("#zeroNote").innerHTML = `${fmtN(tot)} quantity and value index values are exactly 0 and are not flagged. By the flag of the source record: ${z.st.map((s, i) => `${fmtN(z.N[i])} ${nm2[s] || s} (${s || "blank"})`).join(", ")}. Records flagged M are missing in the source but enter the calculation as 0.`;
+}
+function drawGroups() {
+  GROUPS_DRAWN = true;
+  const gcls = { Base: "g-base", Year: "g-year", Level: "g-level" };
+  const gname = { Base: "Base problem", Year: "One-off year", Level: "Real change" };
+  const cats = CAT_ORDER.filter(ci => ISS.some(o => o.c === ci));
+  let h = `<section class="card"><h2>Real examples by cause</h2><p class="sub">One section per cause, each with its own number and colour, and the three most important real cases. The header stays at the top while you scroll through it. In each real case, the outlined cell is the value explained; shaded index cells are flagged (hover for the cause).</p>
+    <div class="jump">${cats.map((ci, k) => `<button class="${gcls[D.cats.driver[ci]]}" data-jump="${ci}"><span class="no">${k + 1}</span>${esc(catLabel(ci))}</button>`).join("")}</div></section>`;
+  cats.forEach((ci, k) => {
+    const id = D.cats.id[ci], drv = D.cats.driver[ci], L = ISS.filter(o => o.c === ci);
+    const crit = L.filter(o => o.sev === 2).length;
+    // three cases: most important first, different series and preferably different countries
+    const pool = L.filter(o => o.sev === 2 && D.series.size[o.s] > 0).concat(L), picks = [], seenS = new Set(), seenA = new Set();
+    for (const pass of [true, false]) for (const o of pool) {
+      if (picks.length >= 3) break;
+      const a = D.series.a[o.s];
+      if (seenS.has(o.s) || (pass && seenA.has(a))) continue;
+      picks.push(o); seenS.add(o.s); seenA.add(a);
+    }
+    h += `<section class="card cause-sec ${gcls[drv]}" id="cause-${ci}">
+      <div class="cs-head"><span class="no">${k + 1}</span><div class="ttl"><span class="grp">Cause ${k + 1} of ${cats.length} · ${gname[drv]}</span><span class="name">${esc(catLabel(ci))}</span></div>
+        <span class="spacer"></span><span class="cnt"><b>${fmtN(L.length)}</b> issues · <b>${fmtN(crit)}</b> critical</span><button class="btn" data-go="${ci}">See all ${fmtN(L.length)} →</button></div>
+      <div class="cs-body">
+        <div class="cs-what"><div><p class="rule">${CAT_DEF[id][0]}</p><p class="means">${CAT_DEF[id][1]}</p></div>
+          <div><div class="exl">What it looks like (illustrative)</div>${exampleTable(id)}</div></div>
+        ${picks.map((ex, j) => `<div class="cs-real">Real case ${j + 1} of ${picks.length} — ${esc(catLabel(ci))}</div>
+        <div class="example" data-s="${ex.s}" data-c="${ci}"></div>`).join("")}
+      </div></section>`;
+  });
+  const el = $("#groupsCard");
+  el.innerHTML = h;
+  el.querySelectorAll("[data-go]").forEach(b => b.onclick = () => goList({ fCat: b.dataset.go }));
+  el.querySelectorAll("[data-jump]").forEach(b => b.onclick = () => document.getElementById("cause-" + b.dataset.jump).scrollIntoView({ behavior: "smooth" }));
+  el.querySelectorAll(".example").forEach(e => mountSeries(e, +e.dataset.s, { cat: +e.dataset.c, compact: true }));
+}
+function drawItemTiles() {
+  const crit = ISS.filter(o => o.sev === 2).length, base = ISS.filter(o => D.cats.driver[o.c] === "Base" && o.sev === 2).length, art = ISS.filter(o => D.cats.artefact[o.c]).length;
+  $("#itemTiles").innerHTML = `
+    <div class="tile"><div class="k">Issues</div><div class="val">${fmtN(ISS.length)}</div><div class="hint">country × item × flow × cause</div></div>
+    <div class="tile"><div class="k">Critical</div><div class="val">${fmtN(crit)}</div><div class="hint">${fmtN(ISS.length - crit)} warnings</div></div>
+    <div class="tile"><div class="k">Critical, caused by the base</div><div class="val">${fmtN(base)}</div><div class="hint">${Math.round(base / Math.max(crit, 1) * 100)}% of critical issues</div></div>
+    <div class="tile"><div class="k">Likely data artefacts</div><div class="val">${fmtN(art)}</div><div class="hint">${fmtN(ISS.length - art)} look like real change</div></div>`;
+}
+function fillSelects() {
+  const ao = D.areas.name.map((n, i) => `<option value="${i}">${esc(n)}</option>`).join("");
+  const io = D.items.name.map((n, i) => `<option value="${i}">${esc(n)} (${esc(D.items.code[i])})</option>`).join("");
+  const isA = new Set(ISS.map(o => D.series.a[o.s])), isI = new Set(ISS.map(o => D.series.i[o.s]));
+  $("#fArea").insertAdjacentHTML("beforeend", D.areas.name.map((n, i) => isA.has(i) ? `<option value="${i}">${esc(n)}</option>` : "").join(""));
+  $("#fItem").insertAdjacentHTML("beforeend", D.items.name.map((n, i) => isI.has(i) ? `<option value="${i}">${esc(n)} (${esc(D.items.code[i])})</option>` : "").join(""));
+  const inA = new Set(), inI = new Set(); D.series.l.forEach((l, s) => { if (l) { inA.add(D.series.a[s]); inI.add(D.series.i[s]); } });
+  $("#lArea").innerHTML = D.areas.name.map((n, i) => inA.has(i) ? `<option value="${i}">${esc(n)}</option>` : "").join("");
+  $("#lItem").innerHTML = D.items.name.map((n, i) => inI.has(i) ? `<option value="${i}">${esc(n)} (${esc(D.items.code[i])})</option>` : "").join("");
+  $("#fCat").insertAdjacentHTML("beforeend", CAT_ORDER.map(ci => `<option value="${ci}">${esc(catLabel(ci))}</option>`).join(""));
+  ["fSev", "fCat", "fFlow", "fType", "fArea", "fItem", "fSort"].forEach(id => $("#" + id).onchange = () => { PAGE = 0; renderList(); });
+  $("#fReset").onclick = () => goList({});
+  const key = new Map(), S = D.series;
+  for (let s = 0; s < S.a.length; s++) if (S.l[s]) key.set(S.a[s] + "|" + S.i[s] + "|" + S.f[s], s);
+  $("#lGo").onclick = () => {
+    const s = key.get($("#lArea").value + "|" + $("#lItem").value + "|" + $("#lFlow").value);
+    if (s === undefined) $("#lookupOut").innerHTML = `<p class="note">No data for this area, item and flow.</p>`;
+    else mountSeries($("#lookupOut"), s);
+  };
+}
+
+// ================================================================ AGGREGATES
+const ATYPE = ["V", "Q", "R", "U"];
+const ATYPE_NAME = ["Value", "Quantity", "Real value", "Unit value"];
+const AUNIT = ["thousand USD", "t", "thousand USD", ""];
+const ACAT_DEF = {
+  a_tiny_base: ["The group's 2014–16 average is below the negligible level (10 t or 10 thousand USD).", "Any normal year divided by it explodes."],
+  a_low_base: ["The group's base average is far below the level just around it.", "The base years were unusually low for the group as a whole."],
+  a_high_base: ["The group's base average is far above the level just around it.", "A base-year spike for the group: other years look tiny."],
+  a_new: ["At least half of the year's total comes from members with no data in 2014–16.", "Items or countries that enter after the base push the index up — the base does not include them."],
+  a_lost: ["At least half of the base comes from members with no data in the flagged year.", "The index drops because members are missing that year, not because trade fell."],
+  a_one_item: ["A single item explains at least half of the change from the base.", "The group index inherits that item's problem — its own diagnosis is shown."],
+  a_one_country: ["A single country explains at least half of the change from the base.", "The region inherits that country's problem — its own diagnosis is shown."],
+  a_spike: ["One year is far above the surrounding years for the group as a whole.", "A one-off spread across items — check that year's records."],
+  a_dip: ["One year is far below the surrounding years for the group as a whole.", "A one-off spread across items — check that year's records."],
+  a_tiny_flow: ["The group's total in the flagged year is negligible.", "Small numbers swing wildly; the index carries little information."],
+  a_trend: ["The group's level moved away from the base and stayed there.", "Probably a real change: trade started, stopped, grew or collapsed."]
+};
+const EXA = {
+  a_tiny_base: { cols: ["2014", "2015", "2016", "2020"], b: [0, 1, 2],
+    rows: [["Group value (1000 $)", ["4", "3", "5", "12,000"]], ["Value index", ["100", "75", "125", "300,000"]]], hl: [1, 3, "c"],
+    note: "The group's base is 4 thousand USD, so a normal 2020 explodes." },
+  a_low_base: { cols: ["2013", "2014", "2015", "2016", "2019"], b: [1, 2, 3],
+    rows: [["Group value (1000 $)", ["40,000", "1,500", "–", "–", "45,000"]], ["Value index", ["2,667", "100", "", "", "3,000"]]], hl: [1, 4, "w"],
+    note: "Only 2014 has data and it is 27× below the years around it." },
+  a_high_base: { cols: ["2013", "2014", "2015", "2016", "2019"], b: [1, 2, 3],
+    rows: [["Group value (1000 $)", ["900", "250,000", "1,000", "1,100", "950"]], ["Value index", ["1.07", "297", "1.19", "1.31", "1.13"]]], hl: [1, 4, "w"],
+    note: "One 250,000 record lifts the base to 84,033; normal years are ~1,000." },
+  a_new: { cols: ["Base", "2020"], b: [0],
+    rows: [["Item A", ["1,000", "1,100"]], ["Item B", ["–", "40,000"]], ["Group value", ["1,000", "41,100"]], ["Value index", ["100", "4,110"]]], hl: [3, 1, "w"],
+    note: "97% of 2020 comes from Item B, which had no trade in 2014–16." },
+  a_lost: { cols: ["Base", "2005"], b: [0],
+    rows: [["Item A", ["9,000", "–"]], ["Item B", ["1,000", "900"]], ["Group value", ["10,000", "900"]], ["Value index", ["100", "9.0"]]], hl: [3, 1, "w"],
+    note: "90% of the base came from Item A, which has no data in 2005." },
+  a_one_item: { cols: ["Base", "2020"], b: [0],
+    rows: [["Item A", ["5,000", "5,500"]], ["Item B", ["20", "60,000"]], ["Group value", ["5,020", "65,500"]], ["Value index", ["100", "1,305"]]], hl: [3, 1, "w"],
+    note: "Item B explains 99% of the change; its own diagnosis: base unusually low." },
+  a_one_country: { cols: ["Base", "2019"], b: [0],
+    rows: [["Country X", ["80,000", "82,000"]], ["Country Y", ["2,000", "900,000"]], ["Region value", ["82,000", "982,000"]], ["Value index", ["100", "1,198"]]], hl: [3, 1, "w"],
+    note: "Country Y explains 99.8% of the change; its own diagnosis: one-year spike." },
+  a_spike: { cols: ["Base", "2018", "2019", "2020"], b: [0],
+    rows: [["Group value (1000 $)", ["3,000", "3,100", "420,000", "3,200"]], ["Value index", ["100", "103", "14,000", "107"]]], hl: [1, 2, "c"],
+    note: "2019 jumps for the group as a whole; no single item explains most of it." },
+  a_dip: { cols: ["Base", "2018", "2019", "2020"], b: [0],
+    rows: [["Group value (1000 $)", ["5,000", "5,200", "30", "5,100"]], ["Value index", ["100", "104", "0.6", "102"]]], hl: [1, 2, "c"],
+    note: "2019 collapses for the group as a whole, then recovers." },
+  a_tiny_flow: { cols: ["Base", "2018", "2019", "2020"], b: [0],
+    rows: [["Group value (1000 $)", ["6,000", "5,800", "2", "6,100"]], ["Value index", ["100", "97", "0.03", "102"]]], hl: [1, 2, "c"],
+    note: "2 thousand USD is a negligible total for the year." },
+  a_trend: { cols: ["Base", "2017", "2018", "2019", "2020"], b: [0],
+    rows: [["Group value (1000 $)", ["2,000", "9,000", "15,000", "22,000", "26,000"]], ["Value index", ["100", "450", "750", "1,100", "1,300"]]], hl: [1, 4, "w"],
+    note: "The group grew year after year and stayed high — most likely real." }
+};
+const AGROUPS = [
+  { d: "Base", t: "Base problems", s: "the group's 2014–16 denominator is wrong" },
+  { d: "Coverage", t: "Coverage", s: "members enter or leave the group" },
+  { d: "Member", t: "One member", s: "a single item or country explains most of the change" },
+  { d: "Year", t: "One-off years", s: "a single year is out of line for the group" },
+  { d: "Level", t: "Real change", s: "no data problem found" }
+];
+const AGCLS = { Base: "g-base", Coverage: "g-coverage", Member: "g-member", Year: "g-year", Level: "g-level" };
+const AGNAME = { Base: "Base problem", Coverage: "Coverage", Member: "One member", Year: "One-off year", Level: "Real change" };
+const acatLabel = ci => AD.cats.label[ci];
+
+async function loadAgg() {
+  if (AD_PROMISE) return AD_PROMISE;
+  AD_PROMISE = (async () => {
+    const bin = atob(PAYLOAD_AGG.trim()), u8 = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    const X = JSON.parse(await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream("deflate"))).text());
+    if (X.none) { $("#loading").textContent = "Aggregates are built when trade_calculations.R runs (Step 8). Run the pipeline once to fill this section."; throw new Error("no aggregates"); }
+    const I = X.issues;
+    AISS = I.s.map((s, k) => ({ rank: k + 1, k, s, c: I.c[k], sev: I.sev[k], n: I.n[k], nc: I.nc[k], ty: I.ty[k], y0: I.y0[k], y1: I.y1[k], wt: I.wt[k], wy: I.wy[k], wx: I.wx[k], ry: I.ry[k], rt: I.rt[k] }));
+    AISSIDX = new Map(); AISS.forEach(o => AISSIDX.set(o.s + "|" + o.c, o));
+    ACBS = new Map(); const cs = X.cells.s;
+    for (let k = 0; k < cs.length; k++) { let a = ACBS.get(cs[k]); if (!a) ACBS.set(cs[k], a = []); a.push(k); }
+    X.topBy = new Map(); for (let k = 0; k < X.top.r.length; k++) { let a = X.topBy.get(X.top.r[k]); if (!a) X.topBy.set(X.top.r[k], a = []); a.push(k); }
+    const crit = new Map(); AISS.forEach(o => { if (o.sev === 2) crit.set(o.c, (crit.get(o.c) || 0) + 1); });
+    const tier = ci => X.cats.id[ci] === "a_tiny_flow" ? 3.5 : ["Base", "Coverage", "Member", "Year", "Level"].indexOf(X.cats.driver[ci]);
+    ACAT_ORDER = X.cats.id.map((_, i) => i).filter(ci => AISS.some(o => o.c === ci)).sort((a, b) => tier(a) - tier(b) || (crit.get(b) || 0) - (crit.get(a) || 0));
+    AD = X;
+    aDrawSummary(); aFillSelects(); aRenderList();
+  })();
+  return AD_PROMISE;
+}
+function aName(gs) {
+  const S = AD.series, ai = S.a[gs];
+  return { lvl: S.lv[gs] ? "Region" : "Country", area: AD.areas.name[ai], acode: AD.areas.code[ai], grp: AD.groups.name[S.g[gs]], gcode: AD.groups.code[S.g[gs]], flow: S.f[gs] ? "Export" : "Import" };
+}
+function aVals(gs, yi) {
+  const S = AD.series, k = gs * NY + yi, V = AD.V[k], Q = AD.Q[k], R = AD.R[k];
+  const has = x => x !== null && x !== undefined;
+  const xV = has(V) && S.bv[gs] > 0 ? V / S.bv[gs] * 100 : null, xQ = has(Q) && S.bq[gs] > 0 ? Q / S.bq[gs] * 100 : null, xR = has(R) && S.br[gs] > 0 ? R / S.br[gs] * 100 : null;
+  return { V, Q, R, xV, xQ, xR, xU: xV !== null && xR > 0 ? xV / xR * 100 : null, U: has(V) && R > 0 ? V / R : null };
+}
+const aIdx = (v, t) => [v.xV, v.xQ, v.xR, v.xU][t];
+const aCur = (v, t) => [v.V, v.Q, v.R, v.U][t];
+function aShowSub(s) {
+  CUR.asub = s;
+  document.querySelectorAll("#aSubnav button").forEach(b => b.classList.toggle("on", b.dataset.s === s));
+  document.querySelectorAll("#p-agg .sp").forEach(el => el.classList.toggle("on", el.id === "as-" + s));
+  if (AD && s === "groups" && !AGROUPS_DRAWN) aDrawGroups();
+}
+document.querySelectorAll("#aSubnav button").forEach(b => b.onclick = () => aShowSub(b.dataset.s));
+function openAgg(gs, focus) {
+  if (CUR.page !== "detail") RETURN = { page: CUR.page, sub: CUR.sub, asub: CUR.asub, rsub: CUR.rsub, y: window.scrollY };
+  showPage("detail");
+  window.scrollTo(0, 0);
+  aMount($("#dBody"), gs, focus);
+  history.pushState({ detail: { k: "a", id: gs, focus: focus || null } }, "");
+}
+function pct(x) { return Math.round(Math.abs(x) * 100) + "%"; }
+function aExplain(gs, c) {
+  const C = AD.cells, ci = C.c[c], id = AD.cats.id[ci], t = C.t[c], y = C.y[c], yi = y - Y0, S = AD.series;
+  const v = aVals(gs, yi), x = aIdx(v, t), m = ATYPE_NAME[t].toLowerCase(), u = AUNIT[t];
+  const base = [S.bv[gs], S.bq[gs], S.br[gs], S.br[gs] > 0 ? S.bv[gs] / S.br[gs] : null][t];
+  const typ = [S.tv[gs], S.tq[gs], S.tr[gs], S.tu[gs]][t];
+  const cur = aCur(v, t), nbm = C.nbm[c], op = C.op[c] === 1, py = y - 1;
+  const lvl = S.lv[gs] ? "country" : "item", lvls = S.lv[gs] ? "countries" : "items";
+  const idxTxt = `${ATYPE_NAME[t]} index ${y} = <b>${fmt(x, "idx")}</b>.`;
+  const pv = yy => aCur(aVals(gs, yy - Y0), t);
+  const uu = u ? " " + u : "";
+  switch (id) {
+    case "a_tiny_base": return t === 3 ? `The group's base value or real value is negligible, so the unit value index (value index ÷ real value index) is unstable. ${idxTxt}`
+      : `Base ${m} of this group is only <b>${fmt(base)}${uu}</b> (2014–16 average). Every year is divided by this tiny base.${(t === 1 || t === 2) && S.bv[gs] > 1000 ? ` The group's base value is ${fmt(S.bv[gs])} thousand USD, so most of its trade has no quantity — the quantity and real value indices cover only a sliver of it.` : ""} ${idxTxt}`;
+    case "a_new": return `<b>${pct(C.sn[c])}</b> of ${y}'s ${m} comes from ${C.nn[c]} ${C.nn[c] === 1 ? lvl : lvls} with no ${m} in 2014–16. They are not in the base, so the index jumps. ${idxTxt}`;
+    case "a_lost": return `<b>${pct(C.sl[c])}</b> of the base ${m} came from ${C.nl[c]} ${C.nl[c] === 1 ? lvl : lvls} with no data in ${y}. The index drops because they are missing that year, not because trade fell. ${idxTxt}`;
+    case "a_one_item": case "a_one_country": {
+      const iss = AISSIDX.get(gs + "|" + ci), tk = iss ? (AD.topBy.get(iss.rank - 1) || []) : [];
+      const top = tk.length && iss.ry === y && iss.rt === t ? AD.mnames[AD.top.m[tk[0]]] : "One " + lvl;
+      const sub = id === "a_one_item" ? (C.si[c] !== null && C.si[c] !== undefined ? D.cats.label[C.si[c]] : null) : (C.sc[c] !== null && C.sc[c] !== undefined ? AD.cats.label[C.sc[c]] : null);
+      const what = t === 3 ? `the gap between the value index and the real value index in ${y}` : `the change in ${m} between the base and ${y}`;
+      return `<b>${esc(top)}</b> explains <b>${pct(C.sh[c])}</b> of ${what}. ${sub ? `Its own diagnosis: <b>${esc(sub)}</b>.` : `Its own index is not flagged — the change is large compared with the group's base.`} ${idxTxt}`;
+    }
+    case "a_low_base": return `Base ${m} (<b>${fmt(base)}${uu}</b>) is ${ratio(typ / base)}× lower than the level around it (${fmt(typ)}${uu}). Every other year is inflated by the same factor. ${idxTxt}`;
+    case "a_high_base": return `Base ${m} (<b>${fmt(base)}${uu}</b>) is ${ratio(base / typ)}× higher than the level around it (${fmt(typ)}${uu}). Every other year looks small against it. ${idxTxt}`;
+    case "a_spike": return op ? `${py} ${m} (${fmt(pv(py))}${uu}) is ${ratio(pv(py) / nbm)}× the surrounding years (${fmt(nbm)}${uu}), so ${y} drops back sharply.`
+      : `${y} ${m} (<b>${fmt(cur)}${uu}</b>) is ${ratio(cur / nbm)}× the median of the surrounding years (${fmt(nbm)}${uu}), and no single ${lvl} explains most of it. ${idxTxt}`;
+    case "a_dip": return op ? `${py} ${m} (${fmt(pv(py))}${uu}) is only 1/${ratio(nbm / pv(py))} of the surrounding years (${fmt(nbm)}${uu}), so ${y} jumps back up.`
+      : `${y} ${m} (<b>${fmt(cur)}${uu}</b>) is only 1/${ratio(nbm / cur)} of the surrounding years (${fmt(nbm)}${uu}), and no single ${lvl} explains most of it. ${idxTxt}`;
+    case "a_tiny_flow": return `${y} ${m} of the group is only <b>${fmt(cur)}${uu}</b> — negligible, so index moves around it are not meaningful. ${idxTxt}`;
+    default: return `Around ${y} the group runs at ${fmt(nbm !== null ? nbm : cur)}${uu}, against ${fmt(typ)}${uu} around the base. The level itself has moved and stayed there — most likely a real change. ${idxTxt}`;
+  }
+}
+function aSplit(c) {
+  const id = AD.cats.id[AD.cells.c[c]];
+  if (!["a_low_base", "a_high_base", "a_spike", "a_dip", "a_trend"].includes(id)) return "";
+  const g = k => AD.cells[k][c] || 0;
+  const sg = Math.sign(g("cb") + g("co") + g("cp") + g("cs")) || 1;
+  const b = Math.max(0, g("cb") * sg), o = Math.max(0, Math.max(g("co") * sg, g("cp") * sg)), s = Math.max(0, g("cs") * sg);
+  const tot = b + o + s; if (!(tot > 0)) return "";
+  const p = v => Math.round(v / tot * 100);
+  return `<div class="split"><span>What drives it:</span><span class="bar">${b ? `<i class="p-base" style="width:${p(b)}%"></i>` : ""}${o ? `<i class="p-one" style="width:${p(o)}%"></i>` : ""}${s ? `<i class="p-sus" style="width:${p(s)}%"></i>` : ""}</span>
+    <span class="lg"><i class="p-base"></i>base ${p(b)}%<i class="p-one"></i>one-off ${p(o)}%<i class="p-sus"></i>sustained ${p(s)}%</span></div>`;
+}
+function aInside(gs, ci, c) {
+  const iss = AISSIDX.get(gs + "|" + ci); if (!iss) return "";
+  const id = AD.cats.id[ci];
+  if (!["a_new", "a_lost", "a_one_item", "a_one_country"].includes(id)) return "";
+  const tk = AD.topBy.get(iss.rank - 1) || []; if (!tk.length) return "";
+  const t = iss.rt, y = iss.ry, T = AD.top, lvl = AD.series.lv[gs] ? "Country" : "Item";
+  const D0 = (() => { const v = aVals(gs, y - Y0); const S = AD.series; return t === 3 ? null : aCur(v, t) - [S.bv[gs], S.bq[gs], S.br[gs]][t]; })();
+  let h = `<div class="inside"><div class="lbl">What's inside — ${ATYPE_NAME[t].toLowerCase()}, ${y} (largest contributions)</div><table><thead><tr><th>${lvl}</th>${t === 3 ? "" : `<th>2014–16 avg</th><th>${y}</th><th>Change</th>`}<th>Share of change</th></tr></thead><tbody>`;
+  tk.forEach((k, j) => {
+    const nm = esc(AD.mnames[T.m[k]]), link = T.ms[k] !== null && T.ms[k] !== undefined ? `<a data-ms="${T.ms[k]}">${nm}</a>` : T.mg[k] !== null && T.mg[k] !== undefined ? `<a data-mg="${T.mg[k]}">${nm}</a>` : nm;
+    const tot = t === 3 && AD.cells.sh[c] ? T.d[tk[0]] / AD.cells.sh[c] : null;
+    const share = t === 3 ? (tot ? Math.round(T.d[k] / tot * 100) + "%" : "") : (D0 ? Math.round(T.d[k] / D0 * 100) + "%" : "");
+    h += `<tr class="${j === 0 ? "top1" : ""}"><td>${link}</td>${t === 3 ? "" : `<td>${fmt(T.b[k]) || "–"}</td><td>${fmt(T.a[k]) || "–"}</td><td>${T.d[k] > 0 ? "+" : ""}${fmt(T.d[k])}</td>`}<td>${share}</td></tr>`;
+  });
+  return h + `</tbody></table></div>`;
+}
+function aRender(gs, focus) {
+  const S = AD.series, nm = aName(gs), cells = ACBS.get(gs) || [];
+  const cellAt = new Map(); for (const c of cells) cellAt.set(AD.cells.t[c] + "|" + AD.cells.y[c], c);
+  const byCat = new Map();
+  for (const c of cells) {
+    const ci = AD.cells.c[c], cur = byCat.get(ci), x = aIdx(aVals(gs, AD.cells.y[c] - Y0), AD.cells.t[c]);
+    const mag = Math.abs(Math.log10(x / 100)) + AD.cells.sev[c] * 100;
+    if (!cur) byCat.set(ci, { worst: c, mag, cells: [c], sev: AD.cells.sev[c] });
+    else { cur.cells.push(c); if (mag > cur.mag) { cur.mag = mag; cur.worst = c; } cur.sev = Math.max(cur.sev, AD.cells.sev[c]); }
+  }
+  // the explained cell = the issue's representative point (same as the R side)
+  for (const [ci, g] of byCat) { const iss = AISSIDX.get(gs + "|" + ci); if (iss) { const c = cellAt.get(iss.rt + "|" + iss.ry); if (c !== undefined) g.worst = c; } }
+  let cats = [...byCat.entries()].sort((a, b) => b[1].sev - a[1].sev || (AD.cats.artefact[b[0]] - AD.cats.artefact[a[0]]) || b[1].mag - a[1].mag);
+  if (focus && focus.cat !== undefined) cats.sort((a, b) => (b[0] === focus.cat) - (a[0] === focus.cat));
+  const compact = !!(focus && focus.compact), otherN = compact ? cats.length - 1 : 0;
+  if (compact) cats = cats.slice(0, 1);
+  const wf = cats[0] ? cats[0][1].worst : null;
+  let h = `<div class="dd-head"><div class="t"><span class="code">[${esc(nm.acode)}]</span> ${esc(nm.area)} — <span class="code">[${esc(nm.gcode)}]</span> ${esc(nm.grp)} — ${nm.flow}</div><span class="drv">${nm.lvl} aggregate</span>
+    ${compact ? `<span class="spacer"></span><button class="btn" data-aopen="${gs}" data-oc="${focus.cat}">Open full view${otherN ? ` · ${otherN} more cause${otherN > 1 ? "s" : ""}` : ""} →</button>` : ""}</div>`;
+  h += `<div class="kv">
+    <div><div class="k">Base value (2014–16 avg)</div><div class="v">${fmt(S.bv[gs]) || "—"} <span>thousand USD</span></div></div>
+    <div><div class="k">Base quantity</div><div class="v">${fmt(S.bq[gs]) || "—"} <span>t</span></div></div>
+    <div><div class="k">Base real value</div><div class="v">${fmt(S.br[gs]) || "—"} <span>thousand USD</span></div></div>
+    <div><div class="k">Level around base (value)</div><div class="v">${fmt(S.tv[gs]) || "—"} <span>thousand USD</span></div></div>
+    <div><div class="k">Trade size</div><div class="v">${fmt(S.size[gs]) || "—"} <span>thousand USD / year</span></div></div>
+  </div>`;
+  if (cats.length) {
+    h += `<div class="why">`;
+    for (const [ci, g] of cats) {
+      const yrs = [...new Set(g.cells.map(c => AD.cells.y[c]))].sort((a, b) => a - b);
+      const tys = [...new Set(g.cells.map(c => AD.cells.t[c]))].sort().map(t => ATYPE_NAME[t].toLowerCase()).join(", ");
+      h += `<div class="item ${g.sev === 2 ? "c" : "w"}"><div class="hd"><span class="sev ${g.sev === 2 ? "c" : "w"}">${g.sev === 2 ? "Critical" : "Warning"}</span><b>${esc(acatLabel(ci))}</b><span class="drv">${AD.cats.driver[ci]}</span><span class="yrs">${tys} index · ${yrs.length} value${yrs.length > 1 ? "s" : ""} · ${yrsRange(yrs)}</span></div>
+        <p>${aExplain(gs, g.worst)}</p>${aSplit(g.worst)}${aInside(gs, ci, g.worst)}</div>`;
+    }
+    h += `</div>`;
+  } else h += `<p class="note" style="margin:0 0 22px">No flagged values in this aggregate.</p>`;
+  const fy = wf !== null ? AD.cells.y[wf] : null, ft = wf !== null ? AD.cells.t[wf] : null;
+  const bc = y => D.base_years.includes(y) ? " bcol" : "";
+  h += `<div class="ts-wrap"><table class="ts"><thead><tr><th class="lab">${esc(nm.area)}, ${esc(nm.grp)}</th>`;
+  for (let yi = 0; yi < NY; yi++) h += `<th class="${bc(Y0 + yi).trim()}">${Y0 + yi}</th>`;
+  h += `</tr></thead><tbody>`;
+  const row = (label, fn) => { let r = `<tr><td class="lab">${label}</td>`; for (let yi = 0; yi < NY; yi++) r += fn(yi, Y0 + yi); return r + `</tr>`; };
+  const has = x => x !== null && x !== undefined;
+  h += `<tr class="grp"><td class="lab">Aggregated data</td><td colspan="${NY}"></td></tr>`;
+  h += row(`${nm.flow} Value <span class="u">[1000 $]</span>`, (yi, y) => { const v = aVals(gs, yi).V; return `<td class="v${bc(y)}">${has(v) ? fmt(v) : ""}</td>`; });
+  h += row(`${nm.flow} Quantity <span class="u">[t]</span>`, (yi, y) => { const v = aVals(gs, yi).Q; return `<td class="v${bc(y)}">${has(v) ? fmt(v) : ""}</td>`; });
+  h += row(`${nm.flow} Real value <span class="u">[1000 $, 2014–16 prices]</span>`, (yi, y) => { const v = aVals(gs, yi).R; return `<td class="v${bc(y)}">${has(v) ? fmt(v) : ""}</td>`; });
+  h += `<tr class="grp"><td class="lab">Calculated · 2014–16 = 100</td><td colspan="${NY}"></td></tr>`;
+  for (let t = 0; t < 4; t++) {
+    h += row(`${ATYPE_NAME[t]} index`, (yi, y) => {
+      const x = aIdx(aVals(gs, yi), t), c = cellAt.get(t + "|" + y);
+      let cls = "v" + bc(y), tip = "";
+      if (c !== undefined) { cls += AD.cells.sev[c] === 2 ? " cc" : " cw"; tip = ` title="${esc((AD.cells.sev[c] === 2 ? "Critical" : "Warning") + " · " + acatLabel(AD.cells.c[c]))}"`; }
+      if (fy === y && ft === t) cls += " focus";
+      return `<td class="${cls}"${tip}>${x === null ? "" : fmt(x, "idx")}</td>`;
+    });
+  }
+  return h + `</tbody></table></div>`;
+}
+function aMount(el, gs, focus) {
+  el.innerHTML = aRender(gs, focus);
+  const f = el.querySelector("td.focus"), wrap = el.querySelector(".ts-wrap");
+  if (f && wrap) wrap.scrollLeft = Math.max(0, f.offsetLeft - wrap.clientWidth / 2);
+  el.querySelectorAll("[data-aopen]").forEach(b => b.onclick = () => openAgg(+b.dataset.aopen, { cat: +b.dataset.oc }));
+  el.querySelectorAll("[data-ms]").forEach(a => a.onclick = () => openSeries(+a.dataset.ms));
+  el.querySelectorAll("[data-mg]").forEach(a => a.onclick = () => openAgg(+a.dataset.mg));
+}
+function aRows(list) {
+  const S = AD.series;
+  let h = `<div class="tblx"><table class="list"><thead><tr><th class="r">#</th><th>Severity</th><th>Cause</th><th>Level</th><th>Area</th><th>Item group</th><th>Flow</th><th>Indices</th><th>Years</th><th class="r">Most extreme</th><th class="r">Trade size, 1000 USD/yr</th></tr></thead><tbody>`;
+  const TN = { V: "V", Q: "Q", R: "RV", U: "UV" };
+  for (const o of list) {
+    const nm = aName(o.s);
+    h += `<tr data-g="${o.s}" data-c="${o.c}"><td class="r num" style="color:var(--muted)">${o.rank}</td>
+      <td><span class="sev ${o.sev === 2 ? "c" : "w"}">${o.sev === 2 ? "Critical" : "Warning"}</span></td>
+      <td>${esc(acatLabel(o.c))}</td><td>${nm.lvl}</td>
+      <td><span class="area">${esc(nm.area)}</span><span class="code">${esc(nm.acode)}</span></td>
+      <td>${esc(nm.grp)}<span class="code">${esc(nm.gcode)}</span></td><td>${nm.flow}</td>
+      <td>${o.ty.split(" ").map(t => `<span class="tag">${TN[t]}</span>`).join("")}</td>
+      <td class="num">${o.y0 === o.y1 ? o.y0 : o.y0 + "–" + o.y1}<span class="code">(${o.n})</span></td>
+      <td class="r num">${TN[ATYPE[o.wt]]} ${o.wy}: <b>${fmt(o.wx, "idx")}</b></td>
+      <td class="r num">${fmt(S.size[o.s])}</td></tr>`;
+  }
+  return h + `</tbody></table></div>`;
+}
+function aBind(el) { el.querySelectorAll("tbody tr[data-g]").forEach(tr => tr.addEventListener("click", () => openAgg(+tr.dataset.g, { cat: +tr.dataset.c }))); }
+function aFiltered() {
+  const v = id => $("#" + id).value, S = AD.series;
+  const sev = v("aSev"), cat = v("aCat"), lv = v("aLvl"), fl = v("aFlow"), ty = v("aType"), ar = v("aArea"), gr = v("aGrp"), so = v("aSort");
+  let L = AISS.filter(o => (!sev || o.sev === +sev) && (cat === "" || o.c === +cat) && (lv === "" || S.lv[o.s] === +lv) && (fl === "" || S.f[o.s] === +fl) &&
+    (!ty || o.ty.split(" ").includes(ty)) && (ar === "" || S.a[o.s] === +ar) && (gr === "" || S.g[o.s] === +gr));
+  if (so === "mag") L = L.slice().sort((a, b) => Math.abs(Math.log10(b.wx / 100)) - Math.abs(Math.log10(a.wx / 100)));
+  else if (so === "size") L = L.slice().sort((a, b) => (S.size[b.s] || 0) - (S.size[a.s] || 0));
+  else if (so === "n") L = L.slice().sort((a, b) => b.n - a.n);
+  return L;
+}
+function aRenderList() {
+  const L = aFiltered(), pages = Math.max(1, Math.ceil(L.length / PER));
+  APAGE = Math.min(APAGE, pages - 1);
+  $("#aListCount").textContent = `${fmtN(L.length)} issues · ${fmtN(L.reduce((a, o) => a + (o.sev === 2), 0))} critical`;
+  $("#aListTable").innerHTML = aRows(L.slice(APAGE * PER, APAGE * PER + PER)); aBind($("#aListTable"));
+  $("#aPager").innerHTML = `<button class="btn" id="apPrev" ${APAGE ? "" : "disabled"}>‹ Previous</button><span>Page ${APAGE + 1} of ${fmtN(pages)}</span><button class="btn" id="apNext" ${APAGE < pages - 1 ? "" : "disabled"}>Next ›</button>`;
+  $("#apPrev").onclick = () => { APAGE--; aRenderList(); window.scrollTo(0, 0); };
+  $("#apNext").onclick = () => { APAGE++; aRenderList(); window.scrollTo(0, 0); };
+}
+function aGoList(filters) {
+  ["aSev", "aCat", "aLvl", "aFlow", "aType", "aArea", "aGrp"].forEach(id => $("#" + id).value = "");
+  $("#aSort").value = "rank";
+  Object.entries(filters || {}).forEach(([k, v]) => $("#" + k).value = v);
+  APAGE = 0; aRenderList(); aShowSub("list"); showPage("agg"); window.scrollTo(0, 0);
+}
+function aPicks(ci) {
+  const L = AISS.filter(o => o.c === ci);
+  const pool = L.filter(o => o.sev === 2 && AD.series.size[o.s] > 0).concat(L), picks = [], seenS = new Set(), seenA = new Set();
+  for (const pass of [true, false]) for (const o of pool) {
+    if (picks.length >= 3) break;
+    const a = AD.series.a[o.s];
+    if (seenS.has(o.s) || (pass && seenA.has(a))) continue;
+    picks.push(o); seenS.add(o.s); seenA.add(a);
+  }
+  return picks;
+}
+function aDrawSummary() {
+  const GA = aggGrid(); dataGrid("gridAgg", GA);
+  const nS = AD.series.a.length, nCrit = new Set(AISS.filter(o => o.sev === 2).map(o => o.s)).size, nAny = new Set(AISS.map(o => o.s)).size;
+  const vOK = AD.verify.max_rel.every((r, i) => r < 1e-9 && AD.verify.na_mismatch[i] === 0);
+  $("#aTiles").innerHTML = `
+    <div class="tile"><div class="k">Data points</div><div class="val">${fmtN(GA.all)}</div><div class="hint">aggregate index values · ${fmtN(nS)} aggregates (country and region × item group × flow)</div></div>
+    <div class="tile"><div class="k">Problematic data points</div><div class="val">${fmtN(GA.bad)}</div><div class="hint">${(GA.bad / GA.all * 100).toFixed(1)}% · ${fmtN(GA.crit)} critical</div></div>
+    <div class="tile"><div class="k">Aggregates with a critical issue</div><div class="val">${fmtN(nCrit)}</div><div class="hint">${Math.round(nCrit / nS * 100)}% of aggregates</div></div>
+    <div class="tile"><div class="k">Aggregates with any issue</div><div class="val">${fmtN(nAny)}</div><div class="hint">${Math.round(nAny / nS * 100)}% of aggregates</div></div>`;
+  $("#aVerify").innerHTML = `<li>Aggregate indices are recomputed from the aggregated value, quantity and real value of the run (built ${AD.built}).</li><li>${vOK ? "Match" : "<b>Do not match</b>"} the pipeline's indices — largest relative difference ${Math.max(...AD.verify.max_rel).toExponential(1)}.</li>`;
+  // cause cards
+  let h = "";
+  for (const g of AGROUPS) {
+    const cis = ACAT_ORDER.filter(ci => AD.cats.driver[ci] === g.d); if (!cis.length) continue;
+    h += `<div class="cause-group"><div class="gh"><span class="t">${g.t}</span><span class="d">— ${g.s}</span></div>${g.note ? `<div class="gnote">${g.note}</div>` : ""}<div class="causes">`;
+    for (const ci of cis) {
+      const id = AD.cats.id[ci], L = AISS.filter(o => o.c === ci), crit = L.filter(o => o.sev === 2).length;
+      h += `<div class="cause"><div class="hd"><span class="name">${esc(acatLabel(ci))}</span><span class="spacer"></span><span class="cnt"><b>${fmtN(L.length)}</b> issues · <b>${fmtN(crit)}</b> critical</span></div>
+        <p class="rule">${ACAT_DEF[id][0]}</p><p class="means">${ACAT_DEF[id][1]}</p>
+        <div class="exl">Example (illustrative)</div>${exampleTable(id, EXA)}
+        <div class="foot"><button class="btn link" data-ago="${ci}">See the ${fmtN(L.length)} issues →</button>&nbsp;&nbsp;<button class="btn link" data-areal="${ci}">Real example →</button></div></div>`;
+    }
+    h += `</div></div>`;
+  }
+  $("#aCauseCards").innerHTML = h;
+  $("#aCauseCards").querySelectorAll("[data-ago]").forEach(b => b.onclick = () => aGoList({ aCat: b.dataset.ago }));
+  $("#aCauseCards").querySelectorAll("[data-areal]").forEach(b => b.onclick = () => { const p = aPicks(+b.dataset.areal)[0]; if (p) openAgg(p.s, { cat: p.c }); });
+  $("#aTop").innerHTML = aRows(AISS.slice(0, 10)); aBind($("#aTop"));
+  const cnt = ACAT_ORDER.map(ci => ({ ci, c: AISS.filter(o => o.c === ci && o.sev === 2).length, w: AISS.filter(o => o.c === ci && o.sev === 1).length }));
+  const mx = Math.max(...cnt.map(o => o.c + o.w));
+  $("#aBars").innerHTML = cnt.map(o => `<div class="lbl" data-c="${o.ci}">${esc(acatLabel(o.ci))}</div>
+    <div class="track" data-c="${o.ci}" title="${fmtN(o.c)} critical · ${fmtN(o.w)} warning"><i style="width:${o.c / mx * 100}%;background:var(--crit)"></i><i style="width:${o.w / mx * 100}%;background:var(--warn)"></i></div>
+    <div class="n num">${fmtN(o.c + o.w)}</div>`).join("");
+  $("#aBars").querySelectorAll("[data-c]").forEach(el => el.onclick = () => aGoList({ aCat: el.dataset.c }));
+}
+function aDrawGroups() {
+  AGROUPS_DRAWN = true;
+  let h = `<section class="card"><h2>Real examples by cause</h2><p class="sub">One section per cause, each with its own number and colour, and the three most important real cases. The header stays at the top while you scroll through it. Member names in "What's inside" open that item or country.</p>
+    <div class="jump">${ACAT_ORDER.map((ci, k) => `<button class="${AGCLS[AD.cats.driver[ci]]}" data-ajump="${ci}"><span class="no">${k + 1}</span>${esc(acatLabel(ci))}</button>`).join("")}</div></section>`;
+  ACAT_ORDER.forEach((ci, k) => {
+    const id = AD.cats.id[ci], drv = AD.cats.driver[ci], L = AISS.filter(o => o.c === ci), crit = L.filter(o => o.sev === 2).length, picks = aPicks(ci);
+    h += `<section class="card cause-sec ${AGCLS[drv]}" id="acause-${ci}">
+      <div class="cs-head"><span class="no">${k + 1}</span><div class="ttl"><span class="grp">Cause ${k + 1} of ${ACAT_ORDER.length} · ${AGNAME[drv]}</span><span class="name">${esc(acatLabel(ci))}</span></div>
+        <span class="spacer"></span><span class="cnt"><b>${fmtN(L.length)}</b> issues · <b>${fmtN(crit)}</b> critical</span><button class="btn" data-ago="${ci}">See all ${fmtN(L.length)} →</button></div>
+      <div class="cs-body">
+        <div class="cs-what"><div><p class="rule">${ACAT_DEF[id][0]}</p><p class="means">${ACAT_DEF[id][1]}</p></div>
+          <div><div class="exl">What it looks like (illustrative)</div>${exampleTable(id, EXA)}</div></div>
+        ${picks.map((ex, j) => `<div class="cs-real">Real case ${j + 1} of ${picks.length} — ${esc(acatLabel(ci))}</div><div class="aexample" data-s="${ex.s}" data-c="${ci}"></div>`).join("")}
+      </div></section>`;
+  });
+  const el = $("#aGroupsCard");
+  el.innerHTML = h;
+  el.querySelectorAll("[data-ago]").forEach(b => b.onclick = () => aGoList({ aCat: b.dataset.ago }));
+  el.querySelectorAll("[data-ajump]").forEach(b => b.onclick = () => document.getElementById("acause-" + b.dataset.ajump).scrollIntoView({ behavior: "smooth" }));
+  el.querySelectorAll(".aexample").forEach(e => aMount(e, +e.dataset.s, { cat: +e.dataset.c, compact: true }));
+}
+function aFillSelects() {
+  const ao = AD.areas.name.map((n, i) => `<option value="${i}">${esc(n)}${AD.areas.lvl[i] === "Region" ? " (region)" : ""}</option>`).join("");
+  const go = AD.groups.name.map((n, i) => `<option value="${i}">${esc(n)}</option>`).join("");
+  $("#aArea").insertAdjacentHTML("beforeend", ao); $("#aGrp").insertAdjacentHTML("beforeend", go);
+  $("#aLArea").innerHTML = ao; $("#aLGrp").innerHTML = go;
+  $("#aCat").insertAdjacentHTML("beforeend", ACAT_ORDER.map(ci => `<option value="${ci}">${esc(acatLabel(ci))}</option>`).join(""));
+  ["aSev", "aCat", "aLvl", "aFlow", "aType", "aArea", "aGrp", "aSort"].forEach(id => $("#" + id).onchange = () => { APAGE = 0; aRenderList(); });
+  $("#aReset").onclick = () => aGoList({});
+  const key = new Map(), S = AD.series;
+  for (let s = 0; s < S.a.length; s++) key.set(S.a[s] + "|" + S.g[s] + "|" + S.f[s], s);
+  $("#aLGo").onclick = () => {
+    const s = key.get($("#aLArea").value + "|" + $("#aLGrp").value + "|" + $("#aLFlow").value);
+    if (s === undefined) $("#aLookupOut").innerHTML = `<p class="note">No data for this area, item group and flow.</p>`;
+    else aMount($("#aLookupOut"), s);
+  };
+}
+
+// ================================================================ REAL VALUES
+let RISS = null, RCAT_ORDER, RGROUPS_DRAWN = false, RPAGE = 0, RISSIDX;
+const RV_DEF = {
+  base_uv_off: ["Real value = quantity × base unit value, and the base unit value is far from other countries'.", "Real value is wrong by the same factor in every year. Usually a base UV borrowed from a group, or one bad base-year record."],
+  qv_mismatch: ["In one year, quantity and value imply a unit value far from other countries'.", "Real value uses the quantity, so a wrong quantity (or value) in that year makes real value and value diverge."],
+  tiny_flow: ["The year's record is negligible (Q < 10 t or V < 10 thousand USD).", "Unit values from tiny records are meaningless, so the real value / value ratio is too."],
+  trend: ["Real value and value diverge because prices really moved.", "Other countries' unit value moved the same way — expected, not an error."]
+};
+const RV_LABEL = { base_uv_off: "Base unit value off", qv_mismatch: "Quantity or value wrong in year", tiny_flow: "Negligible record", trend: "Real price change" };
+const RV_GROUP = { base_uv_off: "Base", qv_mismatch: "Year", tiny_flow: "Year", trend: "Level" };
+const EXR = {
+  base_uv_off: { cols: ["2018", "2019", "2020"], b: [],
+    rows: [["Quantity (t)", ["1,000", "1,100", "1,050"]], ["Value (1000 $)", ["500", "560", "520"]], ["Base UV ($/t)", ["9,000", "9,000", "9,000"]], ["Real value (1000 $)", ["9,000", "9,900", "9,450"]], ["Real value ÷ value", ["18", "18", "18"]]], hl: [4, 1, "w"],
+    note: "Base UV (9,000 $/t) came from a group; other countries are at ~520 $/t." },
+  qv_mismatch: { cols: ["2018", "2019", "2020"], b: [],
+    rows: [["Quantity (t)", ["2,100", "210,000", "2,200"]], ["Value (1000 $)", ["4,300", "4,200", "4,500"]], ["Base UV ($/t)", ["2,000", "2,000", "2,000"]], ["Real value (1000 $)", ["4,200", "420,000", "4,400"]], ["Real value ÷ value", ["0.98", "100", "0.98"]]], hl: [4, 1, "c"],
+    note: "The 2019 quantity has two extra zeros, so real value is 100× the value." },
+  tiny_flow: { cols: ["2018", "2019", "2020"], b: [],
+    rows: [["Quantity (t)", ["800", "0.2", "850"]], ["Value (1000 $)", ["1,200", "15", "1,300"]], ["Base UV ($/t)", ["1,500", "1,500", "1,500"]], ["Real value (1000 $)", ["1,200", "0.3", "1,275"]], ["Real value ÷ value", ["1.0", "0.02", "0.98"]]], hl: [4, 1, "w"],
+    note: "0.2 t for 15 thousand USD is a negligible record." },
+  trend: { cols: ["Base", "2021", "2022"], b: [0],
+    rows: [["Quantity (t)", ["10,000", "10,000", "10,000"]], ["Value (1000 $)", ["4,000", "20,000", "38,000"]], ["Base UV ($/t)", ["400", "400", "400"]], ["Real value (1000 $)", ["4,000", "4,000", "4,000"]], ["Real value ÷ value", ["1.0", "0.2", "0.11"]]], hl: [4, 2, "w"],
+    note: "Prices rose 9× everywhere; real value removes that — as intended." }
+};
+const rid = ci => D.cats.id[ci];
+function initRV() {
+  if (RISS) return;
+  const I = D.rissues;
+  RISS = I.s.map((s, k) => ({ rank: k + 1, s, c: I.c[k], sev: I.sev[k], n: I.n[k], nc: I.nc[k], y0: I.y0[k], y1: I.y1[k], wy: I.wy[k], gap: I.gap[k], ratio: I.ratio[k] }));
+  RISSIDX = new Map(); RISS.forEach(o => RISSIDX.set(o.s + "|" + o.c, o));
+  const ord = ["base_uv_off", "qv_mismatch", "tiny_flow", "trend"];
+  RCAT_ORDER = ord.map(id => D.cats.id.indexOf(id)).filter(ci => ci >= 0 && RISS.some(o => o.c === ci));
+  rDrawSummary(); rFillSelects(); rRenderList();
+}
+function rShowSub(s) {
+  CUR.rsub = s;
+  document.querySelectorAll("#rSubnav button").forEach(b => b.classList.toggle("on", b.dataset.s === s));
+  document.querySelectorAll("#p-rv .sp").forEach(el => el.classList.toggle("on", el.id === "rs-" + s));
+  if (RISS && s === "groups" && !RGROUPS_DRAWN) rDrawGroups();
+}
+document.querySelectorAll("#rSubnav button").forEach(b => b.onclick = () => rShowSub(b.dataset.s));
+function openRV(sid, focus) {
+  if (CUR.page !== "detail") RETURN = { page: CUR.page, sub: CUR.sub, asub: CUR.asub, rsub: CUR.rsub, y: window.scrollY };
+  showPage("detail");
+  window.scrollTo(0, 0);
+  rMount($("#dBody"), sid, focus);
+  history.pushState({ detail: { k: "r", id: sid, focus: focus || null } }, "");
+}
+function rExplain(sid, c) {
+  const S = D.series, y = D.cells.y[c], yi = y - Y0, iv = idxVals(sid, yi), id = rid(D.cells.c[c]);
+  const buv = S.buv[sid] * 1000, gb = S.gb[sid] !== null ? S.gb[sid] * 1000 : null;
+  const rv = iv.q !== null && iv.q !== undefined ? iv.q * S.buv[sid] : null, v = iv.v;
+  const w = D.cells.w[c] === 1, G = D.cells.nbm[c] !== null ? D.cells.nbm[c] * 1000 : null, op = D.cells.op[c] === 1;
+  const r = raw(sid, yi), fl = `Q ${flagText(r.qf)}, V ${flagText(r.vf)}`;
+  const rvTxt = rv !== null && v ? ` In ${y} real value is <b>${fmt(rv)}</b> thousand USD against a value of <b>${fmt(v)}</b> (${ratio(rv / v)}×).` : "";
+  switch (id) {
+    case "base_uv_off": {
+      const hi = gb !== null && buv > gb;
+      return `Real value = quantity × base unit value. The base unit value is <b>${fmt(buv)} $/t</b>${gb !== null ? `, ${ratio(hi ? buv / gb : gb / buv)}× ${hi ? "above" : "below"} other countries' base (${fmt(gb)} $/t)` : ""}. Built from: ${srcText(sid)}. So real value is ${hi ? "too high" : "too low"} by about the same factor in every year.${rvTxt}`;
+    }
+    case "qv_mismatch": {
+      const yy = op ? y - 1 : y, iv2 = idxVals(sid, yy - Y0), uv = iv2.uv !== null ? iv2.uv * 1000 : null;
+      return `In ${yy}, quantity ${fmt(iv2.q)} t and value ${fmt(iv2.v)} thousand USD imply <b>${fmt(uv)} $/t</b>${G !== null && !op ? `, ${ratio(uv > G ? uv / G : G / uv)}× ${uv > G ? "above" : "below"} ${w ? "other countries that year" : "the surrounding years"} (${fmt(G)} $/t)` : ""}. Real value uses the quantity, so one of the two ${yy} figures is probably wrong (flags: ${fl}).${op ? "" : rvTxt}`;
+    }
+    case "tiny_flow":
+      return `${y} is a negligible record (Q ${fmt(r.q)} t, V ${fmt(r.v)} thousand USD). Its unit value — and so the real value / value ratio — is not meaningful.${rvTxt}`;
+    default:
+      return `Prices moved: ${w ? `other countries' unit value for this item went from ${fmt(gb)} $/t in the base to ${fmt(G)} $/t in ${y}` : `the unit value moved far from the base`}, and this series moves with it. Real value removes that price change, so it differs from value — as intended.${rvTxt}`;
+  }
+}
+function rRender(sid, focus) {
+  const S = D.series, nm = seriesName(sid), cells = (CBS.get(sid) || []).filter(c => D.cells.t[c] === 2);
+  const cellAt = new Map(); for (const c of cells) cellAt.set(D.cells.y[c], c);
+  const byCat = new Map();
+  for (const c of cells) {
+    const ci = D.cells.c[c], cur = byCat.get(ci), x = idxVals(sid, D.cells.y[c] - Y0).xu, mag = Math.abs(Math.log10(x / 100)) + D.cells.sev[c] * 100;
+    if (!cur) byCat.set(ci, { worst: c, mag, cells: [c], sev: D.cells.sev[c] });
+    else { cur.cells.push(c); if (mag > cur.mag) { cur.mag = mag; cur.worst = c; } cur.sev = Math.max(cur.sev, D.cells.sev[c]); }
+  }
+  let cats = [...byCat.entries()].sort((a, b) => b[1].sev - a[1].sev || b[1].mag - a[1].mag);
+  if (focus && focus.cat !== undefined) cats.sort((a, b) => (b[0] === focus.cat) - (a[0] === focus.cat));
+  const compact = !!(focus && focus.compact), otherN = compact ? cats.length - 1 : 0;
+  if (compact) cats = cats.slice(0, 1);
+  const fy = cats[0] ? D.cells.y[cats[0][1].worst] : null;
+  const src = D.srcs[S.src[sid]];
+  const srcShort = !src ? "none" : src === "country" ? "own data" : src === "imputed" ? `${S.own[sid]} own, ${S.nimp[sid]} rebuilt, ${S.ndir[sid]} from group` : "from " + esc(src);
+  let h = `<div class="dd-head"><div class="t"><span class="code">[${esc(nm.acode)}]</span> ${esc(nm.area)}, <span class="code">[${esc(nm.icode)}]</span> ${esc(nm.item)} — ${nm.flow}</div><span class="drv">Real value</span>
+    ${compact ? `<span class="spacer"></span><button class="btn" data-ropen="${sid}" data-oc="${focus.cat}">Open full view${otherN ? ` · ${otherN} more cause${otherN > 1 ? "s" : ""}` : ""} →</button>` : ""}</div>`;
+  h += `<div class="kv">
+    <div><div class="k">Base unit value</div><div class="v">${S.buv[sid] !== null ? fmt(S.buv[sid] * 1000) : "—"} <span>$/t · ${srcShort}</span></div></div>
+    <div><div class="k">Other countries' base UV (median)</div><div class="v">${S.gb[sid] !== null ? fmt(S.gb[sid] * 1000) : "—"} <span>$/t</span></div></div>
+    <div><div class="k">Base years with own data</div><div class="v">${baseYearsText(sid)} <span>(${S.nb[sid] || 0} of 3)</span></div></div>
+    <div><div class="k">Trade size</div><div class="v">${fmt(S.size[sid]) || "—"} <span>thousand USD / year</span></div></div>
+  </div>`;
+  if (cats.length) {
+    h += `<div class="why">`;
+    for (const [ci, g] of cats) {
+      const yrs = [...new Set(g.cells.map(c => D.cells.y[c]))].sort((a, b) => a - b);
+      h += `<div class="item ${g.sev === 2 ? "c" : "w"}"><div class="hd"><span class="sev ${g.sev === 2 ? "c" : "w"}">${g.sev === 2 ? "Critical" : "Warning"}</span><b>${RV_LABEL[rid(ci)]}</b><span class="drv">${RV_GROUP[rid(ci)]}</span><span class="yrs">${yrs.length} year${yrs.length > 1 ? "s" : ""} · ${yrsRange(yrs)}</span></div><p>${rExplain(sid, g.worst)}</p></div>`;
+    }
+    h += `</div>`;
+  } else h += `<p class="note" style="margin:0 0 22px">Real value and value do not diverge abnormally in this series.</p>`;
+  const bc = y => D.base_years.includes(y) ? " bcol" : "";
+  const has = x => x !== null && x !== undefined;
+  h += `<div class="ts-wrap"><table class="ts"><thead><tr><th class="lab">${esc(nm.area)}, ${esc(nm.item)}</th>`;
+  for (let yi = 0; yi < NY; yi++) h += `<th class="${bc(Y0 + yi).trim()}">${Y0 + yi}</th>`;
+  h += `</tr></thead><tbody>`;
+  const row = (label, fn) => { let r = `<tr><td class="lab">${label}</td>`; for (let yi = 0; yi < NY; yi++) r += fn(yi, Y0 + yi); return r + `</tr>`; };
+  h += `<tr class="grp"><td class="lab">Source data</td><td colspan="${NY}"></td></tr>`;
+  h += row(`${nm.flow} Quantity <span class="u">[t]</span>`, (yi, y) => { const r = raw(sid, yi); return `<td class="v${bc(y)}">${has(r.q) ? fmt(r.q) : ""}${flagChips(r.qf)}</td>`; });
+  h += row(`${nm.flow} Value <span class="u">[1000 $]</span>`, (yi, y) => { const r = raw(sid, yi); return `<td class="v${bc(y)}">${has(r.v) ? fmt(r.v) : ""}${flagChips(r.vf)}</td>`; });
+  h += row(`${nm.flow} Unit Value <span class="u">[$/t]</span>`, (yi, y) => { const iv = idxVals(sid, yi); return `<td class="v${bc(y)}">${iv.uv === null ? "" : fmt(iv.uv * 1000)}</td>`; });
+  h += `<tr class="grp"><td class="lab">Real value = quantity × base unit value</td><td colspan="${NY}"></td></tr>`;
+  h += row(`Base unit value <span class="u">[$/t]</span>`, (yi, y) => `<td class="v${bc(y)}">${S.buv[sid] !== null && has(idxVals(sid, yi).q) ? fmt(S.buv[sid] * 1000) : ""}</td>`);
+  const mark = (y, inner) => { const c = cellAt.get(y); let cls = "v" + bc(y), tip = ""; if (c !== undefined) { cls += D.cells.sev[c] === 2 ? " cc" : " cw"; tip = ` title="${esc((D.cells.sev[c] === 2 ? "Critical" : "Warning") + " · " + RV_LABEL[rid(D.cells.c[c])])}"`; } if (fy === y) cls += " focus"; return `<td class="${cls}"${tip}>${inner}</td>`; };
+  h += row(`Real value <span class="u">[1000 $, 2014–16 prices]</span>`, (yi, y) => { const iv = idxVals(sid, yi); const rv = has(iv.q) && S.buv[sid] !== null ? iv.q * S.buv[sid] : null; return mark(y, rv === null ? "" : fmt(rv)); });
+  h += row(`Real value ÷ value`, (yi, y) => { const iv = idxVals(sid, yi); const rv = has(iv.q) && S.buv[sid] !== null ? iv.q * S.buv[sid] : null; return mark(y, rv !== null && iv.v > 0 ? fmt(rv / iv.v, "idx") : ""); });
+  return h + `</tbody></table></div>`;
+}
+function rMount(el, sid, focus) {
+  el.innerHTML = rRender(sid, focus);
+  const f = el.querySelector("td.focus"), wrap = el.querySelector(".ts-wrap");
+  if (f && wrap) wrap.scrollLeft = Math.max(0, f.offsetLeft - wrap.clientWidth / 2);
+  el.querySelectorAll("[data-ropen]").forEach(b => b.onclick = () => openRV(+b.dataset.ropen, { cat: +b.dataset.oc }));
+}
+function rRows(list) {
+  const S = D.series;
+  let h = `<div class="tblx"><table class="list"><thead><tr><th class="r">#</th><th>Severity</th><th>Cause</th><th>Area</th><th>Item</th><th>Flow</th><th>Years</th><th class="r">Worst year</th><th class="r">Real value ÷ value</th><th class="r">Real value − value, 1000 USD</th></tr></thead><tbody>`;
+  for (const o of list) {
+    const nm = seriesName(o.s);
+    h += `<tr data-s="${o.s}" data-c="${o.c}"><td class="r num" style="color:var(--muted)">${o.rank}</td>
+      <td><span class="sev ${o.sev === 2 ? "c" : "w"}">${o.sev === 2 ? "Critical" : "Warning"}</span></td>
+      <td>${RV_LABEL[rid(o.c)]}</td>
+      <td><span class="area">${esc(nm.area)}</span><span class="code">${esc(nm.acode)}</span></td>
+      <td>${esc(nm.item)}<span class="code">${esc(nm.icode)}</span></td><td>${nm.flow}</td>
+      <td class="num">${o.y0 === o.y1 ? o.y0 : o.y0 + "–" + o.y1}<span class="code">(${o.n})</span></td>
+      <td class="r num">${o.wy}</td><td class="r num"><b>${o.ratio !== null ? fmt(o.ratio, "idx") + "×" : ""}</b></td>
+      <td class="r num">${o.gap > 0 ? "+" : ""}${fmt(o.gap)}</td></tr>`;
+  }
+  return h + `</tbody></table></div>`;
+}
+function rBind(el) { el.querySelectorAll("tbody tr[data-s]").forEach(tr => tr.addEventListener("click", () => openRV(+tr.dataset.s, { cat: +tr.dataset.c }))); }
+function rFiltered() {
+  const v = id => $("#" + id).value, S = D.series;
+  const sev = v("rSev"), cat = v("rCat"), fl = v("rFlow"), ar = v("rArea"), it = v("rItem"), so = v("rSort");
+  let L = RISS.filter(o => (!sev || o.sev === +sev) && (cat === "" || o.c === +cat) && (fl === "" || S.f[o.s] === +fl) && (ar === "" || S.a[o.s] === +ar) && (it === "" || S.i[o.s] === +it));
+  if (so === "ratio") L = L.slice().sort((a, b) => Math.abs(Math.log10(b.ratio || 1)) - Math.abs(Math.log10(a.ratio || 1)));
+  else if (so === "gap") L = L.slice().sort((a, b) => Math.abs(b.gap || 0) - Math.abs(a.gap || 0));
+  return L;
+}
+function rRenderList() {
+  const L = rFiltered(), pages = Math.max(1, Math.ceil(L.length / PER));
+  RPAGE = Math.min(RPAGE, pages - 1);
+  $("#rListCount").textContent = `${fmtN(L.length)} issues · ${fmtN(L.reduce((a, o) => a + (o.sev === 2), 0))} critical`;
+  $("#rListTable").innerHTML = rRows(L.slice(RPAGE * PER, RPAGE * PER + PER)); rBind($("#rListTable"));
+  $("#rPager").innerHTML = `<button class="btn" id="rpPrev" ${RPAGE ? "" : "disabled"}>‹ Previous</button><span>Page ${RPAGE + 1} of ${fmtN(pages)}</span><button class="btn" id="rpNext" ${RPAGE < pages - 1 ? "" : "disabled"}>Next ›</button>`;
+  $("#rpPrev").onclick = () => { RPAGE--; rRenderList(); window.scrollTo(0, 0); };
+  $("#rpNext").onclick = () => { RPAGE++; rRenderList(); window.scrollTo(0, 0); };
+}
+function rGoList(filters) {
+  ["rSev", "rCat", "rFlow", "rArea", "rItem"].forEach(id => $("#" + id).value = "");
+  $("#rSort").value = "rank";
+  Object.entries(filters || {}).forEach(([k, v]) => $("#" + k).value = v);
+  RPAGE = 0; rRenderList(); rShowSub("list"); showPage("rv"); window.scrollTo(0, 0);
+}
+function rPicks(ci) {
+  const L = RISS.filter(o => o.c === ci), picks = [], seenS = new Set(), seenA = new Set();
+  const pool = L.filter(o => o.sev === 2).concat(L);
+  for (const pass of [true, false]) for (const o of pool) {
+    if (picks.length >= 3) break;
+    const a = D.series.a[o.s];
+    if (seenS.has(o.s) || (pass && seenA.has(a))) continue;
+    picks.push(o); seenS.add(o.s); seenA.add(a);
+  }
+  return picks;
+}
+function rDrawSummary() {
+  const GR = rvGrid(); dataGrid("gridRV", GR);
+  const st = D.rvstats, nS = new Set(RISS.map(o => o.s)).size, nC = new Set(RISS.filter(o => o.sev === 2).map(o => o.s)).size;
+  $("#rTiles").innerHTML = `
+    <div class="tile"><div class="k">Data points</div><div class="val">${fmtN(GR.all)}</div><div class="hint">real values · ${fmtN(st.n_rv)} series, ${fmtN(st.n_borrowed)} on a base UV not fully their own</div></div>
+    <div class="tile"><div class="k">Problematic data points</div><div class="val">${fmtN(GR.bad)}</div><div class="hint">${(GR.bad / GR.all * 100).toFixed(1)}% · ${fmtN(GR.crit)} critical · ${fmtN(nS)} series</div></div>
+    <div class="tile"><div class="k">Real value ${st.year}</div><div class="val">${fmt(st.rv_total / 1e6)}<span style="font-size:16px;font-weight:500"> bn USD</span></div><div class="hint">ItemList items, 2014–16 prices</div></div>
+    <div class="tile"><div class="k">…of which on a borrowed base UV</div><div class="val">${Math.round((1 - st.rv_own / st.rv_total) * 100)}%</div><div class="hint">base UV imputed or taken from a group</div></div>`;
+  let h = "";
+  for (const g of [{ d: "Base", t: "Base unit value", s: "every year is affected",
+      note: `<b>Real value always uses the base unit value, and that is the one base filled from larger areas.</b> A missing 2015 or 2016 is rebuilt from the country's own unit value moved by the parent region's rate of change; a country with no base-year data takes the region's base unit value. So a real value exists even where the quantity index has no base — and a borrowed base unit value that does not fit the country shows up here as “Base unit value off”.` }, { d: "Year", t: "One year", s: "a single year's record" }, { d: "Level", t: "Real change", s: "no data problem found" }]) {
+    const cis = RCAT_ORDER.filter(ci => RV_GROUP[rid(ci)] === g.d); if (!cis.length) continue;
+    h += `<div class="cause-group"><div class="gh"><span class="t">${g.t}</span><span class="d">— ${g.s}</span></div>${g.note ? `<div class="gnote">${g.note}</div>` : ""}<div class="causes">`;
+    for (const ci of cis) {
+      const id = rid(ci), L = RISS.filter(o => o.c === ci), crit = L.filter(o => o.sev === 2).length;
+      h += `<div class="cause"><div class="hd"><span class="name">${RV_LABEL[id]}</span><span class="spacer"></span><span class="cnt"><b>${fmtN(L.length)}</b> series · <b>${fmtN(crit)}</b> critical</span></div>
+        <p class="rule">${RV_DEF[id][0]}</p><p class="means">${RV_DEF[id][1]}</p>
+        <div class="exl">Example (illustrative)</div>${exampleTable(id, EXR)}
+        <div class="foot"><button class="btn link" data-rgo="${ci}">See the ${fmtN(L.length)} series →</button>&nbsp;&nbsp;<button class="btn link" data-rreal="${ci}">Real example →</button></div></div>`;
+    }
+    h += `</div></div>`;
+  }
+  $("#rCauseCards").innerHTML = h;
+  $("#rCauseCards").querySelectorAll("[data-rgo]").forEach(b => b.onclick = () => rGoList({ rCat: b.dataset.rgo }));
+  $("#rCauseCards").querySelectorAll("[data-rreal]").forEach(b => b.onclick = () => { const p = rPicks(+b.dataset.rreal)[0]; if (p) openRV(p.s, { cat: p.c }); });
+  $("#rTop").innerHTML = rRows(RISS.slice(0, 10)); rBind($("#rTop"));
+}
+function rDrawGroups() {
+  RGROUPS_DRAWN = true;
+  const gc = { Base: "g-base", Year: "g-year", Level: "g-level" }, gn = { Base: "Base unit value", Year: "One year", Level: "Real change" };
+  let h = `<section class="card"><h2>Real examples by cause</h2><p class="sub">The three most important real cases of each cause: the source data, the base unit value, and the real value it produces.</p>
+    <div class="jump">${RCAT_ORDER.map((ci, k) => `<button class="${gc[RV_GROUP[rid(ci)]]}" data-rjump="${ci}"><span class="no">${k + 1}</span>${RV_LABEL[rid(ci)]}</button>`).join("")}</div></section>`;
+  RCAT_ORDER.forEach((ci, k) => {
+    const id = rid(ci), L = RISS.filter(o => o.c === ci), crit = L.filter(o => o.sev === 2).length, picks = rPicks(ci);
+    h += `<section class="card cause-sec ${gc[RV_GROUP[id]]}" id="rcause-${ci}">
+      <div class="cs-head"><span class="no">${k + 1}</span><div class="ttl"><span class="grp">Cause ${k + 1} of ${RCAT_ORDER.length} · ${gn[RV_GROUP[id]]}</span><span class="name">${RV_LABEL[id]}</span></div>
+        <span class="spacer"></span><span class="cnt"><b>${fmtN(L.length)}</b> series · <b>${fmtN(crit)}</b> critical</span><button class="btn" data-rgo="${ci}">See all ${fmtN(L.length)} →</button></div>
+      <div class="cs-body">
+        <div class="cs-what"><div><p class="rule">${RV_DEF[id][0]}</p><p class="means">${RV_DEF[id][1]}</p></div>
+          <div><div class="exl">What it looks like (illustrative)</div>${exampleTable(id, EXR)}</div></div>
+        ${picks.map((ex, j) => `<div class="cs-real">Real case ${j + 1} of ${picks.length} — ${RV_LABEL[id]}</div><div class="rexample" data-s="${ex.s}" data-c="${ci}"></div>`).join("")}
+      </div></section>`;
+  });
+  const el = $("#rGroupsCard");
+  el.innerHTML = h;
+  el.querySelectorAll("[data-rgo]").forEach(b => b.onclick = () => rGoList({ rCat: b.dataset.rgo }));
+  el.querySelectorAll("[data-rjump]").forEach(b => b.onclick = () => document.getElementById("rcause-" + b.dataset.rjump).scrollIntoView({ behavior: "smooth" }));
+  el.querySelectorAll(".rexample").forEach(e => rMount(e, +e.dataset.s, { cat: +e.dataset.c, compact: true }));
+}
+function rFillSelects() {
+  const isA = new Set(RISS.map(o => D.series.a[o.s])), isI = new Set(RISS.map(o => D.series.i[o.s]));
+  $("#rArea").insertAdjacentHTML("beforeend", D.areas.name.map((n, i) => isA.has(i) ? `<option value="${i}">${esc(n)}</option>` : "").join(""));
+  $("#rItem").insertAdjacentHTML("beforeend", D.items.name.map((n, i) => isI.has(i) ? `<option value="${i}">${esc(n)} (${esc(D.items.code[i])})</option>` : "").join(""));
+  $("#rCat").insertAdjacentHTML("beforeend", RCAT_ORDER.map(ci => `<option value="${ci}">${RV_LABEL[rid(ci)]}</option>`).join(""));
+  ["rSev", "rCat", "rFlow", "rArea", "rItem", "rSort"].forEach(id => $("#" + id).onchange = () => { RPAGE = 0; rRenderList(); });
+  $("#rReset").onclick = () => rGoList({});
+  const inA = new Set(), inI = new Set(); D.series.l.forEach((l, s) => { if (l) { inA.add(D.series.a[s]); inI.add(D.series.i[s]); } });
+  $("#rLArea").innerHTML = D.areas.name.map((n, i) => inA.has(i) ? `<option value="${i}">${esc(n)}</option>` : "").join("");
+  $("#rLItem").innerHTML = D.items.name.map((n, i) => inI.has(i) ? `<option value="${i}">${esc(n)} (${esc(D.items.code[i])})</option>` : "").join("");
+  const key = new Map(), S = D.series;
+  for (let s = 0; s < S.a.length; s++) if (S.l[s]) key.set(S.a[s] + "|" + S.i[s] + "|" + S.f[s], s);
+  $("#rLGo").onclick = () => {
+    const s = key.get($("#rLArea").value + "|" + $("#rLItem").value + "|" + $("#rLFlow").value);
+    if (s === undefined) $("#rLookupOut").innerHTML = `<p class="note">No data for this area, item and flow.</p>`;
+    else rMount($("#rLookupOut"), s);
+  };
+}
+
+
+// ---------------------------------------------------------------- data points by year
+const DG_STEPS = [[0, "#ffffff"], [0.5, "#e6effb"], [1, "#cde2fb"], [2, "#9ec5f4"], [5, "#6da7ec"], [10, "#3987e5"], [20, "#256abf"], [40, "#184f95"]];
+function dgColor(p) { let c = DG_STEPS[0]; for (const st of DG_STEPS) if (p >= st[0] && p > 0) c = st; return c; }
+function mkRows(labels) { return labels.map(l => ({ label: l, all: new Array(NY).fill(0), bad: new Array(NY).fill(0), crit: new Array(NY).fill(0) })); }
+function finishGrid(rows) {
+  const tot = { label: "All", all: new Array(NY).fill(0), bad: new Array(NY).fill(0), crit: new Array(NY).fill(0) };
+  for (const r of rows) for (let i = 0; i < NY; i++) { tot.all[i] += r.all[i]; tot.bad[i] += r.bad[i]; tot.crit[i] += r.crit[i]; }
+  const sum = a => a.reduce((x, y) => x + y, 0);
+  return { rows, tot, all: sum(tot.all), bad: sum(tot.bad), crit: sum(tot.crit) };
+}
+function itemGrid() {
+  const S = D.series, rows = mkRows(["Import · Quantity index", "Import · Value index", "Import · Unit value index", "Export · Quantity index", "Export · Value index", "Export · Unit value index"]);
+  for (let s = 0; s < S.a.length; s++) {
+    if (!S.l[s]) continue;
+    const f = S.f[s];
+    for (let yi = 0; yi < NY; yi++) { const v = idxVals(s, yi); if (v.xq !== null) rows[f * 3].all[yi]++; if (v.xv !== null) rows[f * 3 + 1].all[yi]++; if (v.xu !== null) rows[f * 3 + 2].all[yi]++; }
+  }
+  const C = D.cells;
+  for (let k = 0; k < C.s.length; k++) { const s = C.s[k]; if (!S.l[s]) continue; const r = rows[S.f[s] * 3 + C.t[k]]; r.bad[C.y[k] - Y0]++; if (C.sev[k] === 2) r.crit[C.y[k] - Y0]++; }
+  return finishGrid(rows);
+}
+function aggGrid() {
+  const S = AD.series, names = ["Value index", "Quantity index", "Real value index", "Unit value index"];
+  const rows = mkRows([...names.map(n => "Import · " + n), ...names.map(n => "Export · " + n)]);
+  for (let s = 0; s < S.a.length; s++) {
+    const f = S.f[s];
+    for (let yi = 0; yi < NY; yi++) { const v = aVals(s, yi); [v.xV, v.xQ, v.xR, v.xU].forEach((x, t) => { if (x !== null) rows[f * 4 + t].all[yi]++; }); }
+  }
+  const C = AD.cells;
+  for (let k = 0; k < C.s.length; k++) { const r = rows[S.f[C.s[k]] * 4 + C.t[k]]; r.bad[C.y[k] - Y0]++; if (C.sev[k] === 2) r.crit[C.y[k] - Y0]++; }
+  return finishGrid(rows);
+}
+function rvGrid() {
+  const S = D.series, rows = mkRows(["Import · Real value", "Export · Real value"]);
+  for (let s = 0; s < S.a.length; s++) {
+    if (!S.l[s] || S.buv[s] === null || S.buv[s] === undefined) continue;
+    for (let yi = 0; yi < NY; yi++) { const q = idxVals(s, yi).q; if (q !== null && q !== undefined) rows[S.f[s]].all[yi]++; }
+  }
+  const C = D.cells;
+  for (let k = 0; k < C.s.length; k++) { const s = C.s[k]; if (!S.l[s] || C.t[k] !== 2) continue; const r = rows[S.f[s]]; r.bad[C.y[k] - Y0]++; if (C.sev[k] === 2) r.crit[C.y[k] - Y0]++; }
+  return finishGrid(rows);
+}
+const DG_MODE = {};
+function dataGrid(id, G) {
+  const el = document.getElementById(id), seg = document.querySelector(`.seg[data-grid="${id}"]`);
+  const mode = DG_MODE[id] || "pct";
+  const sum = a => a.reduce((x, y) => x + y, 0);
+  const cell = (all, bad, crit, extra = "") => {
+    const p = all ? bad / all * 100 : 0, [lim, bg] = dgColor(p);
+    const txt = !all ? "" : mode === "pct" ? (p === 0 ? "0" : p < 0.1 ? "<0.1" : p.toFixed(p < 10 ? 1 : 0)) : fmtN(mode === "bad" ? bad : all);
+    const dk = lim >= 10 ? " dk" : "";
+    return `<td class="${extra}${dk}" style="background:${all ? bg : "transparent"}" title="${fmtN(all)} data points · ${fmtN(bad)} problematic (${p.toFixed(1)}%) · ${fmtN(crit)} critical">${txt}</td>`;
+  };
+  let h = `<div class="ts-wrap"><table class="dg"><thead><tr><th class="lab">${mode === "pct" ? "% problematic" : mode === "bad" ? "Problematic data points" : "All data points"}</th>`;
+  for (let yi = 0; yi < NY; yi++) h += `<th>${Y0 + yi}</th>`;
+  h += `<th>Total</th></tr></thead><tbody>`;
+  for (const r of [...G.rows, G.tot]) {
+    h += `<tr class="${r === G.tot ? "tot" : ""}"><td class="lab">${r.label}</td>`;
+    for (let yi = 0; yi < NY; yi++) h += cell(r.all[yi], r.bad[yi], r.crit[yi]);
+    h += cell(sum(r.all), sum(r.bad), sum(r.crit), "rt ") + `</tr>`;
+  }
+  h += `</tbody></table></div><div class="dg-legend">Share problematic:${DG_STEPS.slice(1).map((st, i) => `<i style="background:${st[1]}"></i><span>${i === DG_STEPS.length - 2 ? "≥ " + st[0] : st[0] + "–" + DG_STEPS[i + 2][0]}%</span>`).join("")}<span style="margin-left:10px">Hover a cell for counts.</span></div>`;
+  el.innerHTML = h;
+  if (seg && !seg.dataset.bound) {
+    seg.dataset.bound = "1";
+    seg.querySelectorAll("button").forEach(b => b.onclick = () => { DG_MODE[id] = b.dataset.m; seg.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); dataGrid(id, G); });
+  }
+}
+// ---------------------------------------------------------------- boot
+async function boot() {
+  const bin = atob(PAYLOAD.trim()), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  D = JSON.parse(await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream("deflate"))).text());
+  Y0 = D.years[0]; NY = D.years.length;
+  const I = D.issues;
+  ISS = I.s.map((s, k) => ({ rank: k + 1, s, c: I.c[k], sev: I.sev[k], n: I.n[k], nc: I.nc[k], ty: I.ty[k], y0: I.y0[k], y1: I.y1[k], wt: I.wt[k], wy: I.wy[k], wx: I.wx[k] }));
+  CBS = new Map(); const cs = D.cells.s;
+  for (let k = 0; k < cs.length; k++) { let a = CBS.get(cs[k]); if (!a) CBS.set(cs[k], a = []); a.push(k); }
+  const crit = new Map(); ISS.forEach(o => { if (o.sev === 2) crit.set(o.c, (crit.get(o.c) || 0) + 1); });
+  const tier = ci => D.cats.id[ci] === "tiny_flow" ? 1.5 : ["Base", "Year", "Level"].indexOf(D.cats.driver[ci]);
+  CAT_ORDER = D.cats.id.map((_, i) => i).sort((a, b) => tier(a) - tier(b) || (crit.get(b) || 0) - (crit.get(a) || 0));
+  $("#meta").textContent = `Outputs of ${D.meta.outputs_date} · diagnostics built ${D.meta.generated}`;
+  drawSummary(); fillSelects(); renderList();
+  READY = true;
+  showPage(CUR.page);
+}
+boot().catch(e => { $("#loading").style.display = "block"; $("#loading").textContent = "Could not load the data: " + e.message + ". Use a current version of Chrome, Edge, Safari or Firefox."; console.error(e); });
+</script>
+</body>
+</html>

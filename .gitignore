@@ -1,0 +1,18 @@
+# Only the files listed below are tracked. Everything else in this folder
+# (raw data, inputs, R workspaces, results CSVs, archive) stays on this computer.
+/*
+!/.gitignore
+!/README.md
+!/trade_calculations.R
+!/RealValue.R
+!/methodology_notes.md
+!/Trade_RealValues_Methodology.pptx
+!/Results_Guide_for_Review.docx
+!/diagnostics/
+!/results/
+/results/*
+!/results/OUTPUTS_README.md
+!/results/diagnostics_dashboard.html
+.DS_Store
+.Rhistory
+.Rproj.user/
