@@ -639,7 +639,6 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
               <tr><td>Aggregate quantity index</td><td>Sum of tonnes × item factor, unweighted</td></tr>
               <tr><td>Aggregate UV index</td><td>Value index ÷ real value index × 100</td></tr>
               <tr><td>Dashboard flags</td><td>Critical: index &gt; 5,000 or &lt; 1 · Warning: index &gt; 1,000 or &lt; 10, or a 10× change from the previous year</td></tr>
-              <tr><td>Pipeline outlier check</td><td>Index &gt; 5,000, listed in results/checks; informational, nothing is removed</td></tr>
               <tr class="grp"><td colspan="2">B · Real values</td></tr>
               <tr><td>Item real value</td><td>Quantity × base UV</td></tr>
               <tr><td>Item real value index</td><td>Not produced (equals the quantity index)</td></tr>
@@ -1439,7 +1438,7 @@ function drawSummary() {
   const C = D.cfg;
   $("#cfgCh").textContent = fmtN(C.crit_hi); $("#cfgCl").textContent = C.crit_lo; $("#cfgWh").textContent = fmtN(C.warn_hi); $("#cfgWl").textContent = C.warn_lo;
   $("#cfgY").textContent = C.yoy; $("#cfgFq").textContent = C.floor_q; $("#cfgFv").textContent = C.floor_v;
-  $("#verifyList").innerHTML = `<li>Every item index is recomputed from <code>TradeData.rds</code> and <code>base_unit_values.csv</code>.</li>
+  $("#verifyList").innerHTML = `<li>Every item index is recomputed from the source trade data and the base unit values.</li>
     <li>${vOK ? "Matches" : "<b>Does not match</b>"} <code>indices_items.csv</code> — largest relative difference ${Math.max(...VR).toExponential(1)}.</li>`;
   const z = D.zeros, tot = z.N.reduce((a, b) => a + b, 0), nm2 = { "": "official", T: "unofficial", E: "estimated", I: "imputed", M: "missing", X: "international org." };
   $("#zeroNote").innerHTML = `${fmtN(tot)} quantity and value index values are exactly 0 and are not flagged. By the flag of the source record: ${z.st.map((s, i) => `${fmtN(z.N[i])} ${nm2[s] || s} (${s || "blank"})`).join(", ")}. Records flagged M are missing in the source but enter the calculation as 0.`;
