@@ -101,6 +101,8 @@ table.plain th.r, table.plain td.r { text-align: right; font-variant-numeric: ta
 .doc-part .pt { display: block; font-size: 24px; font-weight: 700; margin: 2px 0 4px; }
 .doc-part .pd { display: block; color: var(--text-2); font-size: 15px; }
 .doc-body > .doc-part:first-child { margin-top: 8px; }
+.doc-grp { margin: 52px 0 0; padding-bottom: 8px; border-bottom: 2px solid var(--accent); color: var(--accent); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; scroll-margin-top: 130px; }
+.doc-grp + .doc-sec { border-top: 0; margin-top: 4px; padding-top: 20px; }
 .doc-part + .doc-sec { border-top: 0; margin-top: 8px; padding-top: 24px; }
 .doc-sec h3 { font-size: 18px; text-transform: none; letter-spacing: 0; color: var(--text); font-weight: 650; margin: 36px 0 8px; display: flex; gap: 10px; align-items: baseline; scroll-margin-top: 130px; }
 .doc-sec h3 .lv { font-size: 12.5px; font-weight: 550; color: var(--chip-text); background: var(--chip); border-radius: 6px; padding: 1px 8px; }
@@ -232,6 +234,13 @@ table.ts td.v[title] { cursor: help; }
 .split .lg i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 5px 0 12px; }
 .p-base { background: var(--s1); } .p-one { background: var(--s2); } .p-sus { background: var(--s3); }
 .back { margin-bottom: 22px; }
+.dbar { display: flex; gap: 10px; align-items: center; margin-bottom: 22px; }
+.dbar .back { margin-bottom: 0; }
+a.btn { text-decoration: none; display: inline-block; }
+.rev-note { margin: 0 0 4px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; font-size: 14.5px; color: var(--text-2); }
+.cmt-row { display: flex; justify-content: flex-end; margin-bottom: 6px; }
+.doc-body > .cmt-row + .doc-part { margin-top: 8px; }
+.pagebar .cmt { margin-left: auto; }
 
 /* ---------- real examples: one distinct section per cause ---------- */
 .g-base { --gc: #2a78d6; --gt: #eef4fc; }
@@ -356,50 +365,87 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
     <div class="doc">
       <nav class="toc">
         <div class="lbl">Contents</div>
-        <div class="toc-grp">Foundations</div>
-        <a href="#m-data">1 · Data and scope</a>
-        <a href="#m-prep">2 · Preparing the data</a>
-        <a href="#m-buv">3 · Base unit value</a>
-        <a href="#m-agg">4 · Group totals</a>
-        <div class="toc-grp">A · Indices</div>
-        <a href="#m-v">5 · Value index</a>
-        <a class="tsub" href="#m-iv">5.1 Items</a>
-        <a class="tsub" href="#m-av">5.2 Aggregates</a>
-        <a href="#m-q">6 · Quantity index</a>
-        <a class="tsub" href="#m-iq">6.1 Items</a>
-        <a class="tsub" href="#m-aq">6.2 Aggregates</a>
-        <a href="#m-u">7 · Unit value index</a>
-        <a class="tsub" href="#m-iu">7.1 Items</a>
-        <a class="tsub" href="#m-au">7.2 Aggregates</a>
-        <div class="toc-grp">B · Real values</div>
-        <a href="#m-r">8 · Real value</a>
-        <a class="tsub" href="#m-rv">8.1 Items</a>
-        <a class="tsub" href="#m-agr">8.2 Aggregates</a>
-        <a href="#m-ri">9 · Real value index</a>
-        <a class="tsub" href="#m-irv">9.1 Items</a>
-        <a class="tsub" href="#m-ar">9.2 Aggregates</a>
+        <div class="toc-grp">1 · What we calculate</div>
+        <a href="#m-purpose">1 · Purpose</a>
+        <a href="#m-measures">2 · The measures</a>
+        <div class="toc-grp">2 · How we calculate it</div>
+        <a href="#m-data">3 · Data and preparation</a>
+        <a href="#m-buv">4 · Base unit value</a>
+        <a href="#m-agg">5 · Group totals</a>
+        <div class="toc-grp">Indices</div>
+        <a href="#m-v">6 · Value index</a>
+        <a class="tsub" href="#m-iv">6.1 Items</a>
+        <a class="tsub" href="#m-av">6.2 Aggregates</a>
+        <a href="#m-q">7 · Quantity index</a>
+        <a class="tsub" href="#m-iq">7.1 Items</a>
+        <a class="tsub" href="#m-aq">7.2 Aggregates</a>
+        <a href="#m-u">8 · Unit value index</a>
+        <a class="tsub" href="#m-iu">8.1 Items</a>
+        <a class="tsub" href="#m-au">8.2 Aggregates</a>
+        <div class="toc-grp">Real values</div>
+        <a href="#m-r">9 · Real value</a>
+        <a class="tsub" href="#m-rv">9.1 Items</a>
+        <a class="tsub" href="#m-agr">9.2 Aggregates</a>
+        <a href="#m-ri">10 · Real value index</a>
+        <a class="tsub" href="#m-irv">10.1 Items</a>
+        <a class="tsub" href="#m-ar">10.2 Aggregates</a>
         <div class="toc-grp">Reference</div>
-        <a href="#m-cmp">10 · How the aggregate indices fit together</a>
-        <a href="#m-dec">11 · Decisions at a glance</a>
-        <a href="#m-out">12 · Outputs</a>
+        <a href="#m-cmp">11 · How the aggregate indices fit together</a>
+        <a href="#m-dec">12 · Decisions at a glance</a>
+        <a href="#m-out">13 · Outputs</a>
       </nav>
       <div class="doc-body">
-        <div class="doc-part" id="m-found"><span class="pl">Foundations</span><span class="pt">Data, base unit value and group totals</span><span class="pd">Shared by every calculation in parts A and B.</span></div>
+        <div class="cmt-row"><a class="btn" href="https://github.com/mbirkand/Trade-Real-Value-and-Indices/pulls" target="_blank" rel="noopener">Comment on GitHub ↗</a></div>
+
+        <div class="doc-part" id="m-p1"><span class="pl">Part 1</span><span class="pt">What we calculate</span></div>
+
+        <div class="doc-sec" id="m-purpose">
+          <h2><span class="n">1</span>Purpose</h2>
+          <p class="what">To show how each country's agricultural trade changed compared with 2014–16, and to separate the two things that move trade value: <b>prices</b> and <b>volumes</b>.</p>
+          <ul>
+            <li>A country's import bill can grow because it buys more, because prices went up, or both. The trade value alone cannot tell which.</li>
+            <li><b>Indices</b> compare every year with the 2014–16 average, set to 100: one for value, one for quantity and one for price (unit value).</li>
+            <li><b>Real values</b> price each year's trade at 2014–16 prices. Price changes are removed, so what is left is the change in volume, in US dollars.</li>
+            <li>Everything is calculated for <b>items</b> (one country × item) and for <b>aggregates</b> (item groups, for single countries and for regions), with imports and exports kept separate.</li>
+          </ul>
+        </div>
+
+        <div class="doc-sec" id="m-measures">
+          <h2><span class="n">2</span>The measures</h2>
+          <table class="plain">
+            <thead><tr><th>Measure</th><th>The question it answers</th><th>Items</th><th>Aggregates</th></tr></thead>
+            <tbody>
+              <tr><td>Value index</td><td>How much more or less is the trade worth in current US dollars than in 2014–16?</td><td>✓</td><td>✓</td></tr>
+              <tr><td>Quantity index</td><td>How many more or fewer tonnes are traded?</td><td>✓</td><td>✓</td></tr>
+              <tr><td>Unit value index</td><td>How much did prices change?</td><td>✓</td><td>✓</td></tr>
+              <tr><td>Real value</td><td>What would this year's trade be worth at 2014–16 prices?</td><td>✓</td><td>✓</td></tr>
+              <tr><td>Real value index</td><td>How much did the volume of a group change, each item weighted by its 2014–16 price?</td><td>—</td><td>✓</td></tr>
+            </tbody>
+          </table>
+          <h4>How they relate</h4>
+          <div class="eq">
+            <span class="row"><span class="lhs">Value</span> ≈ volume × price<span class="c">both move</span></span>
+            <span class="row"><span class="lhs">Real value</span> = volume × 2014–16 price<span class="c">only volume moves</span></span>
+            <span class="row"><span class="lhs">Value − real value</span> = the effect of price changes since 2014–16</span>
+          </div>
+          <div class="callout"><b>Real value is meant to differ from value.</b> The difference is the price change since 2014–16. In the wheat example of part 2, prices are 20% above the base, so the 2020 real value (300) is below the value (360): the 60 difference is the price rise — the measure working as intended. The dashboard flags a real value only when the gap is too large to be a price change (see the Real values tab).</div>
+          <ul>
+            <li>For a single item the quantity index already measures volume. For a group it does not, because a tonne of olive oil and a tonne of wheat are added as equals; the real value index weights them by price instead (section 10).</li>
+            <li>For a group, value index = real value index × unit value index ÷ 100 (section 11).</li>
+          </ul>
+        </div>
+
+        <div class="doc-part" id="m-p2"><span class="pl">Part 2</span><span class="pt">How we calculate it</span><span class="pd">First the steps every measure shares — preparing the data, the 2014–16 base unit value and the group totals — then each measure, for items and then for aggregates.</span></div>
 
         <div class="doc-sec" id="m-data">
-          <h2><span class="n">1</span>Data and scope</h2>
+          <h2><span class="n">3</span>Data and preparation</h2>
           <ul>
             <li><b>Source:</b> FAO trade data (June 2026 extract), 2000–2024: import and export quantity and value by country × CPC item × year.</li>
             <li>Base period <b>2014–2016 = 100</b>.</li>
-            <li>Imports and exports are calculated separately throughout. A country can have results for one flow and not the other.</li>
             <li>Values are in thousand USD, quantities in tonnes, unit values in thousand USD per tonne (shown as $/t on the other pages).</li>
-            <li>Every measure is calculated for <b>items</b> (one country × item) and for <b>aggregates</b> (item groups, for single countries and for regions).</li>
           </ul>
           <div class="callout"><b>Data snapshot.</b> The trade data were extracted in June 2026, so results run up to 2024. They may not match the current data in SWS exactly.</div>
-        </div>
-
-        <div class="doc-sec" id="m-prep">
-          <h2><span class="n">2</span>Preparing the data</h2>
+          <h4>Preparation</h4>
           <ol class="steps">
             <li>Reshape to one row per country × item × year with four columns: import Q, import V, export Q, export V.</li>
             <li>Remove live animals (CPC 021…). They are reported in head, not tonnes, so their unit values are not comparable.</li>
@@ -410,8 +456,8 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
         </div>
 
         <div class="doc-sec" id="m-buv">
-          <h2><span class="n">3</span>Base unit value (2014–2016)</h2>
-          <p class="what">The 2014–16 price of one country × item × flow. It is the denominator of the item unit value index (7.1) and the price that turns quantities into real values (8).</p>
+          <h2><span class="n">4</span>Base unit value (2014–2016)</h2>
+          <p class="what">The 2014–16 price of one country × item × flow. It is the denominator of the item unit value index (8.1) and the price that turns quantities into real values (9).</p>
           <div class="eq">
             <span class="row"><span class="lhs">UV<sub>t</sub></span> = V<sub>t</sub> ÷ Q<sub>t</sub></span>
             <span class="row"><span class="lhs">base UV</span> = (UV<sub>2014</sub> + UV<sub>2015</sub> + UV<sub>2016</sub>) ÷ 3<span class="c">simple average of the three yearly unit values</span></span>
@@ -425,7 +471,7 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
             <li>If no parent group has a unit value for both years of a step, the parent's own unit value for the missing year is used.</li>
             <li>If the country has <b>no base-year data at all</b>, the parent group's base UV is used as it is.</li>
           </ol>
-          <div class="callout">This filling applies <b>only to the base unit value</b> — and so to the unit value index and to real values. The value and quantity indices are never filled from larger areas (5.1, 6.1).</div>
+          <div class="callout">This filling applies <b>only to the base unit value</b> — and so to the unit value index and to real values. The value and quantity indices are never filled from larger areas (6.1, 7.1).</div>
           <h4>Parent groups</h4>
           <ul>
             <li>The country's regional groups, smallest first: tier 1 → tier 2 → tier 3 → global (all countries).</li>
@@ -446,8 +492,8 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
         </div>
 
         <div class="doc-sec" id="m-agg">
-          <h2><span class="n">4</span>Group totals <span class="lv">aggregates</span></h2>
-          <p class="what">Aggregates are not averages of item results. Items are first summed into item groups, and countries into regions; every aggregate in parts A and B is then calculated on these totals.</p>
+          <h2><span class="n">5</span>Group totals <span class="lv">aggregates</span></h2>
+          <p class="what">Aggregates are not averages of item results. Items are first summed into item groups, and countries into regions; every aggregate below is then calculated on these totals.</p>
           <h4>Country × item group</h4>
           <div class="eq">
             <span class="row"><span class="lhs">Group value<sub>t</sub></span> = Σ V<sub>i,t</sub><span class="c">thousand USD</span></span>
@@ -485,13 +531,13 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
             </tbody></table></div>
         </div>
 
-        <div class="doc-part" id="m-pa"><span class="pl">Part A</span><span class="pt">Indices</span><span class="pd">Value, quantity and unit value indices. Each is shown for items, then for aggregates.</span></div>
+        <div class="doc-grp" id="m-pa">Indices</div>
 
         <div class="doc-sec" id="m-v">
-          <h2><span class="n">5</span>Value index</h2>
+          <h2><span class="n">6</span>Value index</h2>
           <p class="what">How the trade value in current US dollars changed since 2014–16. It moves with both prices and volumes.</p>
 
-          <h3 id="m-iv"><span class="n">5.1</span>Items <span class="lv">country × item</span></h3>
+          <h3 id="m-iv"><span class="n">6.1</span>Items <span class="lv">country × item</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Value index<sub>t</sub></span> = V<sub>t</sub> ÷ mean(V<sub>2014–16</sub>) × 100</span></div>
           <dl class="facts">
             <dt>Denominator</dt><dd>The average value over the country's <b>own</b> valid base years — one, two or three of them. Never filled from a group.</dd>
@@ -500,7 +546,7 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
           </dl>
           <div class="callout">If only one base year exists and it is small, every later year is divided by that small number. A single 2014 record of 2 thousand USD turns an ordinary 2,000 thousand USD year into an index of 100,000.</div>
 
-          <h3 id="m-av"><span class="n">5.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
+          <h3 id="m-av"><span class="n">6.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Value index<sub>t</sub></span> = Group value<sub>t</sub> ÷ mean(Group value<sub>2014–16</sub>) × 100</span></div>
           <dl class="facts">
             <dt>Weights</dt><dd>None needed: dollars of different items can be added directly.</dd>
@@ -510,10 +556,10 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
         </div>
 
         <div class="doc-sec" id="m-q">
-          <h2><span class="n">6</span>Quantity index</h2>
+          <h2><span class="n">7</span>Quantity index</h2>
           <p class="what">How the traded tonnage changed since 2014–16. Prices play no part.</p>
 
-          <h3 id="m-iq"><span class="n">6.1</span>Items <span class="lv">country × item</span></h3>
+          <h3 id="m-iq"><span class="n">7.1</span>Items <span class="lv">country × item</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Quantity index<sub>t</sub></span> = Q<sub>t</sub> ÷ mean(Q<sub>2014–16</sub>) × 100</span></div>
           <dl class="facts">
             <dt>Denominator</dt><dd>The average quantity over the country's own valid base years, as for the value index. Never filled from a group.</dd>
@@ -522,30 +568,30 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
           </dl>
           <div class="callout">Same weakness as the value index. Bangladesh soya bean oil exports have only 2014 (0.002 t), so 22,000 t in 2019 gives a quantity index of 1,100,000,000.</div>
 
-          <h3 id="m-aq"><span class="n">6.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
+          <h3 id="m-aq"><span class="n">7.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Quantity index<sub>t</sub></span> = Group quantity<sub>t</sub> ÷ mean(Group quantity<sub>2014–16</sub>) × 100</span></div>
           <dl class="facts">
             <dt>Weights</dt><dd>Tonnes. A tonne of olive oil and a tonne of wheat count equally.</dd>
             <dt>Example</dt><dd>Olive oil + wheat: 1,575 ÷ 1,150 × 100 = <b>137.0</b> — 37% more tonnes, because cheap wheat grew while expensive olive oil shrank.</dd>
           </dl>
-          <div class="callout">Meaningful only for groups of similar products. For a mixed group it mostly tracks the heaviest, cheapest items. Use the real value index (9.2) as the volume measure for a group.</div>
+          <div class="callout">Meaningful only for groups of similar products. For a mixed group it mostly tracks the heaviest, cheapest items. Use the real value index (10.2) as the volume measure for a group.</div>
         </div>
 
         <div class="doc-sec" id="m-u">
-          <h2><span class="n">7</span>Unit value index</h2>
+          <h2><span class="n">8</span>Unit value index</h2>
           <p class="what">How prices changed since 2014–16.</p>
 
-          <h3 id="m-iu"><span class="n">7.1</span>Items <span class="lv">country × item</span></h3>
+          <h3 id="m-iu"><span class="n">8.1</span>Items <span class="lv">country × item</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Unit value index<sub>t</sub></span> = UV<sub>t</sub> ÷ base UV × 100<span class="c">UV<sub>t</sub> = V<sub>t</sub> ÷ Q<sub>t</sub></span></span></div>
           <dl class="facts">
-            <dt>Denominator</dt><dd>The base UV from section 3. Unlike the value and quantity bases, it may be rebuilt or taken from a group.</dd>
+            <dt>Denominator</dt><dd>The base UV from section 4. Unlike the value and quantity bases, it may be rebuilt or taken from a group.</dd>
             <dt>No index when</dt><dd>The year has no valid observation (Q &gt; 0 and V &gt; 0), or no base UV could be built.</dd>
             <dt>Example</dt><dd>Wheat: 240 ÷ 200 × 100 = <b>120</b> — 20% more per tonne than in the base.</dd>
           </dl>
           <div class="callout">Value index ≠ quantity index × unit value index ÷ 100. In the example, 150 × 120 ÷ 100 = 180, not 182.4. The base UV is the average of the yearly unit values (200 $/t), not mean value ÷ mean quantity (197.3 $/t), and it may come from a group while the other two bases cannot.</div>
 
-          <h3 id="m-au"><span class="n">7.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
-          <p>The price change of the group, holding the item mix fixed at this year's quantities. It is derived from the value index (5.2) and the real value index (9.2).</p>
+          <h3 id="m-au"><span class="n">8.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
+          <p>The price change of the group, holding the item mix fixed at this year's quantities. It is derived from the value index (6.2) and the real value index (10.2).</p>
           <div class="eq">
             <span class="row"><span class="lhs">Unit value index<sub>t</sub></span> = Value index<sub>t</sub> ÷ Real value index<sub>t</sub> × 100</span>
             <span class="row"><span class="lhs">&nbsp;</span> = (Group value<sub>t</sub> ÷ Group real value<sub>t</sub>) ÷ (base value ÷ base real value) × 100</span>
@@ -558,36 +604,36 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
           <div class="callout"><b>Why not group value ÷ group tonnes?</b> In the example that gives 696 $/t in the base and 419 $/t in 2020 — a 40% "price fall", while every price rose by 10%. The drop is only the shift from olive oil to wheat.</div>
         </div>
 
-        <div class="doc-part" id="m-pb"><span class="pl">Part B</span><span class="pt">Real values</span><span class="pd">Trade at constant 2014–16 prices, and the volume index built on it. Each is shown for items, then for aggregates.</span></div>
+        <div class="doc-grp" id="m-pb">Real values</div>
 
         <div class="doc-sec" id="m-r">
-          <h2><span class="n">8</span>Real value</h2>
+          <h2><span class="n">9</span>Real value</h2>
           <p class="what">This year's volume priced at 2014–16 prices: the value the trade would have had if prices had not changed.</p>
 
-          <h3 id="m-rv"><span class="n">8.1</span>Items <span class="lv">country × item</span></h3>
+          <h3 id="m-rv"><span class="n">9.1</span>Items <span class="lv">country × item</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Real value<sub>t</sub></span> = Q<sub>t</sub> × base UV<span class="c">thousand USD at 2014–16 prices</span></span></div>
           <dl class="facts">
-            <dt>Inputs</dt><dd>The year's quantity and the base UV from section 3.</dd>
+            <dt>Inputs</dt><dd>The year's quantity and the base UV from section 4.</dd>
             <dt>Calculated when</dt><dd>Both exist — including flows whose base UV was rebuilt or taken from a group, and flows that have no quantity index.</dd>
             <dt>Example</dt><dd>Wheat: 1,500 t × 200 $/t = <b>300</b> thousand USD. The actual value is 360, so 60 of it is the price rise.</dd>
           </dl>
 
-          <h3 id="m-agr"><span class="n">8.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
+          <h3 id="m-agr"><span class="n">9.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Group real value<sub>t</sub></span> = Σ Q<sub>i,t</sub> × base UV<sub>i</sub><span class="c">thousand USD at 2014–16 prices</span></span></div>
           <dl class="facts">
-            <dt>Coverage</dt><dd>Only items with a quantity and a base UV; value-only items are left out. Regions sum their member countries (section 4).</dd>
+            <dt>Coverage</dt><dd>Only items with a quantity and a base UV; value-only items are left out. Regions sum their member countries (section 5).</dd>
             <dt>Example</dt><dd>Olive oil + wheat: 75 × 4.0 + 1,500 × 0.20 = <b>600</b> thousand USD, against 660 actual — 60 of it is the price rise.</dd>
           </dl>
         </div>
 
         <div class="doc-sec" id="m-ri">
-          <h2><span class="n">9</span>Real value index</h2>
+          <h2><span class="n">10</span>Real value index</h2>
           <p class="what">How the trade volume changed since 2014–16, with each item weighted by its 2014–16 price.</p>
 
-          <h3 id="m-irv"><span class="n">9.1</span>Items <span class="lv">country × item</span></h3>
+          <h3 id="m-irv"><span class="n">10.1</span>Items <span class="lv">country × item</span></h3>
           <p><b>Not produced.</b> With one fixed base UV it would cancel out and leave exactly the quantity index: (1,500 × 200) ÷ (1,000 × 200) × 100 = 150. Real value becomes its own measure only when different items are added up.</p>
 
-          <h3 id="m-ar"><span class="n">9.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
+          <h3 id="m-ar"><span class="n">10.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
           <p>The volume index for a group.</p>
           <div class="eq">
             <span class="row"><span class="lhs">Real value index<sub>t</sub></span> = Group real value<sub>t</sub> ÷ mean(Group real value<sub>2014–16</sub>) × 100</span>
@@ -597,25 +643,25 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
             <dt>Weights</dt><dd>Each item's base UV. A tonne of olive oil (4,000 $/t) counts 20 times a tonne of wheat (200 $/t).</dd>
             <dt>Example</dt><dd>Olive oil + wheat: 600 ÷ 800 × 100 = <b>75.0</b> — volume fell by 25%, because the lost olive oil was worth more at base prices than the extra wheat.</dd>
           </dl>
-          <div class="callout"><b>Not the same as the quantity index (6.2).</b> In the example the quantity index says +37% and the real value index says −25%. The two agree only when the group has one item, all items have the same base UV, or the item mix does not change.</div>
+          <div class="callout"><b>Not the same as the quantity index (7.2).</b> In the example the quantity index says +37% and the real value index says −25%. The two agree only when the group has one item, all items have the same base UV, or the item mix does not change.</div>
         </div>
 
         <div class="doc-sec" id="m-cmp">
-          <h2><span class="n">10</span>How the aggregate indices fit together</h2>
+          <h2><span class="n">11</span>How the aggregate indices fit together</h2>
           <table class="plain">
             <thead><tr><th>Index</th><th>Total it uses</th><th>Measures</th><th>Section</th><th class="r">Example</th></tr></thead>
             <tbody>
-              <tr><td>Value</td><td>Σ value</td><td>Change in current dollars: prices and volumes together</td><td>5.2</td><td class="r">82.5</td></tr>
-              <tr><td>Quantity</td><td>Σ tonnes</td><td>Change in tonnage, every tonne equal</td><td>6.2</td><td class="r">137.0</td></tr>
-              <tr><td>Unit value</td><td>Value index ÷ real value index</td><td>Change in prices at a fixed item mix</td><td>7.2</td><td class="r">110.0</td></tr>
-              <tr><td>Real value</td><td>Σ quantity × base UV</td><td>Change in volume, weighted by base prices</td><td>9.2</td><td class="r">75.0</td></tr>
+              <tr><td>Value</td><td>Σ value</td><td>Change in current dollars: prices and volumes together</td><td>6.2</td><td class="r">82.5</td></tr>
+              <tr><td>Quantity</td><td>Σ tonnes</td><td>Change in tonnage, every tonne equal</td><td>7.2</td><td class="r">137.0</td></tr>
+              <tr><td>Unit value</td><td>Value index ÷ real value index</td><td>Change in prices at a fixed item mix</td><td>8.2</td><td class="r">110.0</td></tr>
+              <tr><td>Real value</td><td>Σ quantity × base UV</td><td>Change in volume, weighted by base prices</td><td>10.2</td><td class="r">75.0</td></tr>
             </tbody>
           </table>
           <p>Value index = real value index × unit value index ÷ 100 holds by construction (75.0 × 110.0 ÷ 100 = 82.5). The quantity index is not part of this identity.</p>
         </div>
 
         <div class="doc-sec" id="m-dec">
-          <h2><span class="n">11</span>Decisions at a glance</h2>
+          <h2><span class="n">12</span>Decisions at a glance</h2>
           <table class="plain">
             <tbody>
               <tr class="grp"><td colspan="2">Data</td></tr>
@@ -633,13 +679,13 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
               <tr><td>Parent order</td><td>Tier 1 → tier 2 → tier 3 → global</td></tr>
               <tr><td>Item factor</td><td>Quantity only</td></tr>
               <tr><td>Aggregate base</td><td>2014–16 average of the group total</td></tr>
-              <tr class="grp"><td colspan="2">A · Indices</td></tr>
+              <tr class="grp"><td colspan="2">Indices</td></tr>
               <tr><td>Item value / quantity base</td><td>Country's own valid base years, never filled</td></tr>
               <tr><td>Item unit value base</td><td>Base UV (may be rebuilt or from a group)</td></tr>
               <tr><td>Aggregate quantity index</td><td>Sum of tonnes × item factor, unweighted</td></tr>
               <tr><td>Aggregate UV index</td><td>Value index ÷ real value index × 100</td></tr>
               <tr><td>Dashboard flags</td><td>Critical: index &gt; 5,000 or &lt; 1 · Warning: index &gt; 1,000 or &lt; 10, or a 10× change from the previous year</td></tr>
-              <tr class="grp"><td colspan="2">B · Real values</td></tr>
+              <tr class="grp"><td colspan="2">Real values</td></tr>
               <tr><td>Item real value</td><td>Quantity × base UV</td></tr>
               <tr><td>Item real value index</td><td>Not produced (equals the quantity index)</td></tr>
               <tr><td>Aggregate volume index</td><td>Real value index (base-price weighted)</td></tr>
@@ -647,7 +693,7 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
           </table>
         </div>
         <div class="doc-sec" id="m-out">
-          <h2><span class="n">12</span>Outputs</h2>
+          <h2><span class="n">13</span>Outputs</h2>
           <p class="what">Four result files in <code>results/</code>, one row per area × item (or item group) × year, 2000–2024, with import and export columns side by side. Only disseminated areas are included. Each column below exists for items and for aggregates.</p>
           <ul>
             <li><b>Items</b> (ItemList items, country × item): <code>indices_items.csv</code>, <code>real_values_items.csv</code>. Identifier columns: Area Code (M49), Area, Item Code (CPC), Item, Year.</li>
@@ -657,21 +703,22 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
             <thead><tr><th>Column</th><th>Unit</th><th>Items</th><th>Aggregates</th></tr></thead>
             <tbody>
               <tr class="grp fn"><td colspan="4">Indices — indices_items.csv · indices_aggregates.csv</td></tr>
-              <tr><td>Import Value Index</td><td>2014–16 = 100</td><td>Value ÷ country's own base-year average <span class="ref">5.1</span></td><td>Group value ÷ its 2014–16 average <span class="ref">5.2</span></td></tr>
-              <tr><td>Import Quantity Index</td><td>2014–16 = 100</td><td>Quantity ÷ country's own base-year average <span class="ref">6.1</span></td><td>Group tonnes ÷ its 2014–16 average <span class="ref">6.2</span></td></tr>
-              <tr><td>Import Unit Value Index</td><td>2014–16 = 100</td><td>Unit value ÷ base UV <span class="ref">7.1</span></td><td>Value index ÷ real value index × 100 <span class="ref">7.2</span></td></tr>
-              <tr><td>Import Real Value Index</td><td>2014–16 = 100</td><td class="na">Not produced — equals the quantity index <span class="ref">9.1</span></td><td>Group real value ÷ its 2014–16 average <span class="ref">9.2</span></td></tr>
-              <tr><td>Export Value Index</td><td>2014–16 = 100</td><td>As for imports <span class="ref">5.1</span></td><td>As for imports <span class="ref">5.2</span></td></tr>
-              <tr><td>Export Quantity Index</td><td>2014–16 = 100</td><td>As for imports <span class="ref">6.1</span></td><td>As for imports <span class="ref">6.2</span></td></tr>
-              <tr><td>Export Unit Value Index</td><td>2014–16 = 100</td><td>As for imports <span class="ref">7.1</span></td><td>As for imports <span class="ref">7.2</span></td></tr>
-              <tr><td>Export Real Value Index</td><td>2014–16 = 100</td><td class="na">Not produced <span class="ref">9.1</span></td><td>As for imports <span class="ref">9.2</span></td></tr>
+              <tr><td>Import Value Index</td><td>2014–16 = 100</td><td>Value ÷ country's own base-year average <span class="ref">6.1</span></td><td>Group value ÷ its 2014–16 average <span class="ref">6.2</span></td></tr>
+              <tr><td>Import Quantity Index</td><td>2014–16 = 100</td><td>Quantity ÷ country's own base-year average <span class="ref">7.1</span></td><td>Group tonnes ÷ its 2014–16 average <span class="ref">7.2</span></td></tr>
+              <tr><td>Import Unit Value Index</td><td>2014–16 = 100</td><td>Unit value ÷ base UV <span class="ref">8.1</span></td><td>Value index ÷ real value index × 100 <span class="ref">8.2</span></td></tr>
+              <tr><td>Import Real Value Index</td><td>2014–16 = 100</td><td class="na">Not produced — equals the quantity index <span class="ref">10.1</span></td><td>Group real value ÷ its 2014–16 average <span class="ref">10.2</span></td></tr>
+              <tr><td>Export Value Index</td><td>2014–16 = 100</td><td>As for imports <span class="ref">6.1</span></td><td>As for imports <span class="ref">6.2</span></td></tr>
+              <tr><td>Export Quantity Index</td><td>2014–16 = 100</td><td>As for imports <span class="ref">7.1</span></td><td>As for imports <span class="ref">7.2</span></td></tr>
+              <tr><td>Export Unit Value Index</td><td>2014–16 = 100</td><td>As for imports <span class="ref">8.1</span></td><td>As for imports <span class="ref">8.2</span></td></tr>
+              <tr><td>Export Real Value Index</td><td>2014–16 = 100</td><td class="na">Not produced <span class="ref">10.1</span></td><td>As for imports <span class="ref">10.2</span></td></tr>
               <tr class="grp fn"><td colspan="4">Real values — real_values_items.csv · real_values_aggregates.csv</td></tr>
-              <tr><td>Import Real Value</td><td>1000 USD at 2014–16 prices</td><td>Quantity × base UV <span class="ref">8.1</span></td><td>Σ item quantity × base UV <span class="ref">8.2</span></td></tr>
-              <tr><td>Export Real Value</td><td>1000 USD at 2014–16 prices</td><td>As for imports <span class="ref">8.1</span></td><td>As for imports <span class="ref">8.2</span></td></tr>
+              <tr><td>Import Real Value</td><td>1000 USD at 2014–16 prices</td><td>Quantity × base UV <span class="ref">9.1</span></td><td>Σ item quantity × base UV <span class="ref">9.2</span></td></tr>
+              <tr><td>Export Real Value</td><td>1000 USD at 2014–16 prices</td><td>As for imports <span class="ref">9.1</span></td><td>As for imports <span class="ref">9.2</span></td></tr>
             </tbody>
           </table>
-          <p class="note">Numbers in grey boxes refer to the methodology sections. When <code>Faostat_TradeIndices.csv</code> is in the main folder, the matching published FAOSTAT index is added next to each item index, e.g. "Import Value Index (FAOSTAT)".</p>
+          <p class="note">Numbers in grey boxes refer to the sections above. When <code>Faostat_TradeIndices.csv</code> is in the main folder, the matching published FAOSTAT index is added next to each item index, e.g. "Import Value Index (FAOSTAT)".</p>
         </div>
+
       </div>
     </div>
     </section>
@@ -693,6 +740,7 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
         <button data-s="list">All issues</button>
         <button data-s="lookup">Look up a series</button>
       </div>
+      <a class="btn cmt" data-cmt="items" href="#" target="_blank" rel="noopener" title="Opens a new GitHub issue about this page. Needs a GitHub account.">Comment on GitHub ↗</a>
     </div>
 
     <div class="sp on" id="s-summary">
@@ -812,6 +860,7 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
         <button data-s="list">All issues</button>
         <button data-s="lookup">Look up a series</button>
       </div>
+      <a class="btn cmt" data-cmt="agg" href="#" target="_blank" rel="noopener" title="Opens a new GitHub issue about this page. Needs a GitHub account.">Comment on GitHub ↗</a>
     </div>
     <p class="scope" id="aScope"></p>
 
@@ -921,6 +970,7 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
         <button data-s="list">All issues</button>
         <button data-s="lookup">Look up a series</button>
       </div>
+      <a class="btn cmt" data-cmt="rv" href="#" target="_blank" rel="noopener" title="Opens a new GitHub issue about this page. Needs a GitHub account.">Comment on GitHub ↗</a>
     </div>
     <div class="sp on" id="rs-summary">
       <div class="tiles" id="rTiles"></div>
@@ -931,8 +981,8 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
         <div id="gridRV"></div>
       </section>
       <section class="card">
-        <h2>Why real value and value diverge</h2>
-        <p class="sub">Real value = quantity × 2014–16 base unit value, so real value ÷ value = base unit value ÷ this year's unit value. A large gap means either the base unit value or that year's quantity/value is off — or prices really moved.</p>
+        <h2>When is the gap between real value and value a problem?</h2>
+        <p class="sub">Real value is meant to differ from value — the difference is the price change since 2014–16. It is flagged only when real value is over 10× or under a tenth of value, or jumps 10× in a year: too large for a price change, usually a data or base unit value problem.</p>
         <div id="rCauseCards"></div>
       </section>
       <section class="card">
@@ -994,7 +1044,10 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
 
   <!-- =============================== DETAIL (full page) =============================== -->
   <div class="page" id="p-detail">
-    <button class="btn back" id="dBack" type="button">← Back</button>
+    <div class="dbar">
+      <button class="btn back" id="dBack" type="button">← Back</button>
+      <a class="btn" id="dComment" href="#" target="_blank" rel="noopener" title="Opens a new GitHub issue for this series, with its name and a link back here filled in. Needs a GitHub account.">Comment on GitHub ↗</a>
+    </div>
     <section class="card" id="dBody"></section>
   </div>
 </main>
@@ -1333,7 +1386,7 @@ function openSeries(sid, focus) {
   showPage("detail");
   window.scrollTo(0, 0);
   mountSeries($("#dBody"), sid, focus);
-  history.pushState({ detail: { k: "i", id: sid, focus: focus || null } }, "");
+  history.pushState({ detail: { k: "i", id: sid, focus: focus || null } }, "", "#" + setComment("i", sid));
 }
 function closeDetail() {
   const r = RETURN || { page: "items", sub: "list", y: 0 };
@@ -1351,6 +1404,7 @@ window.addEventListener("popstate", e => {
     if (d.k === "a" && d.fm) setFam(d.fm);
     if (CUR.page !== "detail") showPage("detail");
     (d.k === "a" ? aMount : d.k === "r" ? rMount : mountSeries)($("#dBody"), d.id, d.focus || undefined);
+    setComment(d.k, d.id);
     window.scrollTo(0, 0);
   } else if (CUR.page === "detail") closeDetail();
 });
@@ -1678,7 +1732,7 @@ function openAgg(gs, focus) {
   showPage("detail");
   window.scrollTo(0, 0);
   aMount($("#dBody"), gs, focus);
-  history.pushState({ detail: { k: "a", id: gs, focus: focus || null, fm: CUR.fam } }, "");
+  history.pushState({ detail: { k: "a", id: gs, focus: focus || null, fm: CUR.fam } }, "", "#" + setComment("a", gs));
 }
 function pct(x) { return Math.round(Math.abs(x) * 100) + "%"; }
 function aExplain(gs, c) {
@@ -1939,9 +1993,9 @@ function aFillSelects() {
 let RISS = null, RCAT_ORDER, RGROUPS_DRAWN = false, RPAGE = 0, RISSIDX;
 const RV_DEF = {
   base_uv_off: ["Real value = quantity × base unit value, and the base unit value is far from other countries'.", "Real value is wrong by the same factor in every year. Usually a base UV borrowed from a group, or one bad base-year record."],
-  qv_mismatch: ["In one year, quantity and value imply a unit value far from other countries'.", "Real value uses the quantity, so a wrong quantity (or value) in that year makes real value and value diverge."],
+  qv_mismatch: ["In one year, quantity and value imply a unit value far from other countries'.", "Real value uses the quantity, so a wrong quantity (or value) in that year puts real value far from value — much further than any price change could explain."],
   tiny_flow: ["The year's record is negligible (Q < 10 t or V < 10 thousand USD).", "Unit values from tiny records are meaningless, so the real value / value ratio is too."],
-  trend: ["Real value and value diverge because prices really moved.", "Other countries' unit value moved the same way — expected, not an error."]
+  trend: ["The gap is large because prices really moved that much since 2014–16.", "Other countries' unit value moved the same way — expected, not an error."]
 };
 const RV_LABEL = { base_uv_off: "Base unit value off", qv_mismatch: "Quantity or value wrong in year", tiny_flow: "Negligible record", trend: "Real price change" };
 const RV_GROUP = { base_uv_off: "Base", qv_mismatch: "Year", tiny_flow: "Year", trend: "Level" };
@@ -1981,7 +2035,7 @@ function openRV(sid, focus) {
   showPage("detail");
   window.scrollTo(0, 0);
   rMount($("#dBody"), sid, focus);
-  history.pushState({ detail: { k: "r", id: sid, focus: focus || null } }, "");
+  history.pushState({ detail: { k: "r", id: sid, focus: focus || null } }, "", "#" + setComment("r", sid));
 }
 function rExplain(sid, c) {
   const S = D.series, y = D.cells.y[c], yi = y - Y0, iv = idxVals(sid, yi), id = rid(D.cells.c[c]);
@@ -2036,7 +2090,7 @@ function rRender(sid, focus) {
       h += `<div class="item ${g.sev === 2 ? "c" : "w"}"><div class="hd"><span class="sev ${g.sev === 2 ? "c" : "w"}">${g.sev === 2 ? "Critical" : "Warning"}</span><b>${RV_LABEL[rid(ci)]}</b><span class="drv">${RV_GROUP[rid(ci)]}</span><span class="yrs">${yrs.length} year${yrs.length > 1 ? "s" : ""} · ${yrsRange(yrs)}</span></div><p>${rExplain(sid, g.worst)}</p></div>`;
     }
     h += `</div>`;
-  } else h += `<p class="note" style="margin:0 0 22px">Real value and value do not diverge abnormally in this series.</p>`;
+  } else h += `<p class="note" style="margin:0 0 22px">The gap between real value and value stays within what price changes can explain in this series.</p>`;
   const bc = y => D.base_years.includes(y) ? " bcol" : "";
   const has = x => x !== null && x !== undefined;
   h += `<div class="ts-wrap"><table class="ts"><thead><tr><th class="lab">${esc(nm.area)}, ${esc(nm.item)}</th>`;
@@ -2248,6 +2302,63 @@ function dataGrid(id, G) {
     seg.querySelectorAll("button").forEach(b => b.onclick = () => { DG_MODE[id] = b.dataset.m; seg.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); dataGrid(id, G); });
   }
 }
+// ---------------------------------------------------------------- comments on GitHub and links to one series
+const GH_REPO = "https://github.com/mbirkand/Trade-Real-Value-and-Indices";
+const PAGE_URL = "https://mbirkand.github.io/Trade-Real-Value-and-Indices/results/diagnostics_dashboard.html";
+const flowKey = f => f === "Export" ? "x" : "m";
+function detailRef(k, id) {
+  if (k === "a") {
+    const n = aName(id);
+    return { hash: ["a", CUR.fam, n.lvl === "Region" ? "r" : "c", n.acode, n.gcode, flowKey(n.flow)].map(encodeURIComponent).join("/"),
+             title: `${n.area} [${n.acode}] · ${n.grp} [${n.gcode}] · ${n.flow}`,
+             where: `${CUR.fam === "vq" ? "Indices" : "Real values"} → Item groups & regions (${n.lvl.toLowerCase()})` };
+  }
+  const n = seriesName(id);
+  return { hash: [k, n.acode, n.icode, flowKey(n.flow)].map(encodeURIComponent).join("/"),
+           title: `${n.area} [${n.acode}] · ${n.item} [${n.icode}] · ${n.flow}`,
+           where: `${k === "r" ? "Real values" : "Indices"} → Countries × items` };
+}
+function setComment(k, id) {
+  const r = detailRef(k, id);
+  const body = `**Series:** ${r.title}\n**Dashboard view:** ${r.where}\n**Link:** ${PAGE_URL}#${r.hash}\n**Outputs of:** ${D.meta.outputs_date}\n\n**Comment:**\n\n`;
+  $("#dComment").href = `${GH_REPO}/issues/new?title=${encodeURIComponent(r.title)}&body=${encodeURIComponent(body)}`;
+  return r.hash;
+}
+function findSeries(acode, icode, f) {
+  const S = D.series;
+  for (let s = 0; s < S.a.length; s++) if (S.f[s] === f && D.areas.code[S.a[s]] === acode && D.items.code[S.i[s]] === icode) return s;
+  return -1;
+}
+function findAgg(lv, acode, gcode, f) {
+  const S = AD.series;
+  for (let g = 0; g < S.a.length; g++) if (S.f[g] === f && S.lv[g] === lv && AD.areas.code[S.a[g]] === acode && AD.groups.code[S.g[g]] === gcode) return g;
+  return -1;
+}
+// comment on a whole page (summary, examples, list or lookup)
+const SUB_LABEL = { summary: "Summary", groups: "Real examples by cause", list: "All issues", lookup: "Look up a series" };
+function viewIssueUrl(k) {
+  const tab = k === "agg" ? (CUR.fam === "vq" ? "Indices" : "Real values") : k === "rv" ? "Real values" : "Indices";
+  const lvl = k === "agg" ? "Item groups & regions" : "Countries × items";
+  const sub = SUB_LABEL[k === "agg" ? CUR.asub : k === "rv" ? CUR.rsub : CUR.sub] || "";
+  const title = `${tab} · ${lvl} · ${sub}`;
+  const body = `**Dashboard view:** ${tab} → ${lvl} → ${sub}\n**Link:** ${PAGE_URL}\n**Outputs of:** ${D ? D.meta.outputs_date : ""}\n\n**Comment:**\n\n`;
+  return `${GH_REPO}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+}
+document.querySelectorAll("a.cmt").forEach(a => a.addEventListener("click", () => { a.href = viewIssueUrl(a.dataset.cmt); }));
+// a link such as …diagnostics_dashboard.html#i/368/2161/m opens that series directly
+async function openFromHash() {
+  const p = location.hash.slice(1).split("/").map(x => decodeURIComponent(x));
+  if (!["i", "r", "a"].includes(p[0])) return;
+  history.replaceState(null, "", location.pathname + location.search);
+  if (p[0] === "a") {
+    await loadAgg();
+    const g = findAgg(p[2] === "r" ? 1 : 0, p[3], p[4], p[5] === "x" ? 1 : 0); if (g < 0) return;
+    goAgg(p[1] === "ru" ? "ru" : "vq"); openAgg(g);
+  } else {
+    const s = findSeries(p[1], p[2], p[3] === "x" ? 1 : 0); if (s < 0) return;
+    if (p[0] === "r") { showPage("rv"); openRV(s); } else { showPage("items"); openSeries(s); }
+  }
+}
 // ---------------------------------------------------------------- boot
 async function boot() {
   const bin = atob(PAYLOAD.trim()), u8 = new Uint8Array(bin.length);
@@ -2265,6 +2376,7 @@ async function boot() {
   drawSummary(); fillSelects(); renderList();
   READY = true;
   showPage(CUR.page);
+  openFromHash().catch(e => console.error(e));
 }
 boot().catch(e => { $("#loading").style.display = "block"; $("#loading").textContent = "Could not load the data: " + e.message + ". Use a current version of Chrome, Edge, Safari or Firefox."; console.error(e); });
 </script>
