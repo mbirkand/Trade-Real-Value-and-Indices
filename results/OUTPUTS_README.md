@@ -60,9 +60,9 @@ Our item indices next to published FAOSTAT indices. Only produced when
 ## Diagnostics (built at the end of every run, Step 8)
 
 **`diagnostics_dashboard.html`** — open in a browser. Three tabs: Methodology,
-Item indices and Real values. Item indices and Real values each switch between
+Indices and Real values. Indices and Real values each switch between
 countries × items and item groups & regions: aggregate value and quantity indices
-are checked under Item indices, aggregate real value and unit value indices under
+are checked under Indices, aggregate real value and unit value indices under
 Real values. For every extreme value: the source data, the calculation and the cause.
 
 **`checks/diagnostics_item_indices.csv`**, **`checks/diagnostics_aggregates.csv`**,

@@ -344,7 +344,7 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
   </div>
   <nav class="tabs" id="tabs">
     <button data-p="method" class="on">Methodology</button>
-    <button data-p="items">Item indices</button>
+    <button data-p="items">Indices</button>
     <button data-p="rv">Real values</button>
   </nav>
 </div></header>
@@ -799,7 +799,7 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
     </div>
   </div>
 
-  <!-- ============ AGGREGATES (shown inside Item indices or Real values) ============ -->
+  <!-- ============ AGGREGATES (shown inside Indices or Real values) ============ -->
   <div class="page" id="p-agg">
     <div class="pagebar">
       <div class="level" aria-label="Level">
@@ -1569,13 +1569,13 @@ const AGCLS = { Base: "g-base", Coverage: "g-coverage", Member: "g-member", Year
 const AGNAME = { Base: "Base problem", Coverage: "Coverage", Member: "One member", Year: "One-off year", Level: "Real change" };
 const acatLabel = ci => AD.cats.label[ci];
 // The aggregate checks are split in two families, shown under two tabs:
-//   vq = value and quantity indices        -> Item indices tab
+//   vq = value and quantity indices        -> Indices tab
 //   ru = real value and unit value indices -> Real values tab
 const FAMT = { vq: [0, 1], ru: [2, 3] };
 const FAM_TXT = {
   vq: { scope: "Value and quantity indices of item groups, for single countries and for regions. Real value and unit value indices of the same groups are checked under <b>Real values</b>.",
         checks: "Applied to every aggregate value index and quantity index value.", idx: "value and quantity index values", none: "No flagged value or quantity index values in this aggregate." },
-  ru: { scope: "Real value and unit value indices of item groups, for single countries and for regions. The group unit value index is value index ÷ real value index, so it is checked here with real value. Value and quantity indices of the same groups are checked under <b>Item indices</b>.",
+  ru: { scope: "Real value and unit value indices of item groups, for single countries and for regions. The group unit value index is value index ÷ real value index, so it is checked here with real value. Value and quantity indices of the same groups are checked under <b>Indices</b>.",
         checks: "Applied to every aggregate real value index and unit value index value.", idx: "real value and unit value index values", none: "No flagged real value or unit value index values in this aggregate." }
 };
 const famOfT = t => t <= 1 ? "vq" : "ru";
@@ -1790,7 +1790,7 @@ function aRender(gs, focus) {
   h += row(`${nm.flow} Real value <span class="u">[1000 $, 2014–16 prices]</span>`, (yi, y) => { const v = aVals(gs, yi).R; return `<td class="v${bc(y)}">${has(v) ? fmt(v) : ""}</td>`; });
   h += `<tr class="grp"><td class="lab">Calculated · 2014–16 = 100</td><td colspan="${NY}"></td></tr>`;
   for (let t = 0; t < 4; t++) {
-    h += row(FT.includes(t) ? `${ATYPE_NAME[t]} index` : `${ATYPE_NAME[t]} index <span class="u">checked under ${CUR.fam === "vq" ? "Real values" : "Item indices"}</span>`, (yi, y) => {
+    h += row(FT.includes(t) ? `${ATYPE_NAME[t]} index` : `${ATYPE_NAME[t]} index <span class="u">checked under ${CUR.fam === "vq" ? "Real values" : "Indices"}</span>`, (yi, y) => {
       const x = aIdx(aVals(gs, yi), t), c = cellAt.get(t + "|" + y);
       let cls = "v" + bc(y), tip = "";
       if (c !== undefined) { cls += AD.cells.sev[c] === 2 ? " cc" : " cw"; tip = ` title="${esc((AD.cells.sev[c] === 2 ? "Critical" : "Warning") + " · " + acatLabel(AD.cells.c[c]))}"`; }

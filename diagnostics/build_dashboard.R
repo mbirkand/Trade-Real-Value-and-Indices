@@ -529,7 +529,7 @@ if (!is.null(AGG)) {
   setorder(GS, gsid)
   PA[, mag := abs(log10(x / 100))]
   # Issues are kept per index family, as the dashboard shows them under two tabs:
-  #   VQ = value and quantity indices (Item indices), RU = real value and unit value indices (Real values)
+  #   VQ = value and quantity indices (Indices tab), RU = real value and unit value indices (Real values)
   PA[, fam := fifelse(type %in% c("V", "Q"), "VQ", "RU")]
   AI <- PA[order(-sev, -mag), .(sev = max(sev), n = .N, n_crit = sum(sev == 2),
            types = paste(intersect(c("V", "Q", "R", "U"), unique(type)), collapse = " "),
