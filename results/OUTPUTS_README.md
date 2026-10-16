@@ -59,13 +59,17 @@ Our item indices next to published FAOSTAT indices. Only produced when
 
 ## Diagnostics (built at the end of every run, Step 8)
 
-**`diagnostics_dashboard.html`** — open in a browser. Methodology, then item
-indices, aggregates and real values: the source data, the calculation and the
-cause of every extreme value.
+**`diagnostics_dashboard.html`** — open in a browser. Three tabs: Methodology,
+Item indices and Real values. Item indices and Real values each switch between
+countries × items and item groups & regions: aggregate value and quantity indices
+are checked under Item indices, aggregate real value and unit value indices under
+Real values. For every extreme value: the source data, the calculation and the cause.
 
 **`checks/diagnostics_item_indices.csv`**, **`checks/diagnostics_aggregates.csv`**,
 **`checks/diagnostics_real_values.csv`** — the same issues as tables, one row per
-series × cause, in order of importance.
+series × cause, in order of importance. The aggregates file has one list per index
+family (column `Index family`: value & quantity, or real value & unit value), each
+ranked on its own.
 
 **`checks/diagnostics_aggregates_cache.rds`** — lets the dashboard script be run
 on its own (outside the pipeline) and still show aggregates.

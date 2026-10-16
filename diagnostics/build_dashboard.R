@@ -528,23 +528,29 @@ if (!is.null(AGG)) {
   GS <- merge(GS, unique(AGG$scope[, .(grp, grp_name)], by = "grp"), by = "grp", all.x = TRUE)
   setorder(GS, gsid)
   PA[, mag := abs(log10(x / 100))]
+  # Issues are kept per index family, as the dashboard shows them under two tabs:
+  #   VQ = value and quantity indices (Item indices), RU = real value and unit value indices (Real values)
+  PA[, fam := fifelse(type %in% c("V", "Q"), "VQ", "RU")]
   AI <- PA[order(-sev, -mag), .(sev = max(sev), n = .N, n_crit = sum(sev == 2),
            types = paste(intersect(c("V", "Q", "R", "U"), unique(type)), collapse = " "),
            y0 = min(year), y1 = max(year), worst_type = type[1], worst_year = year[1], worst_x = x[1],
-           years = paste(sort(unique(year)), collapse = " ")), by = .(gsid, acat, acat_i)]
+           years = paste(sort(unique(year)), collapse = " ")), by = .(fam, gsid, acat, acat_i)]
   AI <- merge(AI, GS[, .(gsid, lvl, area, area_name, grp, grp_name, flow, size)], by = "gsid")
   AI[, tier := as.numeric(match(ACATS$driver[acat_i + 1L], c("Base", "Coverage", "Member", "Year", "Level")))]
   AI[acat == "a_tiny_flow", tier := 4.5]
-  setorder(AI, -sev, tier, -size, gsid)
-  AI[, rank := .I]
-  # the representative point of every issue (worst value) and its top members
-  REP <- unique(PA[order(-sev, -mag)], by = c("gsid", "acat"))[, .(gsid, acat, year, type)]
-  AI <- merge(AI, REP, by = c("gsid", "acat"))
-  setorder(AI, rank)
+  AI[, fam_o := match(fam, c("VQ", "RU"))]
+  setorder(AI, fam_o, -sev, tier, -size, gsid)
+  AI[, rank := rowid(fam)]          # rank within the family
+  AI[, k := .I]                     # row of the issue in the payload
+  # the representative point of every issue (worst value of its family) and its top members
+  REP <- unique(PA[order(-sev, -mag)], by = c("fam", "gsid", "acat"))[, .(fam, gsid, acat, year, type)]
+  AI <- merge(AI, REP, by = c("fam", "gsid", "acat"))
+  setorder(AI, k)
   TOPI <- merge(REP, AGG$TOP, by = c("gsid", "year", "type"))
-  TOPI <- merge(TOPI, AI[, .(gsid, acat, rank)], by = c("gsid", "acat"))
-  setorder(TOPI, rank, rk)
-  fwrite(AI[, .(Rank = rank, Severity = fifelse(sev == 2, "Critical", "Warning"), Category = ACATS$label[acat_i + 1L],
+  TOPI <- merge(TOPI, AI[, .(fam, gsid, acat, k)], by = c("fam", "gsid", "acat"))
+  setorder(TOPI, k, rk)
+  fwrite(AI[, .(`Index family` = fifelse(fam == "VQ", "Value & quantity", "Real value & unit value"),
+                Rank = rank, Severity = fifelse(sev == 2, "Critical", "Warning"), Category = ACATS$label[acat_i + 1L],
                 Level = lvl, `Area Code (M49)` = area, Area = area_name, `Item Group Code` = grp, `Item Group` = grp_name,
                 Flow = flow, `Indices affected` = gsub("R", "RV", gsub("U", "UV", types)), `Flagged values` = n,
                 `Critical values` = n_crit, `First year` = y0, `Last year` = y1, Years = years,
@@ -564,7 +570,7 @@ if (!is.null(AGG)) {
   TOPI[, marea := norm_a(area)]
   TOPI <- merge(TOPI, SER[lvl == "Country", .(m_gsid = gsid, member = area, grp, flow)], by = c("member", "grp", "flow"), all.x = TRUE)
   TOPI[lvl == "Country", m_gsid := NA]
-  setorder(TOPI, rank, rk)
+  setorder(TOPI, k, rk)
 
   agg_payload <- list(
     cats = ACATS,
@@ -627,7 +633,10 @@ payload <- list(
 
 if (!is.null(agg_payload)) {
   ap <- agg_payload
-  GS <- ap$GS; AA <- ap$A; PA <- ap$PA; AI <- ap$AI; TOPI <- ap$TOPI
+  GS <- ap$GS; AA <- ap$A; PA <- ap$PA; AI <- copy(ap$AI); TOPI <- copy(ap$TOPI)
+  # caches written before the index-family split: one issue list, the dashboard splits it
+  if (!"k" %in% names(AI)) { AI[, k := rank]; TOPI[, k := rank] }
+  setorder(AI, k)
   setorder(GS, gsid); setorder(AA, gsid, year)
   stopifnot(nrow(AA) == nrow(GS) * length(yrs), all(AA$year == rep(yrs, nrow(GS))))
   areasA <- ap$areas; groups <- ap$groups
@@ -639,7 +648,7 @@ if (!is.null(agg_payload)) {
   # member links: item series in this run's S (country level)
   TOPI <- merge(TOPI, S[, .(m_sid = sid, marea = area, member = item, flow)], by = c("marea", "member", "flow"), all.x = TRUE)
   TOPI[lvl == "Region", m_sid := NA]
-  setorder(TOPI, rank, rk)
+  setorder(TOPI, k, rk)
   payload_agg <- list(
     years = yrs, base_years = CFG$base_years, cfg = CFG, mnames = mnames,
     cats = ap$cats, verify = ap$VER, built = ap$built,
@@ -655,10 +664,11 @@ if (!is.null(agg_payload)) {
                  nbm = signif(PA$nbm_out, 4), op = as.integer(PA$odd_prev),
                  sh = round(PA$top_share, 3), sn = round(PA$share_new, 3), sl = round(PA$share_lost, 3),
                  nn = PA$n_new, nl = PA$n_lost, si = PA$sub_i, sc = PA$sub_c),
-    issues = list(s = AI$gsid - 1L, c = AI$acat_i, sev = AI$sev, n = AI$n, nc = AI$n_crit, ty = AI$types,
+    issues = c(list(s = AI$gsid - 1L, c = AI$acat_i, sev = AI$sev, n = AI$n, nc = AI$n_crit, ty = AI$types,
                   y0 = AI$y0, y1 = AI$y1, wt = match(AI$worst_type, c("V", "Q", "R", "U")) - 1L, wy = AI$worst_year,
                   wx = signif(AI$worst_x, 5), ry = AI$year, rt = match(AI$type, c("V", "Q", "R", "U")) - 1L),
-    top = list(r = TOPI$rank - 1L, m = match(TOPI$mname, mnames) - 1L, b = sg6(TOPI$b), a = sg6(TOPI$a), d = sg6(TOPI$d),
+               if ("fam" %in% names(AI)) list(fm = tolower(AI$fam))),
+    top = list(r = TOPI$k - 1L, m = match(TOPI$mname, mnames) - 1L, b = sg6(TOPI$b), a = sg6(TOPI$a), d = sg6(TOPI$d),
                ms = TOPI$m_sid - 1L, mg = TOPI$m_gsid - 1L)
   )
 } else payload_agg <- list(none = TRUE)

@@ -79,6 +79,22 @@ table.plain td { padding: 11px 14px; border-bottom: 1px solid var(--border); ver
 table.plain td:first-child { font-weight: 550; }
 @media (min-width: 701px) { table.plain td:first-child { white-space: nowrap; } }
 table.plain code { overflow-wrap: anywhere; }
+.toc .toc-grp { font-size: 12.5px; color: var(--muted); font-weight: 600; margin: 14px 0 4px; }
+.doc-sec h2 .lv { font-size: 13px; font-weight: 550; color: var(--chip-text); background: var(--chip); border-radius: 6px; padding: 1px 8px; letter-spacing: 0; }
+.doc-sec p.what { font-size: 16px; color: var(--text); margin-bottom: 4px; }
+dl.facts { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 8px 20px; margin: 0 0 8px; }
+dl.facts dt { color: var(--muted); font-weight: 550; font-size: 14.5px; padding-top: 1px; }
+dl.facts dd { margin: 0; }
+@media (max-width: 700px) { dl.facts { grid-template-columns: minmax(0, 1fr); gap: 2px; } dl.facts dd { margin-bottom: 8px; } }
+.mex { overflow-x: auto; border: 1px solid var(--border); border-radius: 9px; margin: 10px 0 14px; }
+.mex table { border-collapse: collapse; font-size: 14px; width: 100%; }
+.mex th, .mex td { padding: 7px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.mex tr:last-child td { border-bottom: 0; }
+.mex th { background: var(--surface-2); font-weight: 600; }
+.mex th:first-child, .mex td:first-child, .mex td.l { text-align: left; color: var(--text-2); font-weight: 500; }
+.mex th.b { background: #e6eefa; color: var(--accent); } .mex td.b { background: var(--base-col); }
+.mex .m { font-size: 11.5px; color: var(--muted); margin-left: 4px; }
+table.plain th.r, table.plain td.r { text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 1000px) { .doc { grid-template-columns: minmax(0, 1fr); } .toc { display: none; } }
 .doc-body, .cause, .tile { min-width: 0; }
 
@@ -268,6 +284,14 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
 .subnav button { border: 0; background: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; color: var(--text-2); font-weight: 550; font-size: 14.5px; }
 .subnav button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
 .sp { display: none; } .sp.on { display: block; }
+.pagebar { display: flex; align-items: center; gap: 14px 22px; flex-wrap: wrap; margin-bottom: 28px; }
+.pagebar .subnav { margin-bottom: 0; }
+.level { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 11px; overflow: hidden; background: var(--surface); }
+.level button { border: 0; background: none; padding: 9px 18px; cursor: pointer; color: var(--text-2); font-weight: 600; font-size: 14.5px; }
+.level button + button { border-left: 1px solid var(--border-strong); }
+.level button.on { background: var(--accent); color: #fff; }
+.level button:focus-visible, .subnav button:focus-visible, nav.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
 
 /* ---------- bars ---------- */
 .hbar { display: grid; grid-template-columns: 220px 1fr 90px; gap: 12px 16px; align-items: center; font-size: 14.5px; }
@@ -301,7 +325,6 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
   <nav class="tabs" id="tabs">
     <button data-p="method" class="on">Methodology</button>
     <button data-p="items">Item indices</button>
-    <button data-p="agg">Aggregates</button>
     <button data-p="rv">Real values</button>
   </nav>
 </div></header>
@@ -317,10 +340,19 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
         <a href="#m-data">1 · Data and scope</a>
         <a href="#m-prep">2 · Preparing the data</a>
         <a href="#m-buv">3 · Base unit value</a>
-        <a href="#m-idx">4 · Item indices</a>
-        <a href="#m-rv">5 · Real values</a>
-        <a href="#m-agg">6 · Aggregates</a>
-        <a href="#m-dec">7 · Decisions at a glance</a>
+        <div class="toc-grp">Country × item</div>
+        <a href="#m-iv">4 · Value index</a>
+        <a href="#m-iq">5 · Quantity index</a>
+        <a href="#m-iu">6 · Unit value index</a>
+        <a href="#m-rv">7 · Real value</a>
+        <div class="toc-grp">Item groups and regions</div>
+        <a href="#m-agg">8 · Group totals</a>
+        <a href="#m-av">9 · Value index</a>
+        <a href="#m-aq">10 · Quantity index</a>
+        <a href="#m-ar">11 · Real value index</a>
+        <a href="#m-au">12 · Unit value index</a>
+        <a href="#m-cmp">13 · The four aggregate indices side by side</a>
+        <a href="#m-dec">14 · Decisions at a glance</a>
       </nav>
       <div class="doc-body">
         <div class="doc-sec" id="m-overview">
@@ -330,6 +362,7 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
             <li>Base period <b>2014–2016 = 100</b>.</li>
             <li>Imports and exports are calculated separately throughout. A country can have results for one flow and not the other.</li>
             <li>Values are in thousand USD, quantities in tonnes, unit values in thousand USD per tonne (shown as $/t on the other pages).</li>
+            <li>Sections 4–7 cover one country × item. Sections 8–13 cover item groups and regions, where the indices are built from summed totals and behave differently.</li>
           </ul>
         </div>
 
@@ -367,7 +400,7 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
             <li>If no parent group has a unit value for both years of a step, the parent's own unit value for the missing year is used.</li>
             <li>If the country has <b>no base-year data at all</b>, the parent group's base UV is used as it is.</li>
           </ol>
-          <div class="callout">This filling applies <b>only to the base unit value</b> — and so to the unit value index and to real values. The value and quantity indices are never filled from larger areas (section 4).</div>
+          <div class="callout">This filling applies <b>only to the base unit value</b> — and so to the unit value index and to real values. The value and quantity indices are never filled from larger areas (sections 4 and 5).</div>
           <h4>Parent groups</h4>
           <ul>
             <li>The country's regional groups, smallest first: tier 1 → tier 2 → tier 3 → global (all countries).</li>
@@ -376,64 +409,173 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
             <li>No outlier filtering is applied to base unit values.</li>
           </ul>
           <p>Every flow records where its base UV came from: <b>country</b> (all three years own data), <b>imputed</b> (some years rebuilt) or the <b>group name</b> / <b>global</b> (taken from a group).</p>
+          <h4>Example used in sections 4–7</h4>
+          <p>Wheat imports of one country, with all three base years reported:</p>
+          <div class="mex"><table>
+            <thead><tr><th></th><th class="b">2014</th><th class="b">2015</th><th class="b">2016</th><th class="b">Base</th><th>2020</th></tr></thead>
+            <tbody>
+              <tr><td>Quantity (t)</td><td class="b">1,000</td><td class="b">1,200</td><td class="b">800</td><td class="b">1,000 <span class="m">mean</span></td><td>1,500</td></tr>
+              <tr><td>Value (1000 $)</td><td class="b">200</td><td class="b">216</td><td class="b">176</td><td class="b">197.3 <span class="m">mean</span></td><td>360</td></tr>
+              <tr><td>Unit value ($/t)</td><td class="b">200</td><td class="b">180</td><td class="b">220</td><td class="b">200 <span class="m">base UV</span></td><td>240</td></tr>
+            </tbody></table></div>
         </div>
 
-        <div class="doc-sec" id="m-idx">
-          <h2><span class="n">4</span>Item indices</h2>
-          <div class="eq">
-            <span class="row"><span class="lhs">Value index<sub>t</sub></span> = V<sub>t</sub> ÷ mean(V<sub>2014–16</sub>) × 100</span>
-            <span class="row"><span class="lhs">Quantity index<sub>t</sub></span> = Q<sub>t</sub> ÷ mean(Q<sub>2014–16</sub>) × 100</span>
-            <span class="row"><span class="lhs">Unit value index<sub>t</sub></span> = UV<sub>t</sub> ÷ base UV × 100</span>
-          </div>
-          <ul>
-            <li>The value and quantity denominators are the average of the country's <b>own valid base years</b> (one, two or three of them). A country with none gets no value or quantity index.</li>
-            <li>The unit value denominator is the base UV from section 3, which may be rebuilt.</li>
-            <li>There is no real value index at item level: with a fixed base UV it would equal the quantity index.</li>
-          </ul>
-          <div class="callout"><b>Missing base years are not filled for value and quantity.</b> Only the base unit value borrows from larger areas (section 3). If a country has only 2014, the value and quantity base is 2014 alone; if that single record is small, an ordinary later year produces a very large index. Example: Bangladesh soya bean oil exports have only 2014 (0.002 t), so 22,000 t in 2019 gives a quantity index of 1,100,000,000 — while the rebuilt base unit value (6,330 $/t) keeps the unit value index near 13. The <b>Item indices</b> tab explains these cases.</div>
+        <div class="doc-sec" id="m-iv">
+          <h2><span class="n">4</span>Value index <span class="lv">country × item</span></h2>
+          <p class="what">How the trade value in current US dollars changed since 2014–16. It moves with both prices and volumes.</p>
+          <div class="eq"><span class="row"><span class="lhs">Value index<sub>t</sub></span> = V<sub>t</sub> ÷ mean(V<sub>2014–16</sub>) × 100</span></div>
+          <dl class="facts">
+            <dt>Denominator</dt><dd>The average value over the country's <b>own</b> valid base years — one, two or three of them. Never filled from a group.</dd>
+            <dt>No index when</dt><dd>The country has no valid base year for the item and flow.</dd>
+            <dt>Example</dt><dd>360 ÷ 197.3 × 100 = <b>182.4</b>: the 2020 import bill is 82% above the base.</dd>
+          </dl>
+          <div class="callout">If only one base year exists and it is small, every later year is divided by that small number. A single 2014 record of 2 thousand USD turns an ordinary 2,000 thousand USD year into an index of 100,000.</div>
+        </div>
+
+        <div class="doc-sec" id="m-iq">
+          <h2><span class="n">5</span>Quantity index <span class="lv">country × item</span></h2>
+          <p class="what">How the traded tonnage changed since 2014–16. Prices play no part.</p>
+          <div class="eq"><span class="row"><span class="lhs">Quantity index<sub>t</sub></span> = Q<sub>t</sub> ÷ mean(Q<sub>2014–16</sub>) × 100</span></div>
+          <dl class="facts">
+            <dt>Denominator</dt><dd>The average quantity over the country's own valid base years, as for the value index. Never filled from a group.</dd>
+            <dt>No index when</dt><dd>The country has no valid base year for the item and flow.</dd>
+            <dt>Example</dt><dd>1,500 ÷ 1,000 × 100 = <b>150</b>: 50% more tonnes than in the base.</dd>
+          </dl>
+          <div class="callout">Same weakness as the value index. Bangladesh soya bean oil exports have only 2014 (0.002 t), so 22,000 t in 2019 gives a quantity index of 1,100,000,000. The <b>Item indices</b> tab explains these cases.</div>
+        </div>
+
+        <div class="doc-sec" id="m-iu">
+          <h2><span class="n">6</span>Unit value index <span class="lv">country × item</span></h2>
+          <p class="what">How the price per tonne changed since 2014–16.</p>
+          <div class="eq"><span class="row"><span class="lhs">Unit value index<sub>t</sub></span> = UV<sub>t</sub> ÷ base UV × 100<span class="c">UV<sub>t</sub> = V<sub>t</sub> ÷ Q<sub>t</sub></span></span></div>
+          <dl class="facts">
+            <dt>Denominator</dt><dd>The base UV from section 3. Unlike the value and quantity bases, it may be rebuilt or taken from a group.</dd>
+            <dt>No index when</dt><dd>The year has no valid observation (Q &gt; 0 and V &gt; 0), or no base UV could be built.</dd>
+            <dt>Example</dt><dd>240 ÷ 200 × 100 = <b>120</b>: wheat cost 20% more per tonne than in the base.</dd>
+          </dl>
+          <div class="callout">Value index ≠ quantity index × unit value index ÷ 100. In the example, 150 × 120 ÷ 100 = 180, not 182.4. The base UV is the average of the yearly unit values (200 $/t), not mean value ÷ mean quantity (197.3 $/t), and it may come from a group while the other two bases cannot.</div>
         </div>
 
         <div class="doc-sec" id="m-rv">
-          <h2><span class="n">5</span>Real values</h2>
+          <h2><span class="n">7</span>Real value <span class="lv">country × item</span></h2>
+          <p class="what">This year's volume priced at 2014–16 prices: the value the trade would have had if prices had not changed.</p>
           <div class="eq"><span class="row"><span class="lhs">Real value<sub>t</sub></span> = Q<sub>t</sub> × base UV<span class="c">thousand USD at 2014–16 prices</span></span></div>
-          <ul>
-            <li>Current volumes priced at base-period prices, so price changes are removed.</li>
-            <li>Calculated wherever the quantity and a base UV exist — including flows whose base UV came from a group.</li>
-          </ul>
+          <dl class="facts">
+            <dt>Inputs</dt><dd>The year's quantity and the base UV from section 3.</dd>
+            <dt>Calculated when</dt><dd>Both exist — including flows whose base UV was rebuilt or taken from a group, and flows that have no quantity index.</dd>
+            <dt>Example</dt><dd>1,500 t × 200 $/t = <b>300</b> thousand USD. The actual value is 360, so 60 of it is the price rise.</dd>
+          </dl>
+          <div class="callout">There is no real value <i>index</i> for a single item. With one fixed base UV it would cancel out and leave exactly the quantity index: (1,500 × 200) ÷ (1,000 × 200) × 100 = 150. Real value becomes its own measure only when different items are added up (section 11).</div>
         </div>
 
         <div class="doc-sec" id="m-agg">
-          <h2><span class="n">6</span>Aggregates</h2>
-          <p>Items are summed into item groups, and countries into regions.</p>
+          <h2><span class="n">8</span>Group totals <span class="lv">item groups and regions</span></h2>
+          <p class="what">Before any aggregate index is calculated, items are summed into item groups, and countries into regions. Each index in sections 9–12 is built from one of these totals.</p>
           <h4>Country × item group</h4>
           <div class="eq">
-            <span class="row"><span class="lhs">Value</span> = Σ V<sub>i</sub></span>
-            <span class="row"><span class="lhs">Quantity</span> = Σ Q<sub>i</sub> × factor<sub>i</sub></span>
-            <span class="row"><span class="lhs">Real value</span> = Σ Q<sub>i</sub> × factor<sub>i</sub> × base UV<sub>i</sub></span>
+            <span class="row"><span class="lhs">Group value<sub>t</sub></span> = Σ V<sub>i,t</sub></span>
+            <span class="row"><span class="lhs">Group quantity<sub>t</sub></span> = Σ Q<sub>i,t</sub> × factor<sub>i</sub><span class="c">tonnes</span></span>
+            <span class="row"><span class="lhs">Group real value<sub>t</sub></span> = Σ Q<sub>i,t</sub> × factor<sub>i</sub> × base UV<sub>i</sub><span class="c">thousand USD at 2014–16 prices</span></span>
           </div>
           <ul>
             <li>The item factor applies to quantity and real value, not to value.</li>
             <li>An item can belong to more than one group.</li>
-            <li>An item with no data in a year drops out of that year's sum.</li>
+            <li>An item with no data in a year drops out of that year's sum. An item reported with value but no quantity counts in the group value, but not in the group quantity or real value.</li>
           </ul>
           <h4>Region × item group</h4>
           <ul>
-            <li>Sum of the country × item group results over member countries with Aggregation = TRUE.</li>
+            <li>Sum of the country × item group totals over member countries with Aggregation = TRUE.</li>
           </ul>
-          <h4>Aggregate indices</h4>
-          <div class="eq">
-            <span class="row"><span class="lhs">Value / Quantity / Real value index<sub>t</sub></span> = aggregate<sub>t</sub> ÷ mean(aggregate<sub>2014–16</sub>) × 100</span>
-            <span class="row"><span class="lhs">Unit value index<sub>t</sub></span> = Value index<sub>t</sub> ÷ Real value index<sub>t</sub> × 100</span>
-          </div>
+          <h4>Base of every aggregate index</h4>
           <ul>
-            <li>Each aggregate is rebased on its own 2014–16 average.</li>
-            <li>The <b>real value index</b> is the volume index for a group: it weights items by base-period prices, so different commodities can be added up.</li>
-            <li>The <b>unit value index</b> is the price change at constant item mix. Dividing group value by group tonnes would mix price changes with shifts between cheap and expensive items, so it is not used.</li>
+            <li>The average of the <b>group total</b> over 2014–16 — not the sum of the items' own bases. An item or country that enters the group after the base adds to later years but not to the base.</li>
           </ul>
+          <h4>Example used in sections 9–13</h4>
+          <p>One country, a group of two items. Base years are identical for simplicity.</p>
+          <div class="mex"><table>
+            <thead><tr><th></th><th class="b">Base Q (t)</th><th class="b">Base UV ($/t)</th><th>Q 2020 (t)</th><th>UV 2020 ($/t)</th></tr></thead>
+            <tbody>
+              <tr><td>Beef</td><td class="b">100</td><td class="b">5,000</td><td>50</td><td>5,500</td></tr>
+              <tr><td>Wheat</td><td class="b">1,000</td><td class="b">200</td><td>1,500</td><td>220</td></tr>
+            </tbody></table></div>
+          <div class="mex"><table>
+            <thead><tr><th>Group total</th><th class="b">Base</th><th>2020</th><th>How 2020 is built</th></tr></thead>
+            <tbody>
+              <tr><td>Value (1000 $)</td><td class="b">700</td><td>605</td><td class="l">50 × 5.5 + 1,500 × 0.22</td></tr>
+              <tr><td>Quantity (t)</td><td class="b">1,100</td><td>1,550</td><td class="l">50 + 1,500</td></tr>
+              <tr><td>Real value (1000 $)</td><td class="b">700</td><td>550</td><td class="l">50 × 5.0 + 1,500 × 0.20</td></tr>
+            </tbody></table></div>
+          <p>Every price rose by 10%. Beef volume halved; wheat volume rose by half.</p>
+        </div>
+
+        <div class="doc-sec" id="m-av">
+          <h2><span class="n">9</span>Value index <span class="lv">item groups and regions</span></h2>
+          <p class="what">How the group's trade value in current US dollars changed since 2014–16.</p>
+          <div class="eq"><span class="row"><span class="lhs">Value index<sub>t</sub></span> = Group value<sub>t</sub> ÷ mean(Group value<sub>2014–16</sub>) × 100</span></div>
+          <dl class="facts">
+            <dt>Weights</dt><dd>None needed: dollars of different items can be added directly.</dd>
+            <dt>Example</dt><dd>605 ÷ 700 × 100 = <b>86.4</b>.</dd>
+          </dl>
+          <div class="callout">The value total includes value-only items; the quantity and real value totals do not. A group can therefore have a large value base and an almost empty quantity base (for example Colombia, crude materials n.e.s.: base quantity 0.26 t against 1.38 bn USD of value).</div>
+        </div>
+
+        <div class="doc-sec" id="m-aq">
+          <h2><span class="n">10</span>Quantity index <span class="lv">item groups and regions</span></h2>
+          <p class="what">How the group's total tonnage changed since 2014–16. Every tonne counts the same, whatever the item.</p>
+          <div class="eq"><span class="row"><span class="lhs">Quantity index<sub>t</sub></span> = Group quantity<sub>t</sub> ÷ mean(Group quantity<sub>2014–16</sub>) × 100</span></div>
+          <dl class="facts">
+            <dt>Weights</dt><dd>Tonnes. A tonne of beef and a tonne of wheat count equally.</dd>
+            <dt>Example</dt><dd>1,550 ÷ 1,100 × 100 = <b>140.9</b>: 41% more tonnes, because cheap wheat grew while expensive beef shrank.</dd>
+          </dl>
+          <div class="callout">Meaningful only for groups of similar products. For a mixed group it mostly tracks the heaviest, cheapest items. Use the real value index (section 11) as the volume measure for a group.</div>
+        </div>
+
+        <div class="doc-sec" id="m-ar">
+          <h2><span class="n">11</span>Real value index <span class="lv">item groups and regions</span></h2>
+          <p class="what">How the group's trade volume changed since 2014–16, with each item weighted by its 2014–16 price. This is the volume index for a group.</p>
+          <div class="eq">
+            <span class="row"><span class="lhs">Real value index<sub>t</sub></span> = Group real value<sub>t</sub> ÷ mean(Group real value<sub>2014–16</sub>) × 100</span>
+            <span class="row"><span class="lhs">&nbsp;</span> = Σ(Q<sub>i,t</sub> × base UV<sub>i</sub>) ÷ mean(Σ Q<sub>i</sub> × base UV<sub>i</sub>)<sub>2014–16</sub> × 100<span class="c">factor<sub>i</sub> omitted</span></span>
+          </div>
+          <dl class="facts">
+            <dt>Weights</dt><dd>Each item's base UV. A tonne of beef (5,000 $/t) counts 25 times a tonne of wheat (200 $/t).</dd>
+            <dt>Coverage</dt><dd>Only items with a quantity and a base UV.</dd>
+            <dt>Example</dt><dd>550 ÷ 700 × 100 = <b>78.6</b>: volume fell by 21%, because the lost beef was worth more at base prices than the extra wheat.</dd>
+          </dl>
+          <div class="callout"><b>Not the same as the quantity index.</b> In the example the quantity index says +41% and the real value index says −21%. The two agree only when the group has one item, all items have the same base UV, or the item mix does not change. For a single item they are identical (section 7).</div>
+        </div>
+
+        <div class="doc-sec" id="m-au">
+          <h2><span class="n">12</span>Unit value index <span class="lv">item groups and regions</span></h2>
+          <p class="what">How the group's prices changed since 2014–16, holding the item mix fixed at this year's quantities.</p>
+          <div class="eq">
+            <span class="row"><span class="lhs">Unit value index<sub>t</sub></span> = Value index<sub>t</sub> ÷ Real value index<sub>t</sub> × 100</span>
+            <span class="row"><span class="lhs">&nbsp;</span> = (Group value<sub>t</sub> ÷ Group real value<sub>t</sub>) ÷ (base value ÷ base real value) × 100</span>
+          </div>
+          <dl class="facts">
+            <dt>Reads as</dt><dd>This year's quantities at this year's prices against the same quantities at base prices — price change only. The second factor rescales the base period to 100.</dd>
+            <dt>No index when</dt><dd>Either the value index or the real value index is missing.</dd>
+            <dt>Example</dt><dd>86.4 ÷ 78.6 × 100 = <b>110.0</b> (also 605 ÷ 550 = 1.10): prices up 10%, exactly as for each item.</dd>
+          </dl>
+          <div class="callout"><b>Why not group value ÷ group tonnes?</b> In the example that gives 636 $/t in the base and 390 $/t in 2020 — a 39% "price fall", while every price rose by 10%. The drop is only the shift from beef to wheat.</div>
+        </div>
+
+        <div class="doc-sec" id="m-cmp">
+          <h2><span class="n">13</span>The four aggregate indices side by side</h2>
+          <table class="plain">
+            <thead><tr><th>Index</th><th>Total it uses</th><th>Measures</th><th class="r">Example</th></tr></thead>
+            <tbody>
+              <tr><td>Value</td><td>Σ value</td><td>Change in current dollars: prices and volumes together</td><td class="r">86.4</td></tr>
+              <tr><td>Quantity</td><td>Σ tonnes</td><td>Change in tonnage, every tonne equal</td><td class="r">140.9</td></tr>
+              <tr><td>Real value</td><td>Σ quantity × base UV</td><td>Change in volume, weighted by base prices</td><td class="r">78.6</td></tr>
+              <tr><td>Unit value</td><td>Value index ÷ real value index</td><td>Change in prices at a fixed item mix</td><td class="r">110.0</td></tr>
+            </tbody>
+          </table>
+          <p>Value index = real value index × unit value index ÷ 100 holds by construction (78.6 × 110.0 ÷ 100 = 86.4). The quantity index is not part of this identity.</p>
         </div>
 
         <div class="doc-sec" id="m-dec">
-          <h2><span class="n">7</span>Decisions at a glance</h2>
+          <h2><span class="n">14</span>Decisions at a glance</h2>
           <table class="plain">
             <tbody>
               <tr><td>Base period</td><td>2014–2016 = 100</td></tr>
@@ -446,7 +588,12 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
               <tr><td>Missing base year</td><td>Parent group's rate of change; 2015 first, then 2014 and 2016</td></tr>
               <tr><td>No base-year data</td><td>Parent group's base UV</td></tr>
               <tr><td>Parent order</td><td>Tier 1 → tier 2 → tier 3 → global</td></tr>
+              <tr><td>Item value / quantity base</td><td>Country's own valid base years, never filled</td></tr>
+              <tr><td>Item real value index</td><td>Not produced (equals the quantity index)</td></tr>
               <tr><td>Item factor</td><td>Quantity and real value only</td></tr>
+              <tr><td>Aggregate base</td><td>2014–16 average of the group total</td></tr>
+              <tr><td>Aggregate quantity index</td><td>Sum of tonnes, unweighted</td></tr>
+              <tr><td>Aggregate volume index</td><td>Real value index (base-price weighted)</td></tr>
               <tr><td>Aggregate UV index</td><td>Value index ÷ real value index × 100</td></tr>
               <tr><td>Outlier rule</td><td>Index &gt; 5,000, informational</td></tr>
               <tr><td>Output scope</td><td>Disseminated areas; ItemList items at item level, all items in aggregates</td></tr>
@@ -463,11 +610,17 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
   <!-- =============================== SUMMARY =============================== -->
   <!-- =============================== ITEM INDICES =============================== -->
   <div class="page" id="p-items">
-    <div class="subnav" id="subnav">
-      <button data-s="summary" class="on">Summary</button>
-      <button data-s="groups">Real examples by cause</button>
-      <button data-s="list">All issues</button>
-      <button data-s="lookup">Look up a series</button>
+    <div class="pagebar">
+      <div class="level" aria-label="Level">
+        <button data-l="i" class="on">Countries × items</button>
+        <button data-l="a">Item groups &amp; regions</button>
+      </div>
+      <div class="subnav" id="subnav">
+        <button data-s="summary" class="on">Summary</button>
+        <button data-s="groups">Real examples by cause</button>
+        <button data-s="list">All issues</button>
+        <button data-s="lookup">Look up a series</button>
+      </div>
     </div>
 
     <div class="sp on" id="s-summary">
@@ -574,14 +727,21 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
     </div>
   </div>
 
-  <!-- =============================== AGGREGATES =============================== -->
+  <!-- ============ AGGREGATES (shown inside Item indices or Real values) ============ -->
   <div class="page" id="p-agg">
-    <div class="subnav" id="aSubnav">
-      <button data-s="summary" class="on">Summary</button>
-      <button data-s="groups">Real examples by cause</button>
-      <button data-s="list">All issues</button>
-      <button data-s="lookup">Look up a series</button>
+    <div class="pagebar">
+      <div class="level" aria-label="Level">
+        <button data-l="i">Countries × items</button>
+        <button data-l="a" class="on">Item groups &amp; regions</button>
+      </div>
+      <div class="subnav" id="aSubnav">
+        <button data-s="summary" class="on">Summary</button>
+        <button data-s="groups">Real examples by cause</button>
+        <button data-s="list">All issues</button>
+        <button data-s="lookup">Look up a series</button>
+      </div>
     </div>
+    <p class="scope" id="aScope"></p>
 
     <div class="sp on" id="as-summary">
       <div class="tiles" id="aTiles"></div>
@@ -609,7 +769,7 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
       </section>
       <section class="card">
         <h2>How the checks work</h2>
-        <p class="sub">Applied to every aggregate index value: value, quantity, real value and unit value.</p>
+        <p class="sub" id="aChecksSub"></p>
         <div class="grid2">
           <div>
             <h3>Reproduction</h3>
@@ -651,7 +811,7 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
           <label>Cause<select id="aCat"><option value="">All</option></select></label>
           <label>Level<select id="aLvl"><option value="">All</option><option value="0">Country</option><option value="1">Region</option></select></label>
           <label>Flow<select id="aFlow"><option value="">All</option><option value="0">Import</option><option value="1">Export</option></select></label>
-          <label>Index<select id="aType"><option value="">All</option><option value="V">Value</option><option value="Q">Quantity</option><option value="R">Real value</option><option value="U">Unit value</option></select></label>
+          <label>Index<select id="aType"><option value="">All</option></select></label>
           <label>Area<select id="aArea"><option value="">All</option></select></label>
           <label>Item group<select id="aGrp"><option value="">All</option></select></label>
           <label>Sort<select id="aSort"><option value="rank">Importance</option><option value="mag">Most extreme index</option><option value="size">Trade size</option><option value="n">Most flagged values</option></select></label>
@@ -678,11 +838,17 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
 
   <!-- =============================== REAL VALUES =============================== -->
   <div class="page" id="p-rv">
-    <div class="subnav" id="rSubnav">
-      <button data-s="summary" class="on">Summary</button>
-      <button data-s="groups">Real examples by cause</button>
-      <button data-s="list">All issues</button>
-      <button data-s="lookup">Look up a series</button>
+    <div class="pagebar">
+      <div class="level" aria-label="Level">
+        <button data-l="i" class="on">Countries × items</button>
+        <button data-l="a">Item groups &amp; regions</button>
+      </div>
+      <div class="subnav" id="rSubnav">
+        <button data-s="summary" class="on">Summary</button>
+        <button data-s="groups">Real examples by cause</button>
+        <button data-s="list">All issues</button>
+        <button data-s="lookup">Look up a series</button>
+      </div>
     </div>
     <div class="sp on" id="rs-summary">
       <div class="tiles" id="rTiles"></div>
@@ -766,7 +932,7 @@ section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid v
 const PAYLOAD = "__PAYLOAD__";
 const PAYLOAD_AGG = "__PAYLOAD_AGG__";
 let D, NY, Y0, ISS, CBS, CAT_ORDER, READY = false;
-let AD = null, AISS, ACBS, AISSIDX, ACAT_ORDER, AGROUPS_DRAWN = false, APAGE = 0, AD_PROMISE = null;
+let AD = null, AISS, ACBS, AISSIDX, ACAT_ORDER, AGROUPS_DRAWN = false, APAGE = 0, AD_PROMISE = null, AF = null, AFAM = null;
 const TYPES = ["Q", "V", "UV"];
 const TYPE_NAME = ["Quantity", "Value", "Unit value"];
 const $ = (s, el = document) => el.querySelector(s);
@@ -1061,19 +1227,23 @@ function mountSeries(container, sid, focus) {
 try { history.scrollRestoration = "manual"; } catch (e) {}
 const setHdr = () => document.documentElement.style.setProperty("--hdr", $("header.top").offsetHeight + "px");
 setHdr(); window.addEventListener("resize", setHdr);
-let CUR = { page: "method", sub: "summary", asub: "summary", rsub: "summary" }, RETURN = null, GROUPS_DRAWN = false;
+let CUR = { page: "method", sub: "summary", asub: "summary", rsub: "summary", fam: "vq", lv: { items: "i", rv: "i" } }, RETURN = null, GROUPS_DRAWN = false;
+const famHost = f => f === "vq" ? "items" : "rv";
+const hostOf = p => p === "agg" ? famHost(CUR.fam) : p;
 function showPage(p) {
   CUR.page = p;
+  if (p === "items" || p === "rv") CUR.lv[p] = "i";
+  if (p === "agg") CUR.lv[famHost(CUR.fam)] = "a";
   if (p === "agg" && !AD) {
     document.querySelectorAll(".page").forEach(el => el.classList.remove("on"));
-    document.querySelectorAll("#tabs button[data-p]").forEach(b => b.classList.toggle("on", b.dataset.p === "agg"));
+    document.querySelectorAll("#tabs button[data-p]").forEach(b => b.classList.toggle("on", b.dataset.p === hostOf("agg")));
     $("#loading").style.display = "block";
     if (READY) loadAgg().then(() => { if (CUR.page === "agg") showPage("agg"); });
     return;
   }
   const needsData = p === "summary" || p === "items" || p === "detail" || p === "rv";
   $("#loading").style.display = (needsData && !READY) ? "block" : "none";
-  const tabOf = p === "detail" && RETURN ? RETURN.page : p;
+  const tabOf = hostOf(p === "detail" && RETURN ? RETURN.page : p);
   document.querySelectorAll("#tabs button[data-p]").forEach(b => b.classList.toggle("on", b.dataset.p === tabOf));
   document.querySelectorAll(".page").forEach(el => el.classList.toggle("on", el.id === "p-" + p && (!needsData || READY)));
   if (READY && p === "items" && CUR.sub === "groups" && !GROUPS_DRAWN) drawGroups();
@@ -1087,7 +1257,7 @@ function showSub(s) {
   if (READY && s === "groups" && !GROUPS_DRAWN) drawGroups();
 }
 function openSeries(sid, focus) {
-  if (CUR.page !== "detail") RETURN = { page: CUR.page, sub: CUR.sub, asub: CUR.asub, rsub: CUR.rsub, y: window.scrollY };
+  if (CUR.page !== "detail") RETURN = { page: CUR.page, sub: CUR.sub, asub: CUR.asub, rsub: CUR.rsub, fam: CUR.fam, y: window.scrollY };
   showPage("detail");
   window.scrollTo(0, 0);
   mountSeries($("#dBody"), sid, focus);
@@ -1097,7 +1267,7 @@ function closeDetail() {
   const r = RETURN || { page: "items", sub: "list", y: 0 };
   RETURN = null;
   if (r.page === "items") showSub(r.sub);
-  if (r.page === "agg") aShowSub(r.asub);
+  if (r.page === "agg") { if (r.fam) setFam(r.fam); aShowSub(r.asub); }
   if (r.page === "rv") rShowSub(r.rsub);
   showPage(r.page);
   window.scrollTo(0, r.y || 0);
@@ -1106,6 +1276,7 @@ $("#dBack").onclick = () => history.back();
 window.addEventListener("popstate", e => {
   const d = e.state && e.state.detail;
   if (d) {
+    if (d.k === "a" && d.fm) setFam(d.fm);
     if (CUR.page !== "detail") showPage("detail");
     (d.k === "a" ? aMount : d.k === "r" ? rMount : mountSeries)($("#dBody"), d.id, d.focus || undefined);
     window.scrollTo(0, 0);
@@ -1114,7 +1285,14 @@ window.addEventListener("popstate", e => {
 document.addEventListener("keydown", e => { if (e.key === "Escape" && CUR.page === "detail") history.back(); });
 document.querySelectorAll("#tabs button[data-p]").forEach(b => b.onclick = () => {
   if (CUR.page === "detail") { RETURN = null; history.replaceState(null, ""); }
-  showPage(b.dataset.p); window.scrollTo(0, 0);
+  goTab(b.dataset.p); window.scrollTo(0, 0);
+});
+function goTab(p) { if ((p === "items" || p === "rv") && CUR.lv[p] === "a") goAgg(p === "items" ? "vq" : "ru"); else showPage(p); }
+function goAgg(f) { setFam(f); showPage("agg"); }
+document.querySelectorAll(".level button").forEach(b => b.onclick = () => {
+  const host = hostOf(b.closest(".page").id.slice(2));
+  if (b.dataset.l === "a") goAgg(host === "items" ? "vq" : "ru"); else showPage(host);
+  window.scrollTo(0, 0);
 });
 document.querySelectorAll("#subnav button").forEach(b => b.onclick = () => showSub(b.dataset.s));
 document.querySelectorAll(".toc a").forEach(a => a.onclick = e => { e.preventDefault(); document.querySelector(a.getAttribute("href")).scrollIntoView({ behavior: "smooth" }); });
@@ -1318,6 +1496,74 @@ const AGROUPS = [
 const AGCLS = { Base: "g-base", Coverage: "g-coverage", Member: "g-member", Year: "g-year", Level: "g-level" };
 const AGNAME = { Base: "Base problem", Coverage: "Coverage", Member: "One member", Year: "One-off year", Level: "Real change" };
 const acatLabel = ci => AD.cats.label[ci];
+// The aggregate checks are split in two families, shown under two tabs:
+//   vq = value and quantity indices        -> Item indices tab
+//   ru = real value and unit value indices -> Real values tab
+const FAMT = { vq: [0, 1], ru: [2, 3] };
+const FAM_TXT = {
+  vq: { scope: "Value and quantity indices of item groups, for single countries and for regions. Real value and unit value indices of the same groups are checked under <b>Real values</b>.",
+        checks: "Applied to every aggregate value index and quantity index value.", idx: "value and quantity index values", none: "No flagged value or quantity index values in this aggregate." },
+  ru: { scope: "Real value and unit value indices of item groups, for single countries and for regions. The group unit value index is value index ÷ real value index, so it is checked here with real value. Value and quantity indices of the same groups are checked under <b>Item indices</b>.",
+        checks: "Applied to every aggregate real value index and unit value index value.", idx: "real value and unit value index values", none: "No flagged real value or unit value index values in this aggregate." }
+};
+const famOfT = t => t <= 1 ? "vq" : "ru";
+// One issue list per family. New payloads carry the family (fm) and its top members;
+// older ones are split here from the flagged values.
+function buildFams(X) {
+  const I = X.issues, out = { vq: [], ru: [] };
+  const mk = (k, f, o) => ({ k, s: I.s[k], c: I.c[k], fm: f, ...o });
+  if (I.fm) {
+    for (let k = 0; k < I.s.length; k++) out[I.fm[k]].push(mk(k, I.fm[k], { sev: I.sev[k], n: I.n[k], nc: I.nc[k], ty: I.ty[k], y0: I.y0[k], y1: I.y1[k],
+      wt: I.wt[k], wy: I.wy[k], wx: I.wx[k], ry: I.ry[k], rt: I.rt[k], tk: k }));
+  } else {
+    const C = X.cells, by = new Map();
+    for (let j = 0; j < C.s.length; j++) { const key = C.s[j] + "|" + C.c[j]; let a = by.get(key); if (!a) by.set(key, a = []); a.push(j); }
+    for (let k = 0; k < I.s.length; k++) {
+      const all = by.get(I.s[k] + "|" + I.c[k]) || [];
+      for (const f of ["vq", "ru"]) {
+        const cs = all.filter(j => famOfT(C.t[j]) === f); if (!cs.length) continue;
+        const x = j => aIdx(aVals(C.s[j], C.y[j] - Y0), C.t[j]), mag = j => Math.abs(Math.log10(x(j) / 100));
+        let w = cs[0]; for (const j of cs) if (C.sev[j] > C.sev[w] || (C.sev[j] === C.sev[w] && mag(j) > mag(w))) w = j;
+        const ys = cs.map(j => C.y[j]), tys = new Set(cs.map(j => C.t[j]));
+        const same = famOfT(I.rt[k]) === f;
+        out[f].push(mk(k, f, { sev: Math.max(...cs.map(j => C.sev[j])), n: cs.length, nc: cs.filter(j => C.sev[j] === 2).length,
+          ty: ATYPE.filter((_, t) => tys.has(t)).join(" "), y0: Math.min(...ys), y1: Math.max(...ys),
+          wt: C.t[w], wy: C.y[w], wx: x(w), ry: same ? I.ry[k] : C.y[w], rt: same ? I.rt[k] : C.t[w], tk: same ? k : -1 }));
+      }
+    }
+    for (const f of ["vq", "ru"]) out[f].sort((a, b) => b.sev - a.sev || a.k - b.k);
+  }
+  for (const f of ["vq", "ru"]) out[f].forEach((o, i) => o.rank = i + 1);
+  return out;
+}
+function setFam(f) {
+  CUR.fam = f;
+  if (!AD || AFAM === f) return;
+  AFAM = f;
+  AISS = AF[f];
+  AISSIDX = new Map(); AISS.forEach(o => AISSIDX.set(o.s + "|" + o.c, o));
+  const crit = new Map(); AISS.forEach(o => { if (o.sev === 2) crit.set(o.c, (crit.get(o.c) || 0) + 1); });
+  const tier = ci => AD.cats.id[ci] === "a_tiny_flow" ? 3.5 : ["Base", "Coverage", "Member", "Year", "Level"].indexOf(AD.cats.driver[ci]);
+  ACAT_ORDER = AD.cats.id.map((_, i) => i).filter(ci => AISS.some(o => o.c === ci)).sort((a, b) => tier(a) - tier(b) || (crit.get(b) || 0) - (crit.get(a) || 0));
+  $("#aScope").innerHTML = FAM_TXT[f].scope;
+  $("#aChecksSub").textContent = FAM_TXT[f].checks;
+  $("#aType").innerHTML = `<option value="">All</option>` + FAMT[f].map(t => `<option value="${ATYPE[t]}">${ATYPE_NAME[t]}</option>`).join("");
+  $("#aCat").innerHTML = `<option value="">All</option>` + ACAT_ORDER.map(ci => `<option value="${ci}">${esc(acatLabel(ci))}</option>`).join("");
+  ["aSev", "aCat", "aLvl", "aFlow", "aType", "aArea", "aGrp"].forEach(id => $("#" + id).value = "");
+  $("#aSort").value = "rank"; APAGE = 0;
+  AGROUPS_DRAWN = false; $("#aGroupsCard").innerHTML = "";
+  $("#aLookupOut").innerHTML = `<p class="note">Pick a country or region, an item group and a flow.</p>`;
+  aDrawSummary(); aRenderList();
+  if (CUR.asub === "groups") aDrawGroups();
+}
+// illustrative examples: written for value; for the real value family the same shapes read as real value
+function exaFor(f) {
+  if (f === "vq") return EXA;
+  const o = {};
+  for (const [id, e] of Object.entries(EXA)) o[id] = { ...e, rows: e.rows.map(([l, v]) => [l.replace("Group value", "Group real value").replace("Region value", "Region real value").replace(/^Value index$/, "Real value index"), v]),
+    note: e.note.replace("base is 4 thousand USD", "base real value is 4 thousand USD") };
+  return o;
+}
 
 async function loadAgg() {
   if (AD_PROMISE) return AD_PROMISE;
@@ -1326,17 +1572,13 @@ async function loadAgg() {
     for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
     const X = JSON.parse(await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream("deflate"))).text());
     if (X.none) { $("#loading").textContent = "Aggregates are built when trade_calculations.R runs (Step 8). Run the pipeline once to fill this section."; throw new Error("no aggregates"); }
-    const I = X.issues;
-    AISS = I.s.map((s, k) => ({ rank: k + 1, k, s, c: I.c[k], sev: I.sev[k], n: I.n[k], nc: I.nc[k], ty: I.ty[k], y0: I.y0[k], y1: I.y1[k], wt: I.wt[k], wy: I.wy[k], wx: I.wx[k], ry: I.ry[k], rt: I.rt[k] }));
-    AISSIDX = new Map(); AISS.forEach(o => AISSIDX.set(o.s + "|" + o.c, o));
     ACBS = new Map(); const cs = X.cells.s;
     for (let k = 0; k < cs.length; k++) { let a = ACBS.get(cs[k]); if (!a) ACBS.set(cs[k], a = []); a.push(k); }
     X.topBy = new Map(); for (let k = 0; k < X.top.r.length; k++) { let a = X.topBy.get(X.top.r[k]); if (!a) X.topBy.set(X.top.r[k], a = []); a.push(k); }
-    const crit = new Map(); AISS.forEach(o => { if (o.sev === 2) crit.set(o.c, (crit.get(o.c) || 0) + 1); });
-    const tier = ci => X.cats.id[ci] === "a_tiny_flow" ? 3.5 : ["Base", "Coverage", "Member", "Year", "Level"].indexOf(X.cats.driver[ci]);
-    ACAT_ORDER = X.cats.id.map((_, i) => i).filter(ci => AISS.some(o => o.c === ci)).sort((a, b) => tier(a) - tier(b) || (crit.get(b) || 0) - (crit.get(a) || 0));
     AD = X;
-    aDrawSummary(); aFillSelects(); aRenderList();
+    AF = buildFams(X);
+    aFillSelects();
+    const f = CUR.fam; AFAM = null; setFam(f);
   })();
   return AD_PROMISE;
 }
@@ -1360,11 +1602,11 @@ function aShowSub(s) {
 }
 document.querySelectorAll("#aSubnav button").forEach(b => b.onclick = () => aShowSub(b.dataset.s));
 function openAgg(gs, focus) {
-  if (CUR.page !== "detail") RETURN = { page: CUR.page, sub: CUR.sub, asub: CUR.asub, rsub: CUR.rsub, y: window.scrollY };
+  if (CUR.page !== "detail") RETURN = { page: CUR.page, sub: CUR.sub, asub: CUR.asub, rsub: CUR.rsub, fam: CUR.fam, y: window.scrollY };
   showPage("detail");
   window.scrollTo(0, 0);
   aMount($("#dBody"), gs, focus);
-  history.pushState({ detail: { k: "a", id: gs, focus: focus || null } }, "");
+  history.pushState({ detail: { k: "a", id: gs, focus: focus || null, fm: CUR.fam } }, "");
 }
 function pct(x) { return Math.round(Math.abs(x) * 100) + "%"; }
 function aExplain(gs, c) {
@@ -1383,7 +1625,7 @@ function aExplain(gs, c) {
     case "a_new": return `<b>${pct(C.sn[c])}</b> of ${y}'s ${m} comes from ${C.nn[c]} ${C.nn[c] === 1 ? lvl : lvls} with no ${m} in 2014–16. They are not in the base, so the index jumps. ${idxTxt}`;
     case "a_lost": return `<b>${pct(C.sl[c])}</b> of the base ${m} came from ${C.nl[c]} ${C.nl[c] === 1 ? lvl : lvls} with no data in ${y}. The index drops because they are missing that year, not because trade fell. ${idxTxt}`;
     case "a_one_item": case "a_one_country": {
-      const iss = AISSIDX.get(gs + "|" + ci), tk = iss ? (AD.topBy.get(iss.rank - 1) || []) : [];
+      const iss = AISSIDX.get(gs + "|" + ci), tk = iss && iss.tk >= 0 ? (AD.topBy.get(iss.tk) || []) : [];
       const top = tk.length && iss.ry === y && iss.rt === t ? AD.mnames[AD.top.m[tk[0]]] : "One " + lvl;
       const sub = id === "a_one_item" ? (C.si[c] !== null && C.si[c] !== undefined ? D.cats.label[C.si[c]] : null) : (C.sc[c] !== null && C.sc[c] !== undefined ? AD.cats.label[C.sc[c]] : null);
       const what = t === 3 ? `the gap between the value index and the real value index in ${y}` : `the change in ${m} between the base and ${y}`;
@@ -1414,7 +1656,8 @@ function aInside(gs, ci, c) {
   const iss = AISSIDX.get(gs + "|" + ci); if (!iss) return "";
   const id = AD.cats.id[ci];
   if (!["a_new", "a_lost", "a_one_item", "a_one_country"].includes(id)) return "";
-  const tk = AD.topBy.get(iss.rank - 1) || []; if (!tk.length) return "";
+  if (iss.tk < 0) return "";
+  const tk = AD.topBy.get(iss.tk) || []; if (!tk.length) return "";
   const t = iss.rt, y = iss.ry, T = AD.top, lvl = AD.series.lv[gs] ? "Country" : "Item";
   const D0 = (() => { const v = aVals(gs, y - Y0); const S = AD.series; return t === 3 ? null : aCur(v, t) - [S.bv[gs], S.bq[gs], S.br[gs]][t]; })();
   let h = `<div class="inside"><div class="lbl">What's inside — ${ATYPE_NAME[t].toLowerCase()}, ${y} (largest contributions)</div><table><thead><tr><th>${lvl}</th>${t === 3 ? "" : `<th>2014–16 avg</th><th>${y}</th><th>Change</th>`}<th>Share of change</th></tr></thead><tbody>`;
@@ -1427,7 +1670,7 @@ function aInside(gs, ci, c) {
   return h + `</tbody></table></div>`;
 }
 function aRender(gs, focus) {
-  const S = AD.series, nm = aName(gs), cells = ACBS.get(gs) || [];
+  const S = AD.series, nm = aName(gs), FT = FAMT[CUR.fam], cells = (ACBS.get(gs) || []).filter(c => FT.includes(AD.cells.t[c]));
   const cellAt = new Map(); for (const c of cells) cellAt.set(AD.cells.t[c] + "|" + AD.cells.y[c], c);
   const byCat = new Map();
   for (const c of cells) {
@@ -1461,7 +1704,7 @@ function aRender(gs, focus) {
         <p>${aExplain(gs, g.worst)}</p>${aSplit(g.worst)}${aInside(gs, ci, g.worst)}</div>`;
     }
     h += `</div>`;
-  } else h += `<p class="note" style="margin:0 0 22px">No flagged values in this aggregate.</p>`;
+  } else h += `<p class="note" style="margin:0 0 22px">${FAM_TXT[CUR.fam].none}</p>`;
   const fy = wf !== null ? AD.cells.y[wf] : null, ft = wf !== null ? AD.cells.t[wf] : null;
   const bc = y => D.base_years.includes(y) ? " bcol" : "";
   h += `<div class="ts-wrap"><table class="ts"><thead><tr><th class="lab">${esc(nm.area)}, ${esc(nm.grp)}</th>`;
@@ -1475,7 +1718,7 @@ function aRender(gs, focus) {
   h += row(`${nm.flow} Real value <span class="u">[1000 $, 2014–16 prices]</span>`, (yi, y) => { const v = aVals(gs, yi).R; return `<td class="v${bc(y)}">${has(v) ? fmt(v) : ""}</td>`; });
   h += `<tr class="grp"><td class="lab">Calculated · 2014–16 = 100</td><td colspan="${NY}"></td></tr>`;
   for (let t = 0; t < 4; t++) {
-    h += row(`${ATYPE_NAME[t]} index`, (yi, y) => {
+    h += row(FT.includes(t) ? `${ATYPE_NAME[t]} index` : `${ATYPE_NAME[t]} index <span class="u">checked under ${CUR.fam === "vq" ? "Real values" : "Item indices"}</span>`, (yi, y) => {
       const x = aIdx(aVals(gs, yi), t), c = cellAt.get(t + "|" + y);
       let cls = "v" + bc(y), tip = "";
       if (c !== undefined) { cls += AD.cells.sev[c] === 2 ? " cc" : " cw"; tip = ` title="${esc((AD.cells.sev[c] === 2 ? "Critical" : "Warning") + " · " + acatLabel(AD.cells.c[c]))}"`; }
@@ -1553,7 +1796,7 @@ function aDrawSummary() {
   const nS = AD.series.a.length, nCrit = new Set(AISS.filter(o => o.sev === 2).map(o => o.s)).size, nAny = new Set(AISS.map(o => o.s)).size;
   const vOK = AD.verify.max_rel.every((r, i) => r < 1e-9 && AD.verify.na_mismatch[i] === 0);
   $("#aTiles").innerHTML = `
-    <div class="tile"><div class="k">Data points</div><div class="val">${fmtN(GA.all)}</div><div class="hint">aggregate index values · ${fmtN(nS)} aggregates (country and region × item group × flow)</div></div>
+    <div class="tile"><div class="k">Data points</div><div class="val">${fmtN(GA.all)}</div><div class="hint">aggregate ${FAM_TXT[CUR.fam].idx} · ${fmtN(nS)} aggregates (country and region × item group × flow)</div></div>
     <div class="tile"><div class="k">Problematic data points</div><div class="val">${fmtN(GA.bad)}</div><div class="hint">${(GA.bad / GA.all * 100).toFixed(1)}% · ${fmtN(GA.crit)} critical</div></div>
     <div class="tile"><div class="k">Aggregates with a critical issue</div><div class="val">${fmtN(nCrit)}</div><div class="hint">${Math.round(nCrit / nS * 100)}% of aggregates</div></div>
     <div class="tile"><div class="k">Aggregates with any issue</div><div class="val">${fmtN(nAny)}</div><div class="hint">${Math.round(nAny / nS * 100)}% of aggregates</div></div>`;
@@ -1567,7 +1810,7 @@ function aDrawSummary() {
       const id = AD.cats.id[ci], L = AISS.filter(o => o.c === ci), crit = L.filter(o => o.sev === 2).length;
       h += `<div class="cause"><div class="hd"><span class="name">${esc(acatLabel(ci))}</span><span class="spacer"></span><span class="cnt"><b>${fmtN(L.length)}</b> issues · <b>${fmtN(crit)}</b> critical</span></div>
         <p class="rule">${ACAT_DEF[id][0]}</p><p class="means">${ACAT_DEF[id][1]}</p>
-        <div class="exl">Example (illustrative)</div>${exampleTable(id, EXA)}
+        <div class="exl">Example (illustrative)</div>${exampleTable(id, exaFor(CUR.fam))}
         <div class="foot"><button class="btn link" data-ago="${ci}">See the ${fmtN(L.length)} issues →</button>&nbsp;&nbsp;<button class="btn link" data-areal="${ci}">Real example →</button></div></div>`;
     }
     h += `</div></div>`;
@@ -1594,7 +1837,7 @@ function aDrawGroups() {
         <span class="spacer"></span><span class="cnt"><b>${fmtN(L.length)}</b> issues · <b>${fmtN(crit)}</b> critical</span><button class="btn" data-ago="${ci}">See all ${fmtN(L.length)} →</button></div>
       <div class="cs-body">
         <div class="cs-what"><div><p class="rule">${ACAT_DEF[id][0]}</p><p class="means">${ACAT_DEF[id][1]}</p></div>
-          <div><div class="exl">What it looks like (illustrative)</div>${exampleTable(id, EXA)}</div></div>
+          <div><div class="exl">What it looks like (illustrative)</div>${exampleTable(id, exaFor(CUR.fam))}</div></div>
         ${picks.map((ex, j) => `<div class="cs-real">Real case ${j + 1} of ${picks.length} — ${esc(acatLabel(ci))}</div><div class="aexample" data-s="${ex.s}" data-c="${ci}"></div>`).join("")}
       </div></section>`;
   });
@@ -1609,7 +1852,6 @@ function aFillSelects() {
   const go = AD.groups.name.map((n, i) => `<option value="${i}">${esc(n)}</option>`).join("");
   $("#aArea").insertAdjacentHTML("beforeend", ao); $("#aGrp").insertAdjacentHTML("beforeend", go);
   $("#aLArea").innerHTML = ao; $("#aLGrp").innerHTML = go;
-  $("#aCat").insertAdjacentHTML("beforeend", ACAT_ORDER.map(ci => `<option value="${ci}">${esc(acatLabel(ci))}</option>`).join(""));
   ["aSev", "aCat", "aLvl", "aFlow", "aType", "aArea", "aGrp", "aSort"].forEach(id => $("#" + id).onchange = () => { APAGE = 0; aRenderList(); });
   $("#aReset").onclick = () => aGoList({});
   const key = new Map(), S = AD.series;
@@ -1663,7 +1905,7 @@ function rShowSub(s) {
 }
 document.querySelectorAll("#rSubnav button").forEach(b => b.onclick = () => rShowSub(b.dataset.s));
 function openRV(sid, focus) {
-  if (CUR.page !== "detail") RETURN = { page: CUR.page, sub: CUR.sub, asub: CUR.asub, rsub: CUR.rsub, y: window.scrollY };
+  if (CUR.page !== "detail") RETURN = { page: CUR.page, sub: CUR.sub, asub: CUR.asub, rsub: CUR.rsub, fam: CUR.fam, y: window.scrollY };
   showPage("detail");
   window.scrollTo(0, 0);
   rMount($("#dBody"), sid, focus);
@@ -1888,14 +2130,14 @@ function itemGrid() {
   return finishGrid(rows);
 }
 function aggGrid() {
-  const S = AD.series, names = ["Value index", "Quantity index", "Real value index", "Unit value index"];
+  const S = AD.series, FT = FAMT[CUR.fam], names = FT.map(t => ATYPE_NAME[t] + " index"), m = FT.length;
   const rows = mkRows([...names.map(n => "Import · " + n), ...names.map(n => "Export · " + n)]);
   for (let s = 0; s < S.a.length; s++) {
     const f = S.f[s];
-    for (let yi = 0; yi < NY; yi++) { const v = aVals(s, yi); [v.xV, v.xQ, v.xR, v.xU].forEach((x, t) => { if (x !== null) rows[f * 4 + t].all[yi]++; }); }
+    for (let yi = 0; yi < NY; yi++) { const v = aVals(s, yi); FT.forEach((t, j) => { if (aIdx(v, t) !== null) rows[f * m + j].all[yi]++; }); }
   }
   const C = AD.cells;
-  for (let k = 0; k < C.s.length; k++) { const r = rows[S.f[C.s[k]] * 4 + C.t[k]]; r.bad[C.y[k] - Y0]++; if (C.sev[k] === 2) r.crit[C.y[k] - Y0]++; }
+  for (let k = 0; k < C.s.length; k++) { const j = FT.indexOf(C.t[k]); if (j < 0) continue; const r = rows[S.f[C.s[k]] * m + j]; r.bad[C.y[k] - Y0]++; if (C.sev[k] === 2) r.crit[C.y[k] - Y0]++; }
   return finishGrid(rows);
 }
 function rvGrid() {
