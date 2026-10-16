@@ -3,6 +3,7 @@
 /*
 !/.gitignore
 !/README.md
+!/index.html
 !/trade_calculations.R
 !/RealValue.R
 !/methodology_notes.md
