@@ -939,10 +939,10 @@ cat(sprintf("\nRows after merging with item groups: %s\n",
 country_item_grp <- trade_item_merge[, .(
   agg_imp_v      = sum(imp_v,                    na.rm = TRUE),
   agg_imp_q      = sum(imp_q    * item_factor,   na.rm = TRUE),
-  agg_real_v_imp = sum(real_v_imp * item_factor, na.rm = TRUE),
+  agg_real_v_imp = sum(real_v_imp,               na.rm = TRUE),  # no item factor: real value is already in base-year USD
   agg_exp_v      = sum(exp_v,                    na.rm = TRUE),
   agg_exp_q      = sum(exp_q    * item_factor,   na.rm = TRUE),
-  agg_real_v_exp = sum(real_v_exp * item_factor, na.rm = TRUE),
+  agg_real_v_exp = sum(real_v_exp,               na.rm = TRUE),
   n_v_imp   = sum(!is.na(imp_v)),
   n_q_imp   = sum(!is.na(imp_q)),
   n_rv_imp  = sum(!is.na(real_v_imp)),

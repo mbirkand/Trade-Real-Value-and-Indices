@@ -234,7 +234,7 @@ if (PIPE) {
   # ---- members of every flagged aggregate series (processed in chunks to limit memory)
   SER <- unique(A[, .(gsid, lvl, area, grp, flow)])
   fl_s <- SER[gsid %in% unique(PA$gsid)]
-  # country level: items (Q and real value carry the item factor)
+  # country level: items (only Q carries the item factor)
   tim <- if (exists("trade_item_merge")) get("trade_item_merge") else
     merge(get("trade_calc")[, .(geographicAreaM49, measuredItemCPC, timePointYears, imp_v, imp_q, real_v_imp, exp_v, exp_q, real_v_exp)],
           get("item_map"), by = "measuredItemCPC", allow.cartesian = TRUE)
@@ -263,8 +263,8 @@ if (PIPE) {
     MC <- MC_all[cp, nomatch = 0]
     if (nrow(MC) == 0) MC <- data.table(area = character(), grp = character(), member = character(), year = integer(), f = numeric(),
                                         imp_v = numeric(), imp_q = numeric(), real_v_imp = numeric(), exp_v = numeric(), exp_q = numeric(), real_v_exp = numeric())
-    MC <- rbind(MC[, .(lvl = rep("Country", .N), area, grp, member, year, flow = rep("Import", .N), mV = imp_v, mQ = imp_q * f, mR = real_v_imp * f)],
-                MC[, .(lvl = rep("Country", .N), area, grp, member, year, flow = rep("Export", .N), mV = exp_v, mQ = exp_q * f, mR = real_v_exp * f)])
+    MC <- rbind(MC[, .(lvl = rep("Country", .N), area, grp, member, year, flow = rep("Import", .N), mV = imp_v, mQ = imp_q * f, mR = real_v_imp)],
+                MC[, .(lvl = rep("Country", .N), area, grp, member, year, flow = rep("Export", .N), mV = exp_v, mQ = exp_q * f, mR = real_v_exp)])
     MR <- merge(amap[area %in% rp$area], cig_m[grp %in% rp$grp], by = "member", allow.cartesian = TRUE)[rp, on = .(area, grp), nomatch = 0]
     MR <- rbind(MR[, .(lvl = rep("Region", .N), area, grp, member, year, flow = rep("Import", .N), mV = agg_imp_v, mQ = agg_imp_q, mR = agg_real_v_imp)],
                 MR[, .(lvl = rep("Region", .N), area, grp, member, year, flow = rep("Export", .N), mV = agg_exp_v, mQ = agg_exp_q, mR = agg_real_v_exp)])

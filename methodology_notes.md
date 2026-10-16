@@ -122,7 +122,7 @@ Items are aggregated to commodity groups and countries to regional groups.
 ```
 agg_value      = sum(V_i)
 agg_quantity   = sum(Q_i × factor_i)
-agg_real_value = sum(Q_i × factor_i × base_UV_i)
+agg_real_value = sum(Q_i × base_UV_i)        # no factor: real value is already in base-year USD
 ```
 
 Aggregate value, quantity and real value indices are all rebased on the
@@ -187,7 +187,7 @@ printed to the console at the end of the run but not saved.
 | No base-year data at all | Parent group's base UV taken directly |
 | Parent hierarchy | Tier 1 → tier 2 → tier 3 → global, smallest group first |
 | Base UV outlier filtering | None |
-| Factor | Quantities and real values only |
+| Factor | Quantities only |
 | Outlier rule | Index > 5000, informational |
 | Output scope (areas) | Disseminated areas only |
 | Output scope (items) | Item-level files: `ItemList.xlsx` items only; aggregates: all items |
