@@ -369,24 +369,24 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
         <a href="#m-measures">1 · The measures</a>
         <div class="toc-grp">Indices</div>
         <a href="#m-v">2 · Value index</a>
-        <a class="tsub" href="#m-iv">2.1 Items</a>
-        <a class="tsub" href="#m-av">2.2 Aggregates</a>
+        <a class="tsub" href="#m-iv">2.1 Item value index</a>
+        <a class="tsub" href="#m-av">2.2 Aggregate value index</a>
         <a href="#m-q">3 · Quantity index</a>
-        <a class="tsub" href="#m-iq">3.1 Items</a>
-        <a class="tsub" href="#m-aq">3.2 Aggregates</a>
+        <a class="tsub" href="#m-iq">3.1 Item quantity index</a>
+        <a class="tsub" href="#m-aq">3.2 Aggregate quantity index</a>
         <a href="#m-u">4 · Unit value index</a>
-        <a class="tsub" href="#m-iu">4.1 Items</a>
-        <a class="tsub" href="#m-au">4.2 Aggregates</a>
+        <a class="tsub" href="#m-iu">4.1 Item unit value index</a>
+        <a class="tsub" href="#m-au">4.2 Aggregate unit value index</a>
         <div class="toc-grp">Real values</div>
         <a href="#m-r">5 · Real value</a>
-        <a class="tsub" href="#m-rv">5.1 Items</a>
-        <a class="tsub" href="#m-agr">5.2 Aggregates</a>
+        <a class="tsub" href="#m-rv">5.1 Item real value</a>
+        <a class="tsub" href="#m-agr">5.2 Aggregate real value</a>
         <a href="#m-ri">6 · Real value index</a>
-        <a class="tsub" href="#m-irv">6.1 Items</a>
-        <a class="tsub" href="#m-ar">6.2 Aggregates</a>
+        <a class="tsub" href="#m-irv">6.1 Item real value index</a>
+        <a class="tsub" href="#m-ar">6.2 Aggregate real value index</a>
         <div class="toc-grp">Supporting steps</div>
         <a href="#m-buv">7 · Base unit value</a>
-        <a href="#m-agg">8 · Aggregates</a>
+        <a href="#m-agg">8 · How aggregates are built</a>
         <a href="#m-data">9 · Data and preparation</a>
         <div class="toc-grp">Reference</div>
         <a href="#m-cmp">10 · How the aggregate indices fit together</a>
@@ -420,46 +420,17 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
           <h2><span class="n">2</span>Value index</h2>
           <p class="what">How the trade value in current US dollars changed since 2014–16. It moves with both prices and volumes.</p>
 
-          <h3 id="m-iv"><span class="n">2.1</span>Items <span class="lv">country × item</span></h3>
+          <h3 id="m-iv"><span class="n">2.1</span>Item value index <span class="lv">country × item</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Value index<sub>t</sub></span> = V<sub>t</sub> ÷ mean(V<sub>2014–16</sub>) × 100</span></div>
-          <h4>Example: wheat imports of one country</h4>
-          <p>All three base years reported.</p>
-          <div class="mex"><table>
-            <thead><tr><th></th><th class="b">2014</th><th class="b">2015</th><th class="b">2016</th><th class="b">Base</th><th>2020</th></tr></thead>
-            <tbody>
-              <tr><td>Quantity (t)</td><td class="b">1,000</td><td class="b">1,200</td><td class="b">800</td><td class="b">1,000 <span class="m">mean</span></td><td>1,500</td></tr>
-              <tr><td>Value (1000 $)</td><td class="b">200</td><td class="b">216</td><td class="b">176</td><td class="b">197.3 <span class="m">mean</span></td><td>360</td></tr>
-              <tr><td>Unit value ($/t)</td><td class="b">200</td><td class="b">180</td><td class="b">220</td><td class="b">200 <span class="m">base UV</span></td><td>240</td></tr>
-            </tbody></table></div>
           <dl class="facts">
             <dt>Denominator</dt><dd>The average value over the country's <b>own</b> valid base years — one, two or three of them. Never filled from a group.</dd>
             <dt>No index when</dt><dd>The country has no valid base year for the item and flow.</dd>
-            <dt>Example</dt><dd>Wheat: 360 ÷ 197.3 × 100 = <b>182.4</b> — the 2020 import bill is 82% above the base.</dd>
           </dl>
           <div class="callout">If only one base year exists and it is small, every later year is divided by that small number. A single 2014 record of 2 thousand USD turns an ordinary 2,000 thousand USD year into an index of 100,000.</div>
 
-          <h3 id="m-av"><span class="n">2.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
+          <h3 id="m-av"><span class="n">2.2</span>Aggregate value index <span class="lv">item groups and regions</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Value index<sub>t</sub></span> = Aggregate value<sub>t</sub> ÷ mean(Aggregate value<sub>2014–16</sub>) × 100</span></div>
-          <h4>Example: a group of olive oil and wheat</h4>
-          <p>One country. Base years are identical for simplicity. Every price rose by 10%; olive oil volume halved, wheat volume rose by half.</p>
-          <div class="mex"><table>
-            <thead><tr><th></th><th class="b">Base Q (t)</th><th class="b">Base UV ($/t)</th><th>Q 2020 (t)</th><th>UV 2020 ($/t)</th></tr></thead>
-            <tbody>
-              <tr><td>Olive oil</td><td class="b">150</td><td class="b">4,000</td><td>75</td><td>4,400</td></tr>
-              <tr><td>Wheat</td><td class="b">1,000</td><td class="b">200</td><td>1,500</td><td>220</td></tr>
-            </tbody></table></div>
-          <div class="mex"><table>
-            <thead><tr><th>Aggregate</th><th class="b">Base</th><th>2020</th><th class="l">How 2020 is built</th></tr></thead>
-            <tbody>
-              <tr><td>Value (1000 $)</td><td class="b">800</td><td>660</td><td class="l">75 × 4.4 + 1,500 × 0.22</td></tr>
-              <tr><td>Quantity (t)</td><td class="b">1,150</td><td>1,575</td><td class="l">75 + 1,500</td></tr>
-              <tr><td>Real value (1000 $)</td><td class="b">800</td><td>600</td><td class="l">75 × 4.0 + 1,500 × 0.20</td></tr>
-            </tbody></table></div>
-          <dl class="facts">
-            <dt>Weights</dt><dd>None needed: dollars of different items can be added directly.</dd>
-            <dt>Example</dt><dd>Olive oil + wheat: 660 ÷ 800 × 100 = <b>82.5</b>.</dd>
-          </dl>
-          <div class="callout">The aggregate value includes value-only items; the aggregate quantity and real value do not. A group can therefore have a large value base and an almost empty quantity base (for example Colombia, crude materials n.e.s. exports: base quantity 0.26 t against 1.38 bn USD of value).</div>
+          <p>The same value index, calculated for an aggregate instead of a single item: a country × item group, or a region × item group. The aggregate value is the sum of the items' values (section 8).</p>
         </div>
 
 
@@ -467,22 +438,16 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
           <h2><span class="n">3</span>Quantity index</h2>
           <p class="what">How the traded tonnage changed since 2014–16. Prices play no part.</p>
 
-          <h3 id="m-iq"><span class="n">3.1</span>Items <span class="lv">country × item</span></h3>
+          <h3 id="m-iq"><span class="n">3.1</span>Item quantity index <span class="lv">country × item</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Quantity index<sub>t</sub></span> = Q<sub>t</sub> ÷ mean(Q<sub>2014–16</sub>) × 100</span></div>
           <dl class="facts">
             <dt>Denominator</dt><dd>The average quantity over the country's own valid base years, as for the value index. Never filled from a group.</dd>
             <dt>No index when</dt><dd>The country has no valid base year for the item and flow.</dd>
-            <dt>Example</dt><dd>Wheat: 1,500 ÷ 1,000 × 100 = <b>150</b> — 50% more tonnes than in the base.</dd>
           </dl>
           <div class="callout">Same weakness as the value index. Bangladesh soya bean oil exports have only 2014 (0.002 t), so 22,000 t in 2019 gives a quantity index of 1,100,000,000.</div>
 
-          <h3 id="m-aq"><span class="n">3.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
+          <h3 id="m-aq"><span class="n">3.2</span>Aggregate quantity index <span class="lv">item groups and regions</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Quantity index<sub>t</sub></span> = Aggregate quantity<sub>t</sub> ÷ mean(Aggregate quantity<sub>2014–16</sub>) × 100</span></div>
-          <dl class="facts">
-            <dt>Weights</dt><dd>Tonnes. A tonne of olive oil and a tonne of wheat count equally.</dd>
-            <dt>Example</dt><dd>Olive oil + wheat: 1,575 ÷ 1,150 × 100 = <b>137.0</b> — 37% more tonnes, because cheap wheat grew while expensive olive oil shrank.</dd>
-          </dl>
-          <div class="callout">Meaningful only for groups of similar products. For a mixed group it mostly tracks the heaviest, cheapest items. Use the real value index (6.2) as the volume measure for a group.</div>
         </div>
 
 
@@ -490,16 +455,15 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
           <h2><span class="n">4</span>Unit value index</h2>
           <p class="what">How prices changed since 2014–16.</p>
 
-          <h3 id="m-iu"><span class="n">4.1</span>Items <span class="lv">country × item</span></h3>
+          <h3 id="m-iu"><span class="n">4.1</span>Item unit value index <span class="lv">country × item</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Unit value index<sub>t</sub></span> = UV<sub>t</sub> ÷ base UV × 100<span class="c">UV<sub>t</sub> = V<sub>t</sub> ÷ Q<sub>t</sub></span></span></div>
           <dl class="facts">
             <dt>Denominator</dt><dd>The base UV from section 7. Unlike the value and quantity bases, it may be rebuilt or taken from a group.</dd>
             <dt>No index when</dt><dd>The year has no valid observation (Q &gt; 0 and V &gt; 0), or no base UV could be built.</dd>
-            <dt>Example</dt><dd>Wheat: 240 ÷ 200 × 100 = <b>120</b> — 20% more per tonne than in the base.</dd>
           </dl>
-          <div class="callout">Value index ≠ quantity index × unit value index ÷ 100. In the example, 150 × 120 ÷ 100 = 180, not 182.4. The base UV is the average of the yearly unit values (200 $/t), not mean value ÷ mean quantity (197.3 $/t), and it may come from a group while the other two bases cannot.</div>
+          <div class="callout">Value index ≠ quantity index × unit value index ÷ 100. The base UV is the average of the yearly unit values, not mean value ÷ mean quantity, and it may come from a group while the other two bases cannot.</div>
 
-          <h3 id="m-au"><span class="n">4.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
+          <h3 id="m-au"><span class="n">4.2</span>Aggregate unit value index <span class="lv">item groups and regions</span></h3>
           <p>The price change of the group, holding the item mix fixed at this year's quantities. It is derived from the value index (2.2) and the real value index (6.2).</p>
           <div class="eq">
             <span class="row"><span class="lhs">Unit value index<sub>t</sub></span> = Value index<sub>t</sub> ÷ Real value index<sub>t</sub> × 100</span>
@@ -508,9 +472,8 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
           <dl class="facts">
             <dt>Reads as</dt><dd>This year's quantities at this year's prices against the same quantities at base prices — price change only. The second factor rescales the base period to 100.</dd>
             <dt>No index when</dt><dd>Either the value index or the real value index is missing.</dd>
-            <dt>Example</dt><dd>Olive oil + wheat: 82.5 ÷ 75.0 × 100 = <b>110.0</b> (also 660 ÷ 600 = 1.10) — prices up 10%, exactly as for each item.</dd>
           </dl>
-          <div class="callout"><b>Why not aggregate value ÷ aggregate tonnes?</b> In the example that gives 696 $/t in the base and 419 $/t in 2020 — a 40% "price fall", while every price rose by 10%. The drop is only the shift from olive oil to wheat.</div>
+          <div class="callout"><b>Question: Should we use aggregate value ÷ aggregate tonnes?</b> That ratio also moves when the item mix shifts. A group that trades less of an expensive item and more of a cheap one shows a "price fall" even if every price rose.</div>
         </div>
 
 
@@ -520,19 +483,17 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
           <h2><span class="n">5</span>Real value</h2>
           <p class="what">This year's volume priced at 2014–16 prices: the value the trade would have had if prices had not changed.</p>
 
-          <h3 id="m-rv"><span class="n">5.1</span>Items <span class="lv">country × item</span></h3>
+          <h3 id="m-rv"><span class="n">5.1</span>Item real value <span class="lv">country × item</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Real value<sub>t</sub></span> = Q<sub>t</sub> × base UV<span class="c">thousand USD at 2014–16 prices</span></span></div>
           <dl class="facts">
             <dt>Inputs</dt><dd>The year's quantity and the base UV from section 7.</dd>
             <dt>Calculated when</dt><dd>Both exist — including flows whose base UV was rebuilt or taken from a group, and flows that have no quantity index.</dd>
-            <dt>Example</dt><dd>Wheat: 1,500 t × 200 $/t = <b>300</b> thousand USD. The actual value is 360, so 60 of it is the price rise.</dd>
           </dl>
 
-          <h3 id="m-agr"><span class="n">5.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
+          <h3 id="m-agr"><span class="n">5.2</span>Aggregate real value <span class="lv">item groups and regions</span></h3>
           <div class="eq"><span class="row"><span class="lhs">Aggregate real value<sub>t</sub></span> = Σ Q<sub>i,t</sub> × base UV<sub>i</sub><span class="c">thousand USD at 2014–16 prices</span></span></div>
           <dl class="facts">
             <dt>Coverage</dt><dd>Only items with a quantity and a base UV; value-only items are left out. Regions sum their member countries (section 8).</dd>
-            <dt>Example</dt><dd>Olive oil + wheat: 75 × 4.0 + 1,500 × 0.20 = <b>600</b> thousand USD, against 660 actual — 60 of it is the price rise.</dd>
           </dl>
         </div>
 
@@ -541,20 +502,15 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
           <h2><span class="n">6</span>Real value index</h2>
           <p class="what">How the trade volume changed since 2014–16, with each item weighted by its 2014–16 price.</p>
 
-          <h3 id="m-irv"><span class="n">6.1</span>Items <span class="lv">country × item</span></h3>
-          <p><b>Not produced.</b> With one fixed base UV it would cancel out and leave exactly the quantity index: (1,500 × 200) ÷ (1,000 × 200) × 100 = 150. Real value becomes its own measure only when different items are added up.</p>
+          <h3 id="m-irv"><span class="n">6.1</span>Item real value index <span class="lv">country × item</span></h3>
+          <p><b>Not produced.</b> With one fixed base UV it would cancel out and leave exactly the quantity index. Real value becomes its own measure only when different items are added up.</p>
 
-          <h3 id="m-ar"><span class="n">6.2</span>Aggregates <span class="lv">item groups and regions</span></h3>
+          <h3 id="m-ar"><span class="n">6.2</span>Aggregate real value index <span class="lv">item groups and regions</span></h3>
           <p>The volume index for a group.</p>
           <div class="eq">
             <span class="row"><span class="lhs">Real value index<sub>t</sub></span> = Aggregate real value<sub>t</sub> ÷ mean(Aggregate real value<sub>2014–16</sub>) × 100</span>
             <span class="row"><span class="lhs">&nbsp;</span> = Σ(Q<sub>i,t</sub> × base UV<sub>i</sub>) ÷ mean(Σ Q<sub>i</sub> × base UV<sub>i</sub>)<sub>2014–16</sub> × 100</span>
           </div>
-          <dl class="facts">
-            <dt>Weights</dt><dd>Each item's base UV. A tonne of olive oil (4,000 $/t) counts 20 times a tonne of wheat (200 $/t).</dd>
-            <dt>Example</dt><dd>Olive oil + wheat: 600 ÷ 800 × 100 = <b>75.0</b> — volume fell by 25%, because the lost olive oil was worth more at base prices than the extra wheat.</dd>
-          </dl>
-          <div class="callout"><b>Not the same as the quantity index (3.2).</b> In the example the quantity index says +37% and the real value index says −25%. The two agree only when the group has one item, all items have the same base UV, or the item mix does not change.</div>
         </div>
 
 
@@ -589,7 +545,7 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
 
 
         <div class="doc-sec" id="m-agg">
-          <h2><span class="n">8</span>Aggregates</h2>
+          <h2><span class="n">8</span>How aggregates are built</h2>
           <p class="what">Aggregates are not averages of item results. Items are first summed into item groups, and countries into regions; every aggregate index and real value is calculated on these aggregates.</p>
           <h4>Country × item group</h4>
           <div class="eq">
@@ -638,15 +594,15 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
         <div class="doc-sec" id="m-cmp">
           <h2><span class="n">10</span>How the aggregate indices fit together</h2>
           <table class="plain">
-            <thead><tr><th>Index</th><th>Total it uses</th><th>Measures</th><th>Section</th><th class="r">Example</th></tr></thead>
+            <thead><tr><th>Index</th><th>Total it uses</th><th>Measures</th><th>Section</th></tr></thead>
             <tbody>
-              <tr><td>Value</td><td>Σ value</td><td>Change in current dollars: prices and volumes together</td><td>2.2</td><td class="r">82.5</td></tr>
-              <tr><td>Quantity</td><td>Σ tonnes</td><td>Change in tonnage, every tonne equal</td><td>3.2</td><td class="r">137.0</td></tr>
-              <tr><td>Unit value</td><td>Value index ÷ real value index</td><td>Change in prices at a fixed item mix</td><td>4.2</td><td class="r">110.0</td></tr>
-              <tr><td>Real value</td><td>Σ quantity × base UV</td><td>Change in volume, weighted by base prices</td><td>6.2</td><td class="r">75.0</td></tr>
+              <tr><td>Value</td><td>Σ value</td><td>Change in current dollars: prices and volumes together</td><td>2.2</td></tr>
+              <tr><td>Quantity</td><td>Σ tonnes</td><td>Change in tonnage, every tonne equal</td><td>3.2</td></tr>
+              <tr><td>Unit value</td><td>Value index ÷ real value index</td><td>Change in prices at a fixed item mix</td><td>4.2</td></tr>
+              <tr><td>Real value</td><td>Σ quantity × base UV</td><td>Change in volume, weighted by base prices</td><td>6.2</td></tr>
             </tbody>
           </table>
-          <p>Value index = real value index × unit value index ÷ 100 holds by construction (75.0 × 110.0 ÷ 100 = 82.5). The quantity index is not part of this identity.</p>
+          <p>Value index = real value index × unit value index ÷ 100 holds by construction. The quantity index is not part of this identity.</p>
         </div>
 
 

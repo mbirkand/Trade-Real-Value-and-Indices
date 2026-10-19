@@ -32,59 +32,30 @@ Each measure, for items and then for aggregates. The supporting steps follow.
 
 How the trade value in current US dollars changed since 2014–16. It moves with both prices and volumes.
 
-### 2.1 Items *(country × item)*
+### 2.1 Item value index *(country × item)*
 
 ```text
 Value index_t = V_t ÷ mean(V_{2014–16}) × 100
 ```
 
-#### Example: wheat imports of one country
-
-All three base years reported.
-
-|  | 2014 | 2015 | 2016 | Base | 2020 |
-|---|---|---|---|---|---|
-| Quantity (t) | 1,000 | 1,200 | 800 | 1,000 (mean) | 1,500 |
-| Value (1000 $) | 200 | 216 | 176 | 197.3 (mean) | 360 |
-| Unit value ($/t) | 200 | 180 | 220 | 200 (base UV) | 240 |
-
 - **Denominator:** The average value over the country's **own** valid base years — one, two or three of them. Never filled from a group.
 - **No index when:** The country has no valid base year for the item and flow.
-- **Example:** Wheat: 360 ÷ 197.3 × 100 = **182.4** — the 2020 import bill is 82% above the base.
 
 > If only one base year exists and it is small, every later year is divided by that small number. A single 2014 record of 2 thousand USD turns an ordinary 2,000 thousand USD year into an index of 100,000.
 
-### 2.2 Aggregates *(item groups and regions)*
+### 2.2 Aggregate value index *(item groups and regions)*
 
 ```text
 Value index_t = Aggregate value_t ÷ mean(Aggregate value_{2014–16}) × 100
 ```
 
-#### Example: a group of olive oil and wheat
-
-One country. Base years are identical for simplicity. Every price rose by 10%; olive oil volume halved, wheat volume rose by half.
-
-|  | Base Q (t) | Base UV ($/t) | Q 2020 (t) | UV 2020 ($/t) |
-|---|---|---|---|---|
-| Olive oil | 150 | 4,000 | 75 | 4,400 |
-| Wheat | 1,000 | 200 | 1,500 | 220 |
-
-| Aggregate | Base | 2020 | How 2020 is built |
-|---|---|---|---|
-| Value (1000 $) | 800 | 660 | 75 × 4.4 + 1,500 × 0.22 |
-| Quantity (t) | 1,150 | 1,575 | 75 + 1,500 |
-| Real value (1000 $) | 800 | 600 | 75 × 4.0 + 1,500 × 0.20 |
-
-- **Weights:** None needed: dollars of different items can be added directly.
-- **Example:** Olive oil + wheat: 660 ÷ 800 × 100 = **82.5**.
-
-> The aggregate value includes value-only items; the aggregate quantity and real value do not. A group can therefore have a large value base and an almost empty quantity base (for example Colombia, crude materials n.e.s. exports: base quantity 0.26 t against 1.38 bn USD of value).
+The same value index, calculated for an aggregate instead of a single item: a country × item group, or a region × item group. The aggregate value is the sum of the items' values (section 8).
 
 ## 3. Quantity index
 
 How the traded tonnage changed since 2014–16. Prices play no part.
 
-### 3.1 Items *(country × item)*
+### 3.1 Item quantity index *(country × item)*
 
 ```text
 Quantity index_t = Q_t ÷ mean(Q_{2014–16}) × 100
@@ -92,26 +63,20 @@ Quantity index_t = Q_t ÷ mean(Q_{2014–16}) × 100
 
 - **Denominator:** The average quantity over the country's own valid base years, as for the value index. Never filled from a group.
 - **No index when:** The country has no valid base year for the item and flow.
-- **Example:** Wheat: 1,500 ÷ 1,000 × 100 = **150** — 50% more tonnes than in the base.
 
 > Same weakness as the value index. Bangladesh soya bean oil exports have only 2014 (0.002 t), so 22,000 t in 2019 gives a quantity index of 1,100,000,000.
 
-### 3.2 Aggregates *(item groups and regions)*
+### 3.2 Aggregate quantity index *(item groups and regions)*
 
 ```text
 Quantity index_t = Aggregate quantity_t ÷ mean(Aggregate quantity_{2014–16}) × 100
 ```
 
-- **Weights:** Tonnes. A tonne of olive oil and a tonne of wheat count equally.
-- **Example:** Olive oil + wheat: 1,575 ÷ 1,150 × 100 = **137.0** — 37% more tonnes, because cheap wheat grew while expensive olive oil shrank.
-
-> Meaningful only for groups of similar products. For a mixed group it mostly tracks the heaviest, cheapest items. Use the real value index (6.2) as the volume measure for a group.
-
 ## 4. Unit value index
 
 How prices changed since 2014–16.
 
-### 4.1 Items *(country × item)*
+### 4.1 Item unit value index *(country × item)*
 
 ```text
 Unit value index_t = UV_t ÷ base UV × 100 — UV_t = V_t ÷ Q_t
@@ -119,11 +84,10 @@ Unit value index_t = UV_t ÷ base UV × 100 — UV_t = V_t ÷ Q_t
 
 - **Denominator:** The base UV from section 7. Unlike the value and quantity bases, it may be rebuilt or taken from a group.
 - **No index when:** The year has no valid observation (Q > 0 and V > 0), or no base UV could be built.
-- **Example:** Wheat: 240 ÷ 200 × 100 = **120** — 20% more per tonne than in the base.
 
-> Value index ≠ quantity index × unit value index ÷ 100. In the example, 150 × 120 ÷ 100 = 180, not 182.4. The base UV is the average of the yearly unit values (200 $/t), not mean value ÷ mean quantity (197.3 $/t), and it may come from a group while the other two bases cannot.
+> Value index ≠ quantity index × unit value index ÷ 100. The base UV is the average of the yearly unit values, not mean value ÷ mean quantity, and it may come from a group while the other two bases cannot.
 
-### 4.2 Aggregates *(item groups and regions)*
+### 4.2 Aggregate unit value index *(item groups and regions)*
 
 The price change of the group, holding the item mix fixed at this year's quantities. It is derived from the value index (2.2) and the real value index (6.2).
 
@@ -134,9 +98,8 @@ Unit value index_t = Value index_t ÷ Real value index_t × 100
 
 - **Reads as:** This year's quantities at this year's prices against the same quantities at base prices — price change only. The second factor rescales the base period to 100.
 - **No index when:** Either the value index or the real value index is missing.
-- **Example:** Olive oil + wheat: 82.5 ÷ 75.0 × 100 = **110.0** (also 660 ÷ 600 = 1.10) — prices up 10%, exactly as for each item.
 
-> **Why not aggregate value ÷ aggregate tonnes?** In the example that gives 696 $/t in the base and 419 $/t in 2020 — a 40% "price fall", while every price rose by 10%. The drop is only the shift from olive oil to wheat.
+> **Question: Should we use aggregate value ÷ aggregate tonnes?** That ratio also moves when the item mix shifts. A group that trades less of an expensive item and more of a cheap one shows a "price fall" even if every price rose.
 
 ---
 
@@ -146,7 +109,7 @@ Unit value index_t = Value index_t ÷ Real value index_t × 100
 
 This year's volume priced at 2014–16 prices: the value the trade would have had if prices had not changed.
 
-### 5.1 Items *(country × item)*
+### 5.1 Item real value *(country × item)*
 
 ```text
 Real value_t = Q_t × base UV — thousand USD at 2014–16 prices
@@ -154,26 +117,24 @@ Real value_t = Q_t × base UV — thousand USD at 2014–16 prices
 
 - **Inputs:** The year's quantity and the base UV from section 7.
 - **Calculated when:** Both exist — including flows whose base UV was rebuilt or taken from a group, and flows that have no quantity index.
-- **Example:** Wheat: 1,500 t × 200 $/t = **300** thousand USD. The actual value is 360, so 60 of it is the price rise.
 
-### 5.2 Aggregates *(item groups and regions)*
+### 5.2 Aggregate real value *(item groups and regions)*
 
 ```text
 Aggregate real value_t = Σ Q_{i,t} × base UV_i — thousand USD at 2014–16 prices
 ```
 
 - **Coverage:** Only items with a quantity and a base UV; value-only items are left out. Regions sum their member countries (section 8).
-- **Example:** Olive oil + wheat: 75 × 4.0 + 1,500 × 0.20 = **600** thousand USD, against 660 actual — 60 of it is the price rise.
 
 ## 6. Real value index
 
 How the trade volume changed since 2014–16, with each item weighted by its 2014–16 price.
 
-### 6.1 Items *(country × item)*
+### 6.1 Item real value index *(country × item)*
 
-**Not produced.** With one fixed base UV it would cancel out and leave exactly the quantity index: (1,500 × 200) ÷ (1,000 × 200) × 100 = 150. Real value becomes its own measure only when different items are added up.
+**Not produced.** With one fixed base UV it would cancel out and leave exactly the quantity index. Real value becomes its own measure only when different items are added up.
 
-### 6.2 Aggregates *(item groups and regions)*
+### 6.2 Aggregate real value index *(item groups and regions)*
 
 The volume index for a group.
 
@@ -181,11 +142,6 @@ The volume index for a group.
 Real value index_t = Aggregate real value_t ÷ mean(Aggregate real value_{2014–16}) × 100
 = Σ(Q_{i,t} × base UV_i) ÷ mean(Σ Q_i × base UV_i)_{2014–16} × 100
 ```
-
-- **Weights:** Each item's base UV. A tonne of olive oil (4,000 $/t) counts 20 times a tonne of wheat (200 $/t).
-- **Example:** Olive oil + wheat: 600 ÷ 800 × 100 = **75.0** — volume fell by 25%, because the lost olive oil was worth more at base prices than the extra wheat.
-
-> **Not the same as the quantity index (3.2).** In the example the quantity index says +37% and the real value index says −25%. The two agree only when the group has one item, all items have the same base UV, or the item mix does not change.
 
 ---
 
@@ -224,7 +180,7 @@ UV_{missing} = UV_{anchor} × (parent UV_{missing} ÷ parent UV_{anchor})
 
 Every flow records where its base UV came from: **country** (all three years own data), **imputed** (some years rebuilt) or the **group name** / **global** (taken from a group).
 
-## 8. Aggregates
+## 8. How aggregates are built
 
 Aggregates are not averages of item results. Items are first summed into item groups, and countries into regions; every aggregate index and real value is calculated on these aggregates.
 
@@ -272,14 +228,14 @@ Aggregate real value_t = Σ Q_{i,t} × base UV_i — thousand USD at 2014–16 p
 
 ## 10. How the aggregate indices fit together
 
-| Index | Total it uses | Measures | Section | Example |
-|---|---|---|---|---|
-| Value | Σ value | Change in current dollars: prices and volumes together | 2.2 | 82.5 |
-| Quantity | Σ tonnes | Change in tonnage, every tonne equal | 3.2 | 137.0 |
-| Unit value | Value index ÷ real value index | Change in prices at a fixed item mix | 4.2 | 110.0 |
-| Real value | Σ quantity × base UV | Change in volume, weighted by base prices | 6.2 | 75.0 |
+| Index | Total it uses | Measures | Section |
+|---|---|---|---|
+| Value | Σ value | Change in current dollars: prices and volumes together | 2.2 |
+| Quantity | Σ tonnes | Change in tonnage, every tonne equal | 3.2 |
+| Unit value | Value index ÷ real value index | Change in prices at a fixed item mix | 4.2 |
+| Real value | Σ quantity × base UV | Change in volume, weighted by base prices | 6.2 |
 
-Value index = real value index × unit value index ÷ 100 holds by construction (75.0 × 110.0 ÷ 100 = 82.5). The quantity index is not part of this identity.
+Value index = real value index × unit value index ÷ 100 holds by construction. The quantity index is not part of this identity.
 
 ## 11. Decisions at a glance
 
