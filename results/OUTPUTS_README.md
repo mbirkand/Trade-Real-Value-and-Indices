@@ -28,8 +28,8 @@ Cereals). Same columns as the item file.
 - Import / Export Value Index
 - Import / Export Quantity Index (total tonnes)
 - Import / Export Real Value Index — the volume index for a group
-- Import / Export Unit Value Index = Value Index ÷ Real Value Index × 100,
-  the price change at constant item mix
+- Import / Export Unit Value Index = (aggregate value ÷ aggregate tonnes) ÷ its
+  2014–16 average × 100 — value per tonne; moves with prices and with the item mix
 
 ## checks/ — for reviewing the results
 

@@ -464,16 +464,16 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
           <div class="callout">Value index ≠ quantity index × unit value index ÷ 100. The base UV is the average of the yearly unit values, not mean value ÷ mean quantity, and it may come from a group while the other two bases cannot.</div>
 
           <h3 id="m-au"><span class="n">4.2</span>Aggregate unit value index <span class="lv">item groups and regions</span></h3>
-          <p>The price change of the group, holding the item mix fixed at this year's quantities. It is derived from the value index (2.2) and the real value index (6.2).</p>
+          <p>The value per tonne of the group, against its 2014–16 average. Built from the aggregate value (2.2) and the aggregate quantity (3.2).</p>
           <div class="eq">
-            <span class="row"><span class="lhs">Unit value index<sub>t</sub></span> = Value index<sub>t</sub> ÷ Real value index<sub>t</sub> × 100</span>
-            <span class="row"><span class="lhs">&nbsp;</span> = (Aggregate value<sub>t</sub> ÷ Aggregate real value<sub>t</sub>) ÷ (base value ÷ base real value) × 100</span>
+            <span class="row"><span class="lhs">Aggregate UV<sub>t</sub></span> = Aggregate value<sub>t</sub> ÷ Aggregate quantity<sub>t</sub><span class="c">thousand USD per tonne</span></span>
+            <span class="row"><span class="lhs">Unit value index<sub>t</sub></span> = Aggregate UV<sub>t</sub> ÷ mean(Aggregate UV<sub>2014–16</sub>) × 100</span>
           </div>
           <dl class="facts">
-            <dt>Reads as</dt><dd>This year's quantities at this year's prices against the same quantities at base prices — price change only. The second factor rescales the base period to 100.</dd>
-            <dt>No index when</dt><dd>Either the value index or the real value index is missing.</dd>
+            <dt>Denominator</dt><dd>The average of the yearly aggregate UVs over the 2014–16 years that have both an aggregate value and an aggregate quantity — the same rule as the item base UV, but never filled from a group.</dd>
+            <dt>No index when</dt><dd>The year has no aggregate value or no aggregate quantity, or no base year has both.</dd>
           </dl>
-          <div class="callout"><b>Question: Should we use aggregate value ÷ aggregate tonnes?</b> That ratio also moves when the item mix shifts. A group that trades less of an expensive item and more of a cheap one shows a "price fall" even if every price rose.</div>
+          <div class="callout"><b>Question: Should we calculate it as value index ÷ real value index instead?</b> Value index ÷ real value index × 100 would hold the item mix fixed and show only the price change. Aggregate value ÷ aggregate tonnes also moves when the item mix shifts: a group that trades less of an expensive item and more of a cheap one shows a "price fall" even if every price rose.</div>
         </div>
 
 
@@ -598,11 +598,11 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
             <tbody>
               <tr><td>Value</td><td>Σ value</td><td>Change in current dollars: prices and volumes together</td><td>2.2</td></tr>
               <tr><td>Quantity</td><td>Σ tonnes</td><td>Change in tonnage, every tonne equal</td><td>3.2</td></tr>
-              <tr><td>Unit value</td><td>Value index ÷ real value index</td><td>Change in prices at a fixed item mix</td><td>4.2</td></tr>
+              <tr><td>Unit value</td><td>Σ value ÷ Σ tonnes</td><td>Change in value per tonne: prices and item mix together</td><td>4.2</td></tr>
               <tr><td>Real value</td><td>Σ quantity × base UV</td><td>Change in volume, weighted by base prices</td><td>6.2</td></tr>
             </tbody>
           </table>
-          <p>Value index = real value index × unit value index ÷ 100 holds by construction. The quantity index is not part of this identity.</p>
+          <p>There is no exact identity between these indices. The unit value index is built from tonnes, so it pairs with the quantity index, but value index = quantity index × unit value index ÷ 100 holds only roughly, because the unit value base is an average of yearly ratios.</p>
         </div>
 
 
@@ -629,7 +629,7 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
               <tr><td>Item value / quantity base</td><td>Country's own valid base years, never filled</td></tr>
               <tr><td>Item unit value base</td><td>Base UV (may be rebuilt or from a group)</td></tr>
               <tr><td>Aggregate quantity index</td><td>Sum of tonnes × item factor, unweighted</td></tr>
-              <tr><td>Aggregate UV index</td><td>Value index ÷ real value index × 100</td></tr>
+              <tr><td>Aggregate UV index</td><td>Aggregate value ÷ aggregate tonnes, against its 2014–16 average</td></tr>
               <tr><td>Dashboard flags</td><td>Critical: index &gt; 5,000 or &lt; 1 · Warning: index &gt; 1,000 or &lt; 10, or a 10× change from the previous year</td></tr>
               <tr class="grp"><td colspan="2">Real values</td></tr>
               <tr><td>Item real value</td><td>Quantity × base UV</td></tr>
@@ -652,7 +652,7 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
               <tr class="grp fn"><td colspan="4">Indices — indices_items.csv · indices_aggregates.csv</td></tr>
               <tr><td>Import Value Index</td><td>2014–16 = 100</td><td>Value ÷ country's own base-year average <span class="ref">2.1</span></td><td>Aggregate value ÷ its 2014–16 average <span class="ref">2.2</span></td></tr>
               <tr><td>Import Quantity Index</td><td>2014–16 = 100</td><td>Quantity ÷ country's own base-year average <span class="ref">3.1</span></td><td>Aggregate tonnes ÷ its 2014–16 average <span class="ref">3.2</span></td></tr>
-              <tr><td>Import Unit Value Index</td><td>2014–16 = 100</td><td>Unit value ÷ base UV <span class="ref">4.1</span></td><td>Value index ÷ real value index × 100 <span class="ref">4.2</span></td></tr>
+              <tr><td>Import Unit Value Index</td><td>2014–16 = 100</td><td>Unit value ÷ base UV <span class="ref">4.1</span></td><td>Aggregate value ÷ aggregate tonnes, against its 2014–16 average <span class="ref">4.2</span></td></tr>
               <tr><td>Import Real Value Index</td><td>2014–16 = 100</td><td class="na">Not produced — equals the quantity index <span class="ref">6.1</span></td><td>Aggregate real value ÷ its 2014–16 average <span class="ref">6.2</span></td></tr>
               <tr><td>Export Value Index</td><td>2014–16 = 100</td><td>As for imports <span class="ref">2.1</span></td><td>As for imports <span class="ref">2.2</span></td></tr>
               <tr><td>Export Quantity Index</td><td>2014–16 = 100</td><td>As for imports <span class="ref">3.1</span></td><td>As for imports <span class="ref">3.2</span></td></tr>
@@ -1576,7 +1576,7 @@ const FAMT = { vq: [0, 1], ru: [2, 3] };
 const FAM_TXT = {
   vq: { scope: "Value and quantity indices of item groups, for single countries and for regions. Real value and unit value indices of the same groups are checked under <b>Real values</b>.",
         checks: "Applied to every aggregate value index and quantity index value.", idx: "value and quantity index values", none: "No flagged value or quantity index values in this aggregate." },
-  ru: { scope: "Real value and unit value indices of item groups, for single countries and for regions. The group unit value index is value index ÷ real value index, so it is checked here with real value. Value and quantity indices of the same groups are checked under <b>Indices</b>.",
+  ru: { scope: "Real value and unit value indices of item groups, for single countries and for regions. Value and quantity indices of the same groups are checked under <b>Indices</b>.",
         checks: "Applied to every aggregate real value index and unit value index value.", idx: "real value and unit value index values", none: "No flagged real value or unit value index values in this aggregate." }
 };
 const famOfT = t => t <= 1 ? "vq" : "ru";
@@ -1663,7 +1663,8 @@ function aVals(gs, yi) {
   const S = AD.series, k = gs * NY + yi, V = AD.V[k], Q = AD.Q[k], R = AD.R[k];
   const has = x => x !== null && x !== undefined;
   const xV = has(V) && S.bv[gs] > 0 ? V / S.bv[gs] * 100 : null, xQ = has(Q) && S.bq[gs] > 0 ? Q / S.bq[gs] * 100 : null, xR = has(R) && S.br[gs] > 0 ? R / S.br[gs] * 100 : null;
-  return { V, Q, R, xV, xQ, xR, xU: xV !== null && xR > 0 ? xV / xR * 100 : null, U: has(V) && R > 0 ? V / R : null };
+  const U = has(V) && has(Q) && V > 0 && Q > 0 ? V / Q : null;
+  return { V, Q, R, xV, xQ, xR, xU: U !== null && S.bu && S.bu[gs] > 0 ? U / S.bu[gs] * 100 : null, U };
 }
 const aIdx = (v, t) => [v.xV, v.xQ, v.xR, v.xU][t];
 const aCur = (v, t) => [v.V, v.Q, v.R, v.U][t];
@@ -1685,7 +1686,7 @@ function pct(x) { return Math.round(Math.abs(x) * 100) + "%"; }
 function aExplain(gs, c) {
   const C = AD.cells, ci = C.c[c], id = AD.cats.id[ci], t = C.t[c], y = C.y[c], yi = y - Y0, S = AD.series;
   const v = aVals(gs, yi), x = aIdx(v, t), m = ATYPE_NAME[t].toLowerCase(), u = AUNIT[t];
-  const base = [S.bv[gs], S.bq[gs], S.br[gs], S.br[gs] > 0 ? S.bv[gs] / S.br[gs] : null][t];
+  const base = [S.bv[gs], S.bq[gs], S.br[gs], S.bu ? S.bu[gs] : null][t];
   const typ = [S.tv[gs], S.tq[gs], S.tr[gs], S.tu[gs]][t];
   const cur = aCur(v, t), nbm = C.nbm[c], op = C.op[c] === 1, py = y - 1;
   const lvl = S.lv[gs] ? "country" : "item", lvls = S.lv[gs] ? "countries" : "items";
@@ -1693,7 +1694,7 @@ function aExplain(gs, c) {
   const pv = yy => aCur(aVals(gs, yy - Y0), t);
   const uu = u ? " " + u : "";
   switch (id) {
-    case "a_tiny_base": return t === 3 ? `The group's base value or real value is negligible, so the unit value index (value index ÷ real value index) is unstable. ${idxTxt}`
+    case "a_tiny_base": return t === 3 ? `The group's base value or quantity is negligible, so the unit value index (aggregate value ÷ aggregate tonnes) is unstable. ${idxTxt}`
       : `Base ${m} of this group is only <b>${fmt(base)}${uu}</b> (2014–16 average). Every year is divided by this tiny base.${(t === 1 || t === 2) && S.bv[gs] > 1000 ? ` The group's base value is ${fmt(S.bv[gs])} thousand USD, so most of its trade has no quantity — the quantity and real value indices cover only a sliver of it.` : ""} ${idxTxt}`;
     case "a_new": return `<b>${pct(C.sn[c])}</b> of ${y}'s ${m} comes from ${C.nn[c]} ${C.nn[c] === 1 ? lvl : lvls} with no ${m} in 2014–16. They are not in the base, so the index jumps. ${idxTxt}`;
     case "a_lost": return `<b>${pct(C.sl[c])}</b> of the base ${m} came from ${C.nl[c]} ${C.nl[c] === 1 ? lvl : lvls} with no data in ${y}. The index drops because they are missing that year, not because trade fell. ${idxTxt}`;
@@ -1701,7 +1702,7 @@ function aExplain(gs, c) {
       const iss = AISSIDX.get(gs + "|" + ci), tk = iss && iss.tk >= 0 ? (AD.topBy.get(iss.tk) || []) : [];
       const top = tk.length && iss.ry === y && iss.rt === t ? AD.mnames[AD.top.m[tk[0]]] : "One " + lvl;
       const sub = id === "a_one_item" ? (C.si[c] !== null && C.si[c] !== undefined ? D.cats.label[C.si[c]] : null) : (C.sc[c] !== null && C.sc[c] !== undefined ? AD.cats.label[C.sc[c]] : null);
-      const what = t === 3 ? `the gap between the value index and the real value index in ${y}` : `the change in ${m} between the base and ${y}`;
+      const what = t === 3 ? `the gap between the value index and the quantity index in ${y}` : `the change in ${m} between the base and ${y}`;
       return `<b>${esc(top)}</b> explains <b>${pct(C.sh[c])}</b> of ${what}. ${sub ? `Its own diagnosis: <b>${esc(sub)}</b>.` : `Its own index is not flagged — the change is large compared with the group's base.`} ${idxTxt}`;
     }
     case "a_low_base": return `Base ${m} (<b>${fmt(base)}${uu}</b>) is ${ratio(typ / base)}× lower than the level around it (${fmt(typ)}${uu}). Every other year is inflated by the same factor. ${idxTxt}`;

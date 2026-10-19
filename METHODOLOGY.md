@@ -89,17 +89,17 @@ Unit value index_t = UV_t ÷ base UV × 100 — UV_t = V_t ÷ Q_t
 
 ### 4.2 Aggregate unit value index *(item groups and regions)*
 
-The price change of the group, holding the item mix fixed at this year's quantities. It is derived from the value index (2.2) and the real value index (6.2).
+The value per tonne of the group, against its 2014–16 average. Built from the aggregate value (2.2) and the aggregate quantity (3.2).
 
 ```text
-Unit value index_t = Value index_t ÷ Real value index_t × 100
-= (Aggregate value_t ÷ Aggregate real value_t) ÷ (base value ÷ base real value) × 100
+Aggregate UV_t = Aggregate value_t ÷ Aggregate quantity_t — thousand USD per tonne
+Unit value index_t = Aggregate UV_t ÷ mean(Aggregate UV_{2014–16}) × 100
 ```
 
-- **Reads as:** This year's quantities at this year's prices against the same quantities at base prices — price change only. The second factor rescales the base period to 100.
-- **No index when:** Either the value index or the real value index is missing.
+- **Denominator:** The average of the yearly aggregate UVs over the 2014–16 years that have both an aggregate value and an aggregate quantity — the same rule as the item base UV, but never filled from a group.
+- **No index when:** The year has no aggregate value or no aggregate quantity, or no base year has both.
 
-> **Question: Should we use aggregate value ÷ aggregate tonnes?** That ratio also moves when the item mix shifts. A group that trades less of an expensive item and more of a cheap one shows a "price fall" even if every price rose.
+> **Question: Should we calculate it as value index ÷ real value index instead?** Value index ÷ real value index × 100 would hold the item mix fixed and show only the price change. Aggregate value ÷ aggregate tonnes also moves when the item mix shifts: a group that trades less of an expensive item and more of a cheap one shows a "price fall" even if every price rose.
 
 ---
 
@@ -232,10 +232,10 @@ Aggregate real value_t = Σ Q_{i,t} × base UV_i — thousand USD at 2014–16 p
 |---|---|---|---|
 | Value | Σ value | Change in current dollars: prices and volumes together | 2.2 |
 | Quantity | Σ tonnes | Change in tonnage, every tonne equal | 3.2 |
-| Unit value | Value index ÷ real value index | Change in prices at a fixed item mix | 4.2 |
+| Unit value | Σ value ÷ Σ tonnes | Change in value per tonne: prices and item mix together | 4.2 |
 | Real value | Σ quantity × base UV | Change in volume, weighted by base prices | 6.2 |
 
-Value index = real value index × unit value index ÷ 100 holds by construction. The quantity index is not part of this identity.
+There is no exact identity between these indices. The unit value index is built from tonnes, so it pairs with the quantity index, but value index = quantity index × unit value index ÷ 100 holds only roughly, because the unit value base is an average of yearly ratios.
 
 ## 11. Decisions at a glance
 
@@ -260,7 +260,7 @@ Value index = real value index × unit value index ÷ 100 holds by construction.
 | Item value / quantity base | Country's own valid base years, never filled |
 | Item unit value base | Base UV (may be rebuilt or from a group) |
 | Aggregate quantity index | Sum of tonnes × item factor, unweighted |
-| Aggregate UV index | Value index ÷ real value index × 100 |
+| Aggregate UV index | Aggregate value ÷ aggregate tonnes, against its 2014–16 average |
 | Dashboard flags | Critical: index > 5,000 or < 1 · Warning: index > 1,000 or < 10, or a 10× change from the previous year |
 | **Real values** |  |
 | Item real value | Quantity × base UV |
@@ -279,7 +279,7 @@ Four result files in `results/`, one row per area × item (or item group) × yea
 | **Indices — indices_items.csv · indices_aggregates.csv** |  |  |  |
 | Import Value Index | 2014–16 = 100 | Value ÷ country's own base-year average (2.1) | Aggregate value ÷ its 2014–16 average (2.2) |
 | Import Quantity Index | 2014–16 = 100 | Quantity ÷ country's own base-year average (3.1) | Aggregate tonnes ÷ its 2014–16 average (3.2) |
-| Import Unit Value Index | 2014–16 = 100 | Unit value ÷ base UV (4.1) | Value index ÷ real value index × 100 (4.2) |
+| Import Unit Value Index | 2014–16 = 100 | Unit value ÷ base UV (4.1) | Aggregate value ÷ aggregate tonnes, against its 2014–16 average (4.2) |
 | Import Real Value Index | 2014–16 = 100 | Not produced — equals the quantity index (6.1) | Aggregate real value ÷ its 2014–16 average (6.2) |
 | Export Value Index | 2014–16 = 100 | As for imports (2.1) | As for imports (2.2) |
 | Export Quantity Index | 2014–16 = 100 | As for imports (3.1) | As for imports (3.2) |

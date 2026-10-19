@@ -1205,10 +1205,17 @@ agg_level <- function(dt, level, code_col) {
     out[, paste(f, "Value Index")           := v]
     out[, paste(f, "Quantity Index")        := col(paste0(f, "_Qty_Index"))]
     out[, paste(f, "Real Value Index")      := rv]
-    # Unit value index = value index / real value index x 100
-    # (price change at constant item mix; the real value index is the volume measure)
-    out[, paste(f, "Unit Value Index")      := fifelse(!is.na(v) & !is.na(rv) & rv > 0,
-                                                       v / rv * 100, NA_real_)]
+    # Unit value index = aggregate UV / base aggregate UV x 100, where
+    # aggregate UV = aggregate value / aggregate quantity and the base is the mean of the
+    # yearly aggregate UVs over the 2014-16 years with both (as for the item base UV).
+    # Open question: value index / real value index x 100 would hold the item mix fixed.
+    av <- col(paste0(f, "_Value_1000USD")); aq <- col(paste0(f, "_Quantity"))
+    out[, .auv := fifelse(!is.na(av) & !is.na(aq) & av > 0 & aq > 0, av / aq, NA_real_)]
+    out[, .abuv := { b <- .auv[Year %in% base_period]; if (any(!is.na(b))) mean(b, na.rm = TRUE) else NA_real_ },
+        by = .(`Area Code (M49)`, `Item Group Code`)]
+    out[, paste(f, "Unit Value Index")      := fifelse(!is.na(.auv) & !is.na(.abuv) & .abuv > 0,
+                                                       .auv / .abuv * 100, NA_real_)]
+    out[, c(".auv", ".abuv") := NULL]
     if (!is.null(fao_idx)) {
       out[, paste(f, "Value Index (FAOSTAT)")    := col(paste0("FAO_", f, "_Value_Index"))]
       out[, paste(f, "Quantity Index (FAOSTAT)") := col(paste0("FAO_", f, "_Quantity_Index"))]

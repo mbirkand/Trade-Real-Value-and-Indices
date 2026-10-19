@@ -186,9 +186,11 @@ if (PIPE) {
   A[, `:=`(xV = fifelse(!is.na(V) & BV > 0, V / BV * 100, NA_real_),
            xQ = fifelse(!is.na(Q) & BQ > 0, Q / BQ * 100, NA_real_),
            xR = fifelse(!is.na(R) & BR > 0, R / BR * 100, NA_real_))]
-  A[, xU := fifelse(!is.na(xV) & !is.na(xR) & xR > 0, xV / xR * 100, NA_real_)]
-  A[, U  := fifelse(!is.na(V) & !is.na(R) & R > 0, V / R, NA_real_)]
-  A[, BU := fifelse(BV > 0 & BR > 0, BV / BR, NA_real_)]
+  # unit value index exactly as Step 6: aggregate value / aggregate quantity, against the
+  # mean of the yearly ratios over the base years
+  A[, U  := fifelse(!is.na(V) & !is.na(Q) & V > 0 & Q > 0, V / Q, NA_real_)]
+  A[, BU := { b <- U[year %in% CFG$base_years]; if (any(!is.na(b))) mean(b, na.rm = TRUE) else NA_real_ }, by = gsid]
+  A[, xU := fifelse(!is.na(U) & !is.na(BU) & BU > 0, U / BU * 100, NA_real_)]
   AVER <- rbindlist(lapply(list(c("Value", "xV", "pv"), c("Quantity", "xQ", "pq"), c("Real value", "xR", "pr")), function(z) {
     a <- A[[z[3]]]; b <- A[[z[2]]]; ok <- !is.na(a) & !is.na(b)
     list(index = z[1], max_rel = if (any(ok)) max(abs(a[ok] - b[ok]) / pmax(abs(a[ok]), 1e-12)) else 0,
@@ -214,11 +216,11 @@ if (PIPE) {
   mka <- function(k) {
     d <- A[, .(gsid, year, type = k, x = get(paste0("x", k)), px = get(paste0("px", k)), cur = get(k),
                base = get(paste0("B", k)), typ = get(paste0("t", k)), nbm = get(paste0("n", k)),
-               pcur = get(paste0("p", k)), pnbm = get(paste0("pn", k)), V, R, BV, BR, is_uv = k == "U")]
+               pcur = get(paste0("p", k)), pnbm = get(paste0("pn", k)), V, Q, BV, BQ, is_uv = k == "U")]
     d <- d[!is.na(x) & x > 0]
     fl <- if (k == "Q") CFG$floor_q else CFG$floor_v
     if (k == "U") {
-      d[, `:=`(tiny_cur = V < CFG$floor_v | R < CFG$floor_v, tiny_prev = FALSE, tiny_base = BV < CFG$floor_v | BR < CFG$floor_v)]
+      d[, `:=`(tiny_cur = V < CFG$floor_v | Q < CFG$floor_q, tiny_prev = FALSE, tiny_base = BV < CFG$floor_v | BQ < CFG$floor_q)]
     } else {
       d[, `:=`(tiny_cur = cur < fl, tiny_prev = FALSE, tiny_base = base < fl)]
     }
@@ -287,7 +289,7 @@ if (PIPE) {
     X <- merge(X, ABB, by = "gsid")
     X[, `:=`(b = fcase(type == "V", bV, type == "Q", bQ, type == "R", bR, default = 0),
              a = fcase(type == "V", aV, type == "Q", aQ, type == "R", aR, default = 0))]
-    X[, d := fifelse(type == "U", fifelse(BV > 0 & BR > 0, (aV - bV) / BV - (aR - bR) / BR, 0), a - b)]
+    X[, d := fifelse(type == "U", fifelse(BV > 0 & BQ > 0, (aV - bV) / BV - (aQ - bQ) / BQ, 0), a - b)]
     X <- X[!(b == 0 & a == 0 & d == 0), .(gsid, year, type, member, a, b, d)]
     X[, Dsum := sum(d), by = .(gsid, year, type)]
     X[, sgn := fifelse(Dsum >= 0, 1, -1)]
@@ -511,7 +513,7 @@ if (!is.null(AGG)) {
   ci <- merge(ci, S[, .(sid, area, item, flow, buv, gb)], by.x = c("area", "top", "flow"), by.y = c("area", "item", "flow"), all.x = TRUE)
   ci <- merge(ci, P[, .(sid, year, itype = type, icat = cat)], by = c("sid", "year", "itype"), all.x = TRUE)
   ci[, uvoff := !is.na(buv) & !is.na(gb) & gb > 0 & (buv / gb > 10 | buv / gb < 0.1)]
-  ci[, sub := fifelse(type %in% c("R", "U") & uvoff, "base_uv_off", icat)]
+  ci[, sub := fifelse(type == "R" & uvoff, "base_uv_off", icat)]
   PA <- merge(PA, ci[, .(gsid, year, type, sub_item = sub, msid = sid)], by = c("gsid", "year", "type"), all.x = TRUE)
   cc <- merge(PA[acat == "a_one_country", .(gsid, year, type, top)], SER[, .(gsid, grp, flow)], by = "gsid")
   cc <- merge(cc, SER[lvl == "Country", .(mgsid = gsid, top = area, grp, flow)], by = c("top", "grp", "flow"), all.x = TRUE)
@@ -523,7 +525,7 @@ if (!is.null(AGG)) {
   cat("\nAggregates — flagged values by cause:\n")
   print(PA[, .(values = .N, critical = sum(sev == 2), series = uniqueN(gsid)), by = acat][order(-critical)])
 
-  GS <- unique(A[, .(gsid, lvl, area, grp, flow, BV, BQ, BR, size, tV, tQ, tR, tU)], by = "gsid")
+  GS <- unique(A[, .(gsid, lvl, area, grp, flow, BV, BQ, BR, BU, size, tV, tQ, tR, tU)], by = "gsid")
   GS <- merge(GS, unique(AGG$scope[, .(lvl, area, area_name)], by = c("lvl", "area")), by = c("lvl", "area"), all.x = TRUE)
   GS <- merge(GS, unique(AGG$scope[, .(grp, grp_name)], by = "grp"), by = "grp", all.x = TRUE)
   setorder(GS, gsid)
@@ -656,7 +658,7 @@ if (!is.null(agg_payload)) {
     groups = list(code = groups$grp, name = groups$grp_name),
     series = list(lv = as.integer(GS$lvl == "Region"), a = match(paste(GS$lvl, GS$area), paste(areasA$lvl, areasA$area)) - 1L,
                   g = match(GS$grp, groups$grp) - 1L, f = as.integer(GS$flow == "Export"),
-                  bv = sg6(GS$BV), bq = sg6(GS$BQ), br = sg6(GS$BR), size = signif(GS$size, 4),
+                  bv = sg6(GS$BV), bq = sg6(GS$BQ), br = sg6(GS$BR), bu = sg6(GS$BU), size = signif(GS$size, 4),
                   tv = sg6(GS$tV), tq = sg6(GS$tQ), tr = sg6(GS$tR), tu = sg6(GS$tU)),
     V = sg6(AA$V), Q = sg6(AA$Q), R = sg6(AA$R),
     cells = list(s = PA$gsid - 1L, t = match(PA$type, c("V", "Q", "R", "U")) - 1L, y = PA$year, sev = PA$sev, c = PA$acat_i,

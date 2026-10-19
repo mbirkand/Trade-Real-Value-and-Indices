@@ -131,10 +131,10 @@ weights items by base-period prices, which is what lets heterogeneous commoditie
 be compared. No UV index at aggregate level.
 
 Output comes at two levels: country × item group, and area group × item group.
-Aggregates carry a unit value index computed as value index ÷ real value index
-× 100 — the implicit price change at constant item mix. A plain group value ÷
-group tonnes would mix price changes with shifts between cheap and expensive
-items, so it is not used.
+Aggregates carry a unit value index computed as aggregate value ÷ aggregate
+tonnes, against the average of the yearly ratios over 2014–16. It mixes price
+changes with shifts between cheap and expensive items. Open question: use value
+index ÷ real value index × 100 instead (price change at constant item mix).
 
 ## Outlier checks
 
