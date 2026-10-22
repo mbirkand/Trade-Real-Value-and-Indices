@@ -2,74 +2,62 @@
 
 Base period 2014–2016 = 100. Values in 1,000 USD, quantities in tonnes.
 
-Each file has one row per area × item (or item group) × year, with import and
-export columns side by side. Only disseminated areas are included.
+All outputs are aggregates: item groups, for countries and for regions, built
+from all items. Each file has one row per area × item group × year, with import
+and export columns side by side. Only disseminated areas are included. Nothing is
+published for single items; no unit value or real value indices are produced.
+No data are filtered out.
+
+11 item groups are excluded from the calculations and are not in any output:
+F1898 Hides and skins, F1900 Natural rubber, F1846 Non-edible fats and oils,
+F1901 Textile fibres, F2076 Other meat, F1902 Crude materials nes, F1845
+Non-edible crude materials, F1892 Fodder and feeding stuff, F1849 Other food nes,
+F1847 Non-food, F1848 Other food. Their items still count in every other group
+they belong to. Natural rubber and Textile fibres may be added next year.
 
 ## Main results
 
-**`real_values_items.csv`** — items in `ItemList.xlsx`
-- Import / Export Quantity (t)
-- Import / Export Value (1000 USD)
-- Import / Export Real Value (1000 USD) = quantity × 2014–2016 base unit value,
-  i.e. trade at constant prices
-
-**`indices_items.csv`** — items in `ItemList.xlsx`
-- Import / Export Value Index
-- Import / Export Quantity Index
-- Import / Export Unit Value Index
-- When `Faostat_TradeIndices.csv` is present, the matching FAOSTAT index sits
-  next to each, e.g. "Import Value Index (FAOSTAT)"
-
-**`real_values_aggregates.csv`** — item groups, built from **all** items.
-`Level` = Country (e.g. Türkiye × Cereals) or Region (e.g. Eastern Africa ×
-Cereals). Same columns as the item file.
+**`real_values_aggregates.csv`** — `Level` = Country (e.g. Türkiye × Cereals)
+or Region (e.g. Eastern Africa × Cereals).
+- Import / Export Real Value (1000 USD) — Σ item quantity × 2014–2016 base unit
+  value, i.e. trade at constant prices
 
 **`indices_aggregates.csv`** — same rows:
 - Import / Export Value Index
-- Import / Export Quantity Index (total tonnes)
-- Import / Export Real Value Index — the volume index for a group
-- Import / Export Unit Value Index = (aggregate value ÷ aggregate tonnes) ÷ its
-  2014–16 average × 100 — value per tonne; moves with prices and with the item mix
+- Import / Export Quantity Index (total tonnes × item factor)
 
 ## checks/ — for reviewing the results
 
 **`base_unit_values.csv`**
-The 2014–2016 base unit value behind every real value and index (ItemList
-items), and how it was built: `Base_Yrs_Own` years from the country's own
-data, `N_Imputed` years rebuilt from a parent group's trend, `N_Direct` years
-taken straight from a group. The three add up to 3. Treat rows where
-`UV_Source` is not "country" as less certain.
-
-**`outlier_check_items.csv`**
-Item-level index values above 5000 (ItemList items), with the previous year's
-value and the year-on-year ratio.
+The 2014–2016 base unit value behind every real value (all items), and how it
+was built: `Base_Yrs_Own` years from the country's own data, `N_Imputed` years
+rebuilt from a parent group's trend, `N_Direct` years taken straight from a
+group. The three add up to 3. Treat rows where `UV_Source` is not "country" as
+less certain.
 
 **`outlier_check_aggregates.csv`**
-The same check on the aggregate indices. `Pct_UV_Country` = share of the
-aggregate built on the countries' own prices: high share + extreme index is
-worth checking; low share is usually an imputation artefact.
+Aggregate value and quantity index values above 5000, with the previous year's
+value and the year-on-year ratio.
 
 **`outlier_drilldown_aggregates.csv`**
-For the 50 largest flagged aggregates, the country/item rows behind them
-(all items).
-
-**`faostat_vs_ours_indices.xlsx`**
-Our item indices next to published FAOSTAT indices. Only produced when
-`Faostat_TradeIndices.csv` is in the main folder.
+For the 50 largest of them, the country/item rows behind them (all items).
 
 ## Diagnostics (built at the end of every run, Step 8)
 
-**`diagnostics_dashboard.html`** — open in a browser. Three tabs: Methodology,
-Indices and Real values. Indices and Real values each switch between
-countries × items and item groups & regions: aggregate value and quantity indices
-are checked under Indices, aggregate real value and unit value indices under
-Real values. For every extreme value: the source data, the calculation and the cause.
+**`diagnostics_dashboard.html`** — open in a browser. Tabs:
+- **Methodology**
+- **Indices** — extreme aggregate value and quantity index values and their cause
+- **Real values** — aggregate real values 10× or more above or below the previous
+  year, compared with what the other countries did in the same year
+- **Base unit values** — base unit values far from other countries' or from the
+  country's own other years, with their effect on real value
+- **Dissemination groups** — tick the item groups to disseminate; size and reliability of each item group and area level,
+  and what a minimum series size would remove; a separate section lists the item groups excluded from the calculations
 
-**`checks/diagnostics_item_indices.csv`**, **`checks/diagnostics_aggregates.csv`**,
-**`checks/diagnostics_real_values.csv`** — the same issues as tables, one row per
-series × cause, in order of importance. The aggregates file has one list per index
-family (column `Index family`: value & quantity, or real value & unit value), each
-ranked on its own.
+**`checks/diagnostics_aggregates.csv`**, **`checks/diagnostics_real_value_jumps.csv`**,
+**`checks/diagnostics_base_unit_values.csv`**, **`checks/diagnostics_dissemination_groups.csv`**,
+**`checks/diagnostics_excluded_groups.csv`** — the same findings as tables, in order of importance.
 
-**`checks/diagnostics_aggregates_cache.rds`** — lets the dashboard script be run
-on its own (outside the pipeline) and still show aggregates.
+**`checks/diagnostics_cache.rds`** — lets the dashboard page be rebuilt on its own
+(`source("diagnostics/build_dashboard.R")` outside the pipeline), e.g. after a
+change to the page template.

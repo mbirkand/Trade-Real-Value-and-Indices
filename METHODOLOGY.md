@@ -10,146 +10,84 @@ This file is the Methodology tab of the [diagnostics dashboard](https://mbirkand
 
 ## 1. The measures
 
-| Measure | The question it answers | Items | Aggregates |
-|---|---|---|---|
-| Value index | How much more or less is the trade worth in current US dollars than in 2014–16? | ✓ | ✓ |
-| Quantity index | How many more or fewer tonnes are traded? | ✓ | ✓ |
-| Unit value index | How much did prices change? | ✓ | ✓ |
-| Real value | What would this year's trade be worth at 2014–16 prices? | ✓ | ✓ |
-| Real value index | How much did the volume of a group change, each item weighted by its 2014–16 price? | — | ✓ |
+| Measure | The question it answers | Produced for |
+|---|---|---|
+| Value index | How much more or less is the trade of a group worth in current US dollars than in 2014–16? | Item groups — countries and regions |
+| Quantity index | How many more or fewer tonnes of the group are traded? | Item groups — countries and regions |
+| Real value | What would this year's trade of a group be worth at 2014–16 prices? | Item groups — countries and regions |
+
+> **Aggregates only.** Every output is for item groups, for countries and for regions. Nothing is published for single items: item real values are only the building block of the aggregate real values. Not produced at all: unit value indices and real value indices.
 
 ---
 
 # Part 2 — How we calculate it
 
-Each measure, for items and then for aggregates. The supporting steps follow.
+Each measure, then the supporting steps.
 
 ---
 
-# Indices
+# Indices — aggregates only
 
-## 2. Value index
+## 2. Value index *(item groups and regions)*
 
-How the trade value in current US dollars changed since 2014–16. It moves with both prices and volumes.
-
-### 2.1 Item value index *(country × item)*
-
-```text
-Value index_t = V_t ÷ mean(V_{2014–16}) × 100
-```
-
-- **Denominator:** The average value over the country's **own** valid base years — one, two or three of them. Never filled from a group.
-- **No index when:** The country has no valid base year for the item and flow.
-
-> If only one base year exists and it is small, every later year is divided by that small number. A single 2014 record of 2 thousand USD turns an ordinary 2,000 thousand USD year into an index of 100,000.
-
-### 2.2 Aggregate value index *(item groups and regions)*
+How the trade value of a group in current US dollars changed since 2014–16. It moves with both prices and volumes.
 
 ```text
 Value index_t = Aggregate value_t ÷ mean(Aggregate value_{2014–16}) × 100
 ```
 
-The same value index, calculated for an aggregate instead of a single item: a country × item group, or a region × item group. The aggregate value is the sum of the items' values (section 8).
+- **Aggregate:** A country × item group, or a region × item group. The aggregate value is the sum of the items' values (section 6).
+- **Denominator:** The average of the aggregate value over the 2014–16 years in which the aggregate has a value.
+- **No index when:** The aggregate has no value in any base year, or its base average is 0.
 
-## 3. Quantity index
+## 3. Quantity index *(item groups and regions)*
 
-How the traded tonnage changed since 2014–16. Prices play no part.
-
-### 3.1 Item quantity index *(country × item)*
-
-```text
-Quantity index_t = Q_t ÷ mean(Q_{2014–16}) × 100
-```
-
-- **Denominator:** The average quantity over the country's own valid base years, as for the value index. Never filled from a group.
-- **No index when:** The country has no valid base year for the item and flow.
-
-> Same weakness as the value index. Bangladesh soya bean oil exports have only 2014 (0.002 t), so 22,000 t in 2019 gives a quantity index of 1,100,000,000.
-
-### 3.2 Aggregate quantity index *(item groups and regions)*
+How the traded tonnage of a group changed since 2014–16. Prices play no part; every tonne counts the same.
 
 ```text
 Quantity index_t = Aggregate quantity_t ÷ mean(Aggregate quantity_{2014–16}) × 100
 ```
 
-## 4. Unit value index
+- **Aggregate:** The sum of the items' tonnes, each multiplied by its item factor (section 6).
+- **Denominator:** The average of the aggregate quantity over the 2014–16 years in which the aggregate has a quantity.
+- **No index when:** The aggregate has no quantity in any base year, or its base average is 0.
 
-How prices changed since 2014–16.
-
-### 4.1 Item unit value index *(country × item)*
-
-```text
-Unit value index_t = UV_t ÷ base UV × 100 — UV_t = V_t ÷ Q_t
-```
-
-- **Denominator:** The base UV from section 7. Unlike the value and quantity bases, it may be rebuilt or taken from a group.
-- **No index when:** The year has no valid observation (Q > 0 and V > 0), or no base UV could be built.
-
-> Value index ≠ quantity index × unit value index ÷ 100. The base UV is the average of the yearly unit values, not mean value ÷ mean quantity, and it may come from a group while the other two bases cannot.
-
-### 4.2 Aggregate unit value index *(item groups and regions)*
-
-The value per tonne of the group, against its 2014–16 average. Built from the aggregate value (2.2) and the aggregate quantity (3.2).
-
-```text
-Aggregate UV_t = Aggregate value_t ÷ Aggregate quantity_t — thousand USD per tonne
-Unit value index_t = Aggregate UV_t ÷ mean(Aggregate UV_{2014–16}) × 100
-```
-
-- **Denominator:** The average of the yearly aggregate UVs over the 2014–16 years that have both an aggregate value and an aggregate quantity — the same rule as the item base UV, but never filled from a group.
-- **No index when:** The year has no aggregate value or no aggregate quantity, or no base year has both.
-
-> **Question: Should we calculate it as value index ÷ real value index instead?** Value index ÷ real value index × 100 would hold the item mix fixed and show only the price change. Aggregate value ÷ aggregate tonnes also moves when the item mix shifts: a group that trades less of an expensive item and more of a cheap one shows a "price fall" even if every price rose.
+> An item reported with value but no quantity counts in the value index but not in the quantity index. In groups where most of the trade has no quantity, the quantity index covers only a small part of the group.
 
 ---
 
 # Real values
 
-## 5. Real value
+## 4. Real value
 
 This year's volume priced at 2014–16 prices: the value the trade would have had if prices had not changed.
 
-### 5.1 Item real value *(country × item)*
+### 4.1 Item real value *(country × item · not published)*
 
 ```text
 Real value_t = Q_t × base UV — thousand USD at 2014–16 prices
 ```
 
-- **Inputs:** The year's quantity and the base UV from section 7.
-- **Calculated when:** Both exist — including flows whose base UV was rebuilt or taken from a group, and flows that have no quantity index.
+- **Inputs:** The year's quantity and the base unit value from section 5.
+- **Calculated when:** Both exist — including flows whose base unit value was rebuilt or taken from a group.
+- **Used for:** Only as the building block of the aggregate real value (4.2). Not published.
 
-### 5.2 Aggregate real value *(item groups and regions)*
+### 4.2 Aggregate real value *(item groups and regions)*
 
 ```text
 Aggregate real value_t = Σ Q_{i,t} × base UV_i — thousand USD at 2014–16 prices
 ```
 
-- **Coverage:** Only items with a quantity and a base UV; value-only items are left out. Regions sum their member countries (section 8).
-
-## 6. Real value index
-
-How the trade volume changed since 2014–16, with each item weighted by its 2014–16 price.
-
-### 6.1 Item real value index *(country × item)*
-
-**Not produced.** With one fixed base UV it would cancel out and leave exactly the quantity index. Real value becomes its own measure only when different items are added up.
-
-### 6.2 Aggregate real value index *(item groups and regions)*
-
-The volume index for a group.
-
-```text
-Real value index_t = Aggregate real value_t ÷ mean(Aggregate real value_{2014–16}) × 100
-= Σ(Q_{i,t} × base UV_i) ÷ mean(Σ Q_i × base UV_i)_{2014–16} × 100
-```
+- **Coverage:** Only items with a quantity and a base unit value; value-only items are left out. Regions sum their member countries (section 6).
+- **Published as:** A level in thousand USD at 2014–16 prices. No real value index is calculated.
 
 ---
 
 # Supporting steps
 
-## 7. Base unit value (2014–2016)
+## 5. Base unit value (2014–2016)
 
-The 2014–16 price of one country × item × flow. It is the denominator of the item unit value index (4.1) and the price that turns quantities into real values (5).
+The 2014–16 price of one country × item × flow. It is the price that turns quantities into real values (section 4).
 
 ```text
 UV_t = V_t ÷ Q_t
@@ -158,31 +96,35 @@ base UV = (UV_{2014} + UV_{2015} + UV_{2016}) ÷ 3 — simple average of the thr
 
 #### When a base year is missing
 
-A missing year is rebuilt from the country's nearest own year, moved by the parent group's rate of change. Only the change is borrowed; the country keeps its own price level.
+A base year counts as the country's own data when it has both a quantity and a value above zero. A year without own data is estimated from a year that has it: take the country's own unit value in that year and move it up or down by as much as the parent group's unit value moved between the two years.
+
+Only the group's change is used, not its price. The country keeps its own price level, which can be higher or lower than its neighbours' for good reasons. The flip side: if the country's own year is wrong, the estimated years copy the error.
+
+**The country itself is left out of the group.** The parent group's unit values used for a country are calculated from the other member countries only (leave-one-out). Otherwise the country's own record — often a large share of a small group — would move the group's price and feed back into its own estimate. If no other member has data for both years, the next group up is used.
+
+> **Changed on 22 October 2026.** Until then the parent group's unit values included the country being estimated.
 
 ```text
-UV_{missing} = UV_{anchor} × (parent UV_{missing} ÷ parent UV_{anchor})
+UV_{missing} = UV_{anchor} × (parent UV_{missing} ÷ parent UV_{anchor})    parent = the other member countries
 ```
 
 1. Fill **2015** first — from 2016 if the country has it, otherwise from 2014.
 2. Then fill **2014** and **2016** from 2015. Every remaining gap is a single step.
 3. If no parent group has a unit value for both years of a step, the parent's own unit value for the missing year is used.
-4. If the country has **no base-year data at all**, the parent group's base UV is used as it is.
-
-> This filling applies **only to the base unit value** — and so to the unit value index and to real values. The value and quantity indices are never filled from larger areas (2.1, 3.1).
+4. If the country has **no base-year data at all**, the parent group's base unit value is used as it is.
 
 #### Parent groups
 
 - The country's regional groups, smallest first: tier 1 → tier 2 → tier 3 → global (all countries).
-- A group's unit value for a year is pooled: ΣV ÷ ΣQ over its member countries.
+- A group's unit value for a year is pooled: ΣV ÷ ΣQ over its member countries, leaving out the country being estimated.
 - Not used as parents: EU (27), Australia and New Zealand, LDCs, landlocked and small-island developing states, LIFDCs, net food-importing developing countries, and all "excluding intra-trade" groups.
 - No outlier filtering is applied to base unit values.
 
-Every flow records where its base UV came from: **country** (all three years own data), **imputed** (some years rebuilt) or the **group name** / **global** (taken from a group).
+Every flow records where its base unit value came from: **country** (all three years own data), **imputed** (some years rebuilt) or the **group name** / **global** (taken from a group).
 
-## 8. How aggregates are built
+## 6. How aggregates are built
 
-Aggregates are not averages of item results. Items are first summed into item groups, and countries into regions; every aggregate index and real value is calculated on these aggregates.
+Aggregates are not averages of item results. Items are first summed into item groups, and countries into regions; the aggregate indices and real values are calculated on these sums.
 
 #### Country × item group
 
@@ -193,7 +135,7 @@ Aggregate real value_t = Σ Q_{i,t} × base UV_i — thousand USD at 2014–16 p
 ```
 
 - The item factor applies to quantity.
-- The factor is 1 for almost every item. Only a limited number use another factor — 37 items, in 44 of 2,354 item × group pairs — to convert them to a common equivalent, for example **rice, milled equivalent**, cassava equivalent, some **milk groups** (cheese, butter and ghee, whey, condensed and dry milk) and some meat groups.
+- The factor is 1 for almost every item. Only a limited number use another factor to convert them to a common equivalent, for example **rice, milled equivalent**, cassava equivalent, some **milk groups** (cheese, butter and ghee, whey, condensed and dry milk) and some meat groups.
 - An item can belong to more than one group.
 - An item with no data in a year drops out of that year's sum. An item reported with value but no quantity counts in the aggregate value, but not in the aggregate quantity or real value.
 
@@ -201,11 +143,31 @@ Aggregate real value_t = Σ Q_{i,t} × base UV_i — thousand USD at 2014–16 p
 
 - Sum of the country × item group aggregates over member countries with Aggregation = TRUE.
 
-#### Base of every aggregate index
+#### Base of the aggregate indices
 
 - The average of the **aggregate** over 2014–16 — not the sum of the items' own bases. An item or country that enters the group after the base adds to later years but not to the base.
 
-## 9. Data and preparation
+#### Item groups excluded from the calculations
+
+These 11 item groups are in `DisseminationList.csv` but are not calculated: no aggregate real values and no indices, for countries or for regions. Their items are still calculated and still count in every other group they belong to (for example Agricultural Products). They are listed in their own section of the Dissemination groups tab.
+
+| Code | Item group | Note |
+|---|---|---|
+| F1898 | Hides and skins | — |
+| F1900 | Natural rubber | **May be added next year** |
+| F1846 | Non-edible fats and oils | — |
+| F1901 | Textile fibres | **May be added next year** |
+| F2076 | Other meat | — |
+| F1902 | Crude materials nes | — |
+| F1845 | Non-edible crude materials | — |
+| F1892 | Fodder and feeding stuff | — |
+| F1849 | Other food nes | — |
+| F1847 | Non-food | — |
+| F1848 | Other food | — |
+
+> **Note for next year.** Natural rubber (F1900) and Textile fibres (F1901) may be added to the calculations next year.
+
+## 7. Data and preparation
 
 - **Source:** FAO trade data (June 2026 extract), 2000–2024: import and export quantity and value by country × CPC item × year.
 - Base period **2014–2016 = 100**.
@@ -217,27 +179,16 @@ Aggregate real value_t = Σ Q_{i,t} × base UV_i — thousand USD at 2014–16 p
 
 1. Reshape to one row per country × item × year with four columns: import Q, import V, export Q, export V.
 2. Remove live animals (CPC 021…). They are reported in head, not tonnes, so their unit values are not comparable.
-3. Fix one-sided zeros: if Q = 0 but V > 0, Q is set to missing; if V = 0 but Q > 0, V is set to missing. The other side still counts in its own index.
+3. Fix one-sided zeros: if Q = 0 but V > 0, Q is set to missing; if V = 0 but Q > 0, V is set to missing. The other side still counts in its own total.
 4. A **valid observation** is one with Q > 0 and V > 0 — enough to compute a unit value.
 
-> Nothing is filtered out for size. Very small records (Q < 10 t or V < 10 thousand USD) are counted and reported but kept. There is no coverage rule and no minimum number of base years.
+> **No data are filtered.** Every record is used as reported, even when the source data look problematic: very small records (Q < 10 t or V < 10 thousand USD), unusual unit values, and estimated, imputed or missing-flagged records all stay in. Records flagged as missing (M) that carry a 0 enter as 0. There is no coverage rule and no minimum number of base years. The other pages of the dashboard flag values for review; they never remove them.
 
 ---
 
 # Reference
 
-## 10. How the aggregate indices fit together
-
-| Index | Total it uses | Measures | Section |
-|---|---|---|---|
-| Value | Σ value | Change in current dollars: prices and volumes together | 2.2 |
-| Quantity | Σ tonnes | Change in tonnage, every tonne equal | 3.2 |
-| Unit value | Σ value ÷ Σ tonnes | Change in value per tonne: prices and item mix together | 4.2 |
-| Real value | Σ quantity × base UV | Change in volume, weighted by base prices | 6.2 |
-
-There is no exact identity between these indices. The unit value index is built from tonnes, so it pairs with the quantity index, but value index = quantity index × unit value index ÷ 100 holds only roughly, because the unit value base is an average of yearly ratios.
-
-## 11. Decisions at a glance
+## 8. Decisions at a glance
 
 | Topic | Decision |
 |---|---|
@@ -246,47 +197,44 @@ There is no exact identity between these indices. The unit value index is built 
 | Live animals | Excluded |
 | One-sided zeros | Zero side set to missing |
 | Valid observation | Q > 0 and V > 0 |
-| Small-record filter | Not applied, only reported |
+| Filtering of problematic data | None — flagged for review only |
 | Minimum base years | None |
-| Output scope | Disseminated areas; ItemList items at item level, all items in aggregates |
+| Output scope | Disseminated areas; aggregates only, built from all items; 11 item groups excluded (section 6) |
 | **Base unit value and aggregates** |  |
 | Base UV | Per-year unit values, simple average |
-| Missing base year | Parent group's rate of change; 2015 first, then 2014 and 2016 |
+| Missing base year | Parent group's rate of change, without the country itself; 2015 first, then 2014 and 2016 |
 | No base-year data | Parent group's base UV |
 | Parent order | Tier 1 → tier 2 → tier 3 → global |
 | Item factor | Quantity only |
 | Aggregate base | 2014–16 average of the aggregate |
+| Excluded item groups | 11 groups not calculated (section 6); their items still count in other groups. Natural rubber and Textile fibres may be added next year |
 | **Indices** |  |
-| Item value / quantity base | Country's own valid base years, never filled |
-| Item unit value base | Base UV (may be rebuilt or from a group) |
+| Level | Aggregates only (item groups for countries and regions) |
+| Produced | Value index and quantity index |
+| Not produced | Item indices, unit value indices, real value indices |
 | Aggregate quantity index | Sum of tonnes × item factor, unweighted |
-| Aggregate UV index | Aggregate value ÷ aggregate tonnes, against its 2014–16 average |
-| Dashboard flags | Critical: index > 5,000 or < 1 · Warning: index > 1,000 or < 10, or a 10× change from the previous year |
 | **Real values** |  |
-| Item real value | Quantity × base UV |
-| Item real value index | Not produced (equals the quantity index) |
-| Aggregate volume index | Real value index (base-price weighted) |
+| Item real value | Quantity × base UV — building block only, not published |
+| Aggregate real value | Σ quantity × base UV, published as a level |
+| **Dashboard checks (review only)** |  |
+| Indices | Critical: index > 5,000 or < 1 · Warning: index > 1,000 or < 10, or a 10× change from the previous year |
+| Real values | Aggregate real value 10× or more (critical 100×) above or below the previous year, compared with other countries |
+| Base unit values | 10× (critical 100×) from other countries' base UV, or 10× from the country's own other years |
+| Dissemination groups | Open — chosen on the Dissemination groups tab, from the size and reliability of each group and area level. The 11 excluded groups are listed there in their own section |
 
-## 12. Outputs
+## 9. Outputs
 
-Four result files in `results/`, one row per area × item (or item group) × year, 2000–2024, with import and export columns side by side. Only disseminated areas are included. Each column below exists for items and for aggregates.
+Two result files in `results/`: `real_values_aggregates.csv` and `indices_aggregates.csv`. One row per area × item group × year, 2000–2024, with import and export columns side by side. Item groups for countries and for regions (only the item groups with Dissemination = TRUE in `DisseminationList.csv`), built from all items; only disseminated areas. The 11 excluded item groups (section 6) are not in either file. Identifier columns: Level (Country or Region), Area Code (M49), Area, Item Group Code, Item Group, Year.
 
-- **Items** (ItemList items, country × item): `indices_items.csv`, `real_values_items.csv`. Identifier columns: Area Code (M49), Area, Item Code (CPC), Item, Year.
-- **Aggregates** (all items, item groups for countries and regions): `indices_aggregates.csv`, `real_values_aggregates.csv`. Identifier columns: Level (Country or Region), Area Code (M49), Area, Item Group Code, Item Group, Year.
+| Column | Unit | Calculation |
+|---|---|---|
+| **Real values — real_values_aggregates.csv** |  |  |
+| Import Real Value (1000 USD) | 1000 USD at 2014–16 prices | Σ item quantity × base UV (4.2) |
+| Export Real Value (1000 USD) | 1000 USD at 2014–16 prices | As for imports (4.2) |
+| **Indices — indices_aggregates.csv** |  |  |
+| Import Value Index | 2014–16 = 100 | Aggregate value ÷ its 2014–16 average (2) |
+| Import Quantity Index | 2014–16 = 100 | Aggregate tonnes ÷ its 2014–16 average (3) |
+| Export Value Index | 2014–16 = 100 | As for imports (2) |
+| Export Quantity Index | 2014–16 = 100 | As for imports (3) |
 
-| Column | Unit | Items | Aggregates |
-|---|---|---|---|
-| **Indices — indices_items.csv · indices_aggregates.csv** |  |  |  |
-| Import Value Index | 2014–16 = 100 | Value ÷ country's own base-year average (2.1) | Aggregate value ÷ its 2014–16 average (2.2) |
-| Import Quantity Index | 2014–16 = 100 | Quantity ÷ country's own base-year average (3.1) | Aggregate tonnes ÷ its 2014–16 average (3.2) |
-| Import Unit Value Index | 2014–16 = 100 | Unit value ÷ base UV (4.1) | Aggregate value ÷ aggregate tonnes, against its 2014–16 average (4.2) |
-| Import Real Value Index | 2014–16 = 100 | Not produced — equals the quantity index (6.1) | Aggregate real value ÷ its 2014–16 average (6.2) |
-| Export Value Index | 2014–16 = 100 | As for imports (2.1) | As for imports (2.2) |
-| Export Quantity Index | 2014–16 = 100 | As for imports (3.1) | As for imports (3.2) |
-| Export Unit Value Index | 2014–16 = 100 | As for imports (4.1) | As for imports (4.2) |
-| Export Real Value Index | 2014–16 = 100 | Not produced (6.1) | As for imports (6.2) |
-| **Real values — real_values_items.csv · real_values_aggregates.csv** |  |  |  |
-| Import Real Value | 1000 USD at 2014–16 prices | Quantity × base UV (5.1) | Σ item quantity × base UV (5.2) |
-| Export Real Value | 1000 USD at 2014–16 prices | As for imports (5.1) | As for imports (5.2) |
-
-Numbers in brackets refer to the sections above. When `Faostat_TradeIndices.csv` is in the main folder, the matching published FAOSTAT index is added next to each item index, e.g. "Import Value Index (FAOSTAT)".
+Numbers in brackets refer to the sections above.
