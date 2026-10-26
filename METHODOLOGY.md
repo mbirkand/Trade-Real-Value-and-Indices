@@ -219,7 +219,7 @@ These 11 item groups are in `DisseminationList.csv` but are not calculated: no a
 | **Dashboard checks (review only)** |  |
 | Indices | Critical: index > 5,000 or < 1 · Warning: index > 1,000 or < 10, or a 10× change from the previous year |
 | Real values | Aggregate real value 10× or more (critical 100×) above or below the previous year, compared with other countries |
-| Base unit values | 10× (critical 100×) from other countries' base UV, or 10× from the country's own other years |
+| Base unit values | Base UV 10× or more (critical 100×) above or below other countries' base UV, or 10× or more above or below the country's own other years. Also flagged: the highest base year's UV 10× or more the lowest |
 | Dissemination groups | Open — chosen on the Dissemination groups tab, from the size and reliability of each group and area level. The 11 excluded groups are listed there in their own section |
 
 ## 9. Outputs
