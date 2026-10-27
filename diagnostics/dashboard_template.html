@@ -357,6 +357,26 @@ p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
 .pb0 { background: #b8322f; } .pb1 { background: #eba38f; } .pb2 { background: #c9c8c2; } .pb3 { background: #8fb6e8; } .pb4 { background: #2a6fc9; }
 .inside td.hot { background: var(--warn-tint); font-weight: 600; }
 .inside + .inside { margin-top: 18px; }
+/* real value jump: the cause */
+.jc { margin-top: 14px; border: 1px solid var(--border-strong); border-radius: 10px; padding: 14px 18px; background: var(--surface-2); }
+.jc .hl { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; }
+.jc .verdict { font-size: 16.5px; font-weight: 650; margin: 2px 0 6px; }
+.jc .verdict.c { color: var(--crit); }
+.jc p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.6; }
+.jc table.calc { border-collapse: collapse; font-size: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.jc table.calc th, .jc table.calc td { padding: 6px 14px; border-bottom: 1px solid var(--border); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.jc table.calc th { background: var(--surface-3); font-weight: 600; font-size: 12.5px; color: var(--text-2); }
+.jc table.calc th:first-child, .jc table.calc td:first-child { text-align: left; color: var(--text-2); }
+.jc table.calc tr:last-child td { border-bottom: 0; }
+.jc table.calc tr.res td { font-weight: 650; }
+.jc table.calc td.hot { background: var(--crit-tint); font-weight: 650; }
+.jc table.calc td .op { color: var(--muted); margin-right: 6px; font-weight: 600; }
+.jc .lk { margin-top: 10px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+.jc .lk a { cursor: pointer; }
+.inside p.ans { margin: 0 0 8px; font-size: 14.5px; }
+details.more { margin-top: 6px; }
+details.more > summary { cursor: pointer; color: var(--accent); font-size: 14px; padding: 4px 0; }
+details.more[open] > summary { margin-bottom: 6px; }
 table.list.dist td.offc { background: var(--warn-tint); }
 p.read { margin: 0 0 14px; font-size: 15px; line-height: 1.6; max-width: 900px; }
 .how { border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin: 0 0 24px; background: var(--surface); }
@@ -383,7 +403,6 @@ table.list.pubx td.gname { white-space: normal; min-width: 200px; }
 .selbar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 0 0 16px; padding: 12px 16px; background: var(--accent-soft); border-radius: 10px; font-size: 14px; }
 .selbar .sp2 { flex: 1; }
 .selbar .hint { color: var(--text-2); font-size: 13px; }
-#pThrLvl { margin-bottom: 16px; }
 /* key findings: the page's message in three or four lines */
 .keyf { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 12px; padding: 18px 24px 16px; margin: 0 0 20px; }
 .keyf .kh { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
@@ -627,7 +646,7 @@ td .code { margin-left: 5px; }
               <tr><td>Aggregate real value</td><td>Σ quantity × base UV, published as a level</td></tr>
               <tr class="grp"><td colspan="2">Dashboard checks (review only)</td></tr>
               <tr><td>Indices</td><td>Critical: index &gt; 5,000 or &lt; 1 · Warning: index &gt; 1,000 or &lt; 10, or a 10× change from the previous year</td></tr>
-              <tr><td>Real values</td><td>Aggregate real value 10× or more (critical 100×) above or below the previous year, compared with other countries</td></tr>
+              <tr><td>Real values</td><td>Aggregate real value 10× or more (critical 100×) above or below the previous year, compared with other countries and traced to the one item behind most of the change (quantity × base unit value)</td></tr>
               <tr><td>Base unit values</td><td>Base UV 10× or more (critical 100×) above or below other countries' base UV, or 10× or more above or below the country's own other years. Also flagged: the highest base year's UV 10× or more the lowest</td></tr>
               <tr><td>Dissemination groups</td><td>Open — chosen on the Dissemination groups tab, from the size and reliability of each group and area level. The 11 excluded groups are listed there in their own section</td></tr>
             </tbody>
@@ -839,9 +858,12 @@ td .code { margin-left: 5px; }
               <li><b>Only real value jumped:</b> the aggregate value changed less than 3× — quantity or base unit value is the problem.</li>
               <li><b>Value jumped too:</b> the trade itself changed, or quantity and value were both recorded on a different scale.</li>
             </ul>
-            <h3>What's inside</h3>
+            <h3>Cause of each jump</h3>
             <ul class="tight">
-              <li>The items (country) or countries (region) with the largest change in real value, with their quantity and base unit value.</li>
+              <li>The one item behind most of the change (for a region: in the member country that contributed most), shown as quantity × base unit value = real value.</li>
+              <li><b>Base unit value out of line:</b> its base unit value is 10× or more above or below other countries'.</li>
+              <li><b>Quantity on another scale:</b> its quantity moved 10× more than its value.</li>
+              <li>The series table also shows the unit value (value ÷ quantity) next to the average base unit value (real value ÷ quantity) every year; a 10× gap is shaded.</li>
             </ul>
           </div>
         </div>
@@ -988,12 +1010,6 @@ td .code { margin-left: 5px; }
       <h2>Area levels</h2>
       <p class="sub">The same reliability measures for countries and for each kind of region. Series = area × item group × flow.</p>
       <div id="pLevels"></div>
-    </section>
-    <section class="card">
-      <h2>What a minimum size would remove</h2>
-      <p class="sub">If series below a minimum trade size were not published: how many series would remain, how much trade they cover, and how many of the flagged series would go.</p>
-      <div class="seg" id="pThrLvl"><button data-l="0" class="on">Countries × item groups</button><button data-l="1">Regions × item groups</button></div>
-      <div id="pThr"></div>
     </section>
     <section class="card">
       <h2>Excluded from the calculations</h2>
@@ -1662,16 +1678,85 @@ const EXJ = {
 const JGROUP = { j_rv_only: "Base", j_both: "Year", j_shared: "Level", j_tiny: "Coverage" };
 const JGNAME = { j_rv_only: "This country only", j_both: "This country only", j_shared: "Shared", j_tiny: "Negligible" };
 function jVals(gs, y) { const v = aVals(gs, y - Y0); return v; }
-function jText(o, short) {
-  const gs = o.s, nm = aName(gs), p = aVals(gs, o.y - 1 - Y0), c = aVals(gs, o.y - Y0), isR = AD.series.lv[gs] === 1;
-  const who = isR ? "member countries" : "other countries";
-  let t = `Real value went from <b>${fmt(p.R)}</b> to <b>${fmt(c.R)}</b> thousand USD in ${o.y} (<b>${rt(o.r)}</b>). Value ${has(o.vr) ? rt(o.vr) : "–"}, quantity ${has(o.qr) ? rt(o.qr) : "–"}.`;
-  if (o.np) t += ` Of ${o.np} ${who} with a real value in both years, the median changed <b>${rt(o.pm)}</b> and <b>${pct1(o.ps)}</b> also jumped 10× ${o.r > 1 ? "up" : "down"}; all of them together ${rt(o.tr)}.`;
-  else t += ` No ${who} have a real value in both years to compare with.`;
-  if (short) return t;
+function jText(o) {
+  const gs = o.s, p = aVals(gs, o.y - 1 - Y0), c = aVals(gs, o.y - Y0);
+  const flat = has(o.vr) && o.vr < 3 && o.vr > 1 / 3;
+  return `Real value went from <b>${fmt(p.R)}</b> to <b>${fmt(c.R)}</b> thousand USD in ${o.y} (<b>${rt(o.r)}</b>)${flat ? ", but" : ";"} value changed ${flat ? "only " : ""}${has(o.vr) ? rt(o.vr) : "–"} and quantity ${has(o.qr) ? rt(o.qr) : "–"}.`;
+}
+// the cause of a jump: the one item behind most of the change (for a region: in the member country that contributed most)
+let JCAUSEBY = new Map();
+function jCause(o) {
+  const C = AD.jcause;
+  if (C) {
+    const k = JCAUSEBY.get(o.rank - 1); if (k === undefined) return null;
+    return { area: C.a[k], item: C.i[k], icode: C.ic[k], sh: C.sh[k], pq: C.pq[k], cq: C.cq[k], pv: C.pv[k], cv: C.cv[k],
+             pr: C.pr[k], cr: C.cr[k], buv: C.buv[k], gb: C.gb[k], src: has(C.src[k]) ? AD.srcs[C.src[k]] : null, ms: C.ms[k] };
+  }
+  // older data without "jcause": rebuilt from the largest contributors (for a region: the country's own jump that year)
+  const T = AD.jtop, isR = AD.series.lv[o.s] === 1;
+  let tk = JTOPBY.get(o.rank - 1) || [], area = aName(o.s).area, sh = 1;
+  if (!tk.length) return null;
+  if (isR) {
+    const k0 = tk[0], cj = has(T.mg[k0]) ? (JBY.get(T.mg[k0]) || []).find(x => x.y === o.y) : null;
+    if (!cj) return null;
+    area = AD.mnames[T.m[k0]]; sh = T.sh[k0]; tk = JTOPBY.get(cj.rank - 1) || [];
+    if (!tk.length) return null;
+  }
+  const k = tk[0], buv = T.buv[k];
+  if (!(buv > 0)) return null;
+  return { area, item: AD.mnames[T.m[k]], icode: null, sh: sh * T.sh[k], pq: T.pr[k] / buv, cq: T.cr[k] / buv, pv: T.pv[k], cv: T.cv[k],
+           pr: T.pr[k], cr: T.cr[k], buv, gb: has(T.rp[k]) && T.rp[k] > 0 ? buv / T.rp[k] : null, src: has(T.src[k]) ? AD.srcs[T.src[k]] : null, ms: T.ms[k] };
+}
+const offX = x => has(x) && isFinite(x) && x > 0 && (x >= 10 || x <= 0.1);
+const timesTxt = r => r >= 1 ? `${ratio(r)} times` : `1/${ratio(1 / r)} of`;
+const usdT = x => has(x) ? `${fmt(x * 1000)} $/t` : "–";
+function jCauseHtml(o, nm) {
+  const c = jCause(o); if (!c) return "";
+  const y0 = o.y - 1, y1 = o.y, up = o.r > 1, flow = nm.flow.toLowerCase();
+  const q = up ? c.cq : c.pq, v = up ? c.cv : c.pv, yy = up ? y1 : y0;
+  const uv = q > 0 && v > 0 ? v / q : null, rp = c.gb > 0 ? c.buv / c.gb : null, ru = has(uv) ? c.buv / uv : null;
+  const qr = c.pq > 0 && c.cq > 0 ? c.cq / c.pq : null, vr = c.pv > 0 && c.cv > 0 ? c.cv / c.pv : null;
+  const qScale = has(qr) && has(vr) && offX(qr / vr);
+  const kind = offX(rp) ? "buv" : qScale ? "qty" : offX(ru) ? "gap"
+    : AD.jcats.id[o.c] === "j_shared" ? "shared" : !(c.pq > 0) ? "start" : !(c.cq > 0) ? "stop" : "trade";
+  const verdict = {
+    buv: "Base unit value out of line",
+    qty: "Quantity recorded on another scale",
+    gap: "Base unit value far from this year's price",
+    shared: "Shared with other countries",
+    start: "An item started being traded",
+    stop: "An item stopped being traded",
+    trade: "The trade itself changed"
+  }[kind];
+  const who = `<b>${esc(c.item)}</b>${c.icode ? ` <span class="code">${esc(c.icode)}</span>` : ""} — ${AD.series.lv[o.s] === 1 ? `<b>${esc(c.area)}</b>, ` : ""}${flow}s`;
+  const shTxt = c.sh >= 0.995 ? "all of the change" : `${pct(c.sh)} of the change`;
+  let why;
+  if (kind === "buv") {
+    const parts = [];
+    if (has(rp)) parts.push(`${timesTxt(rp)} other countries' (${usdT(c.gb)})`);
+    if (has(ru) && offX(ru)) parts.push(`${timesTxt(ru)} its own price in ${yy} (${usdT(uv)})`);
+    why = `${who}. Its base unit value is <b>${usdT(c.buv)}</b>${parts.length ? ` — ${parts.join(" and ")}` : ""}. Every tonne is valued at this price, so when its quantity went from ${fmt(c.pq) || "0"} to ${fmt(c.cq) || "0"} t its real value went from ${fmt(c.pr) || "0"} to ${fmt(c.cr) || "0"} thousand USD: ${shTxt}.`;
+  } else if (kind === "gap") {
+    why = `${who}. Its base unit value (<b>${usdT(c.buv)}</b>${has(rp) ? `, ${rt(rp)} other countries'` : ""}) is ${timesTxt(ru)} its own price in ${yy} (<b>${usdT(uv)}</b>): either the base period or this year's quantity or value is off. Its quantity went from ${fmt(c.pq) || "0"} to ${fmt(c.cq) || "0"} t, so its real value went from ${fmt(c.pr) || "0"} to ${fmt(c.cr) || "0"} thousand USD: ${shTxt}.`;
+  } else if (kind === "qty") {
+    why = `${who}. Its quantity changed ${rt(qr)} but its value only ${rt(vr)} — one of the two years is probably recorded in another unit. Its real value went from ${fmt(c.pr) || "0"} to ${fmt(c.cr) || "0"} thousand USD: ${shTxt}.`;
+  } else {
+    const lead = kind === "start" ? `It was not traded in ${y0}.` : kind === "stop" ? `It was not traded in ${y1}.` : kind === "shared" ? "Other countries moved the same way, so the cause is probably common to all." : "Quantity and value moved together.";
+    why = `Largest item: ${who}. ${lead} Its base unit value (${usdT(c.buv)}${has(rp) ? `, ${rt(rp)} other countries'` : ""}) is not out of line. Its real value went from ${fmt(c.pr) || "0"} to ${fmt(c.cr) || "0"} thousand USD: ${shTxt}.`;
+  }
+  const hot = kind === "buv" || kind === "gap";
+  const cell = (x, cls) => `<td class="${cls || ""}">${has(x) ? fmt(x) || "0" : "–"}</td>`;
+  let t = `<table class="calc"><thead><tr><th>${esc(c.item.length > 48 ? c.item.slice(0, 46) + "…" : c.item)}</th><th>${y0}</th><th>${y1}</th></tr></thead><tbody>
+    <tr><td>Quantity [t]</td>${cell(c.pq)}${cell(c.cq)}</tr>
+    <tr><td><span class="op">×</span>Base unit value [$/t]</td>${cell(c.buv * 1000, hot ? "hot" : "")}${cell(c.buv * 1000, hot ? "hot" : "")}</tr>
+    <tr class="res"><td><span class="op">=</span>Real value [1000 $]</td>${cell(c.pr)}${cell(c.cr)}</tr>
+    <tr><td>Value as traded [1000 $]</td>${cell(c.pv)}${cell(c.cv)}</tr>
+  </tbody></table>`;
+  const links = [];
+  if (has(c.ms)) links.push(`<a data-ms="${c.ms}">Open this base unit value →</a>`);
   const tk = JTOPBY.get(o.rank - 1) || [];
-  if (tk.length) t += ` Largest contributor: <b>${esc(AD.mnames[AD.jtop.m[tk[0]]])}</b>, ${pct(AD.jtop.sh[tk[0]])} of the change.`;
-  return t;
+  if (AD.series.lv[o.s] === 1 && tk.length && has(AD.jtop.mg[tk[0]])) links.push(`<a data-mj="${AD.jtop.mg[tk[0]]}" data-y="${o.y}">Open ${esc(c.area)}, ${esc(nm.grp)} →</a>`);
+  return `<div class="jc"><div class="hl">Cause</div><div class="verdict${hot || kind === "qty" ? " c" : ""}">${verdict}</div><p>${why}</p>${t}${links.length ? `<div class="lk">${links.join("")}</div>` : ""}</div>`;
 }
 function peerBar(o) {
   const b = [o.b0, o.b1, o.b2, o.b3, o.b4], tot = b.reduce((x, y) => x + y, 0); if (!tot) return "";
@@ -1680,30 +1765,37 @@ function peerBar(o) {
     <div class="lg">${b.map((n, i) => `<span><i class="${cls[i]}"></i>${lab[i]} <b>${fmtN(n)}</b></span>`).join("")}</div></div>`;
 }
 function jPanels(o) {
-  const gs = o.s, isR = AD.series.lv[gs] === 1, y = o.y;
-  let h = `<div class="inside"><div class="lbl">${isR ? "Member countries" : "Other countries"} — same item group and flow, ${y - 1} → ${y}</div>${peerBar(o) || `<p class="note">No ${isR ? "member countries" : "other countries"} to compare.</p>`}`;
+  const gs = o.s, isR = AD.series.lv[gs] === 1, y = o.y, nm = aName(gs);
+  const who = isR ? "member countries" : "other countries";
+  let h = jCauseHtml(o, nm);
+  // did the others jump too?
+  h += `<div class="inside"><div class="lbl">Did the ${who} jump too?</div>`;
+  if (o.np) {
+    const same = o.r > 1 ? o.b4 : o.b0, shared = AD.jcats.id[o.c] === "j_shared";
+    h += `<p class="ans"><b>${shared ? "Yes" : "No"}</b> — of ${fmtN(o.np)} ${who} with a real value in both years, the median changed <b>${rt(o.pm)}</b>; ${fmtN(same)} ${o.r > 1 ? "rose" : "fell"} 10× or more.${shared ? " The cause is probably common to all of them." : " The cause is in this series' own data."}</p>${peerBar(o)}`;
+  } else h += `<p class="ans">No ${who} have a real value in both years to compare with.</p>`;
   const pk = JPEERBY.get(o.rank - 1) || [];
   if (pk.length) {
-    h += `<table><thead><tr><th>${isR ? "Member country" : "Largest other countries"}</th><th>Real value ${y - 1}</th><th>Real value ${y}</th><th>Change</th></tr></thead><tbody>`;
+    h += `<details class="more"><summary>Show the ${isR ? "member countries" : "largest other countries"}</summary><table><thead><tr><th>Country</th><th>Real value ${y - 1}</th><th>Real value ${y}</th><th>Change</th></tr></thead><tbody>`;
     for (const k of pk) {
       const a = AD.jpeer.a[k], mg = has(a) ? AKEY.get(a + "|" + AD.series.g[gs] + "|" + AD.series.f[gs]) : undefined, r = AD.jpeer.cr[k] / AD.jpeer.pr[k];
       const nmx = has(a) ? esc(AD.areas.name[a]) : "?";
       h += `<tr><td>${mg !== undefined ? `<a data-mj="${mg}" data-y="${y}">${nmx}</a>` : nmx}</td><td>${fmt(AD.jpeer.pr[k])}</td><td>${fmt(AD.jpeer.cr[k])}</td><td class="${r >= 10 || r <= 0.1 ? "hot" : ""}">${rt(r)}</td></tr>`;
     }
-    h += `</tbody></table>`;
+    h += `</tbody></table></details>`;
   }
   h += `</div>`;
+  // the largest contributors
   const tk = JTOPBY.get(o.rank - 1) || [], T = AD.jtop;
   if (tk.length) {
-    h += `<div class="inside"><div class="lbl">What's inside — largest changes in real value, ${y - 1} → ${y}</div><table><thead><tr><th>${isR ? "Country" : "Item"}</th><th>Real value ${y - 1}</th><th>Real value ${y}</th><th>Change</th><th>Share</th><th>Quantity ${y - 1} → ${y}, t</th><th>Value ${y - 1} → ${y}, 1000 $</th>${isR ? "" : "<th>Base UV, $/t</th><th>Base UV vs other countries</th>"}</tr></thead><tbody>`;
+    h += `<div class="inside"><div class="lbl">Largest contributors to the change</div><details class="more"><summary>Show the ${tk.length} ${isR ? "countries" : "items"} with the largest change in real value</summary><table><thead><tr><th>${isR ? "Country" : "Item"}</th><th>Real value ${y - 1} → ${y}</th><th>Share of change</th><th>Quantity ${y - 1} → ${y}, t</th><th>Value ${y - 1} → ${y}, 1000 $</th>${isR ? "" : "<th>Base UV vs other countries</th>"}</tr></thead><tbody>`;
     tk.forEach((k, j) => {
       const nmx = esc(AD.mnames[T.m[k]]), link = has(T.ms[k]) ? `<a data-ms="${T.ms[k]}">${nmx}</a>` : has(T.mg[k]) ? `<a data-mj="${T.mg[k]}" data-y="${y}">${nmx}</a>` : nmx;
-      const src = has(T.src[k]) ? AD.srcs[T.src[k]] : null, d = T.cr[k] - T.pr[k];
-      h += `<tr class="${j === 0 ? "top1" : ""}"><td>${link}</td><td>${fmt(T.pr[k]) || "0"}</td><td>${fmt(T.cr[k]) || "0"}</td><td>${d > 0 ? "+" : ""}${fmt(d)}</td><td>${pct(T.sh[k])}</td>
+      h += `<tr class="${j === 0 ? "top1" : ""}"><td>${link}</td><td>${fmt(T.pr[k]) || "0"} → ${fmt(T.cr[k]) || "0"}</td><td>${pct(T.sh[k])}</td>
         <td>${fmt(T.pq[k]) || "0"} → ${fmt(T.cq[k]) || "0"}</td><td>${fmt(T.pv[k]) || "0"} → ${fmt(T.cv[k]) || "0"}</td>
-        ${isR ? "" : `<td>${has(T.buv[k]) ? fmt(T.buv[k] * 1000) : "–"}<span class="code">${src ? (src === "country" ? "own" : src === "imputed" ? "rebuilt" : esc(src)) : ""}</span></td><td class="${has(T.rp[k]) && (T.rp[k] >= 10 || T.rp[k] <= 0.1) ? "hot" : ""}">${rt(T.rp[k])}</td>`}</tr>`;
+        ${isR ? "" : `<td class="${offX(T.rp[k]) ? "hot" : ""}">${rt(T.rp[k])}</td>`}</tr>`;
     });
-    h += `</tbody></table></div>`;
+    h += `</tbody></table></details></div>`;
   }
   return h;
 }
@@ -1725,8 +1817,8 @@ function jRender(gs, focus) {
     for (const o of shown) {
       const foc = o.y === fy;
       h += `<div class="item ${o.sev === 2 ? "c" : "w"}"><div class="hd">${sevChip(o.sev)}<b>${esc(jLabel(o.c))}</b><span class="drv">${o.y - 1} → ${o.y}</span><span class="yrs">real value ${rt(o.r)}</span>
-        ${foc ? "" : `<span class="spacer" style="flex:1"></span><button class="btn link" data-jf="${o.y}">Show the comparison</button>`}</div>
-        <p>${jText(o, !foc)}</p>${foc ? jPanels(o) : ""}</div>`;
+        ${foc ? "" : `<span class="spacer" style="flex:1"></span><button class="btn link" data-jf="${o.y}">Show the cause</button>`}</div>
+        <p>${jText(o)}</p>${foc ? jPanels(o) : ""}</div>`;
     }
     h += `</div>`;
   } else h += `<p class="note" style="margin:0 0 22px">No year-on-year change of 10× or more in this real value series.</p>`;
@@ -1736,6 +1828,10 @@ function jRender(gs, focus) {
   h += tsRow(`${nm.flow} Value <span class="u">[1000 $]</span>`, (yi, y) => { const v = aVals(gs, yi).V; return `<td class="v${bc(y)}">${has(v) ? fmt(v) : ""}</td>`; });
   h += tsRow(`${nm.flow} Quantity <span class="u">[t]</span>`, (yi, y) => { const v = aVals(gs, yi).Q; return `<td class="v${bc(y)}">${has(v) ? fmt(v) : ""}</td>`; });
   h += tsRow(`${nm.flow} Real value <span class="u">[1000 $, 2014–16 prices]</span>`, (yi, y) => { const v = aVals(gs, yi).R, o = jy.get(y); return `<td class="v${bc(y)}${o ? (o.sev === 2 ? " cc" : " cw") : ""}${y === fy ? " focus" : ""}">${has(v) ? fmt(v) : ""}</td>`; });
+  h += tsGrp("Price behind the real value");
+  const uvA = (yi, k) => { const a = aVals(gs, yi); return a.Q > 0 && a[k] > 0 ? a[k] / a.Q * 1000 : null; };
+  h += tsRow(`Unit value <span class="u">[$/t] value ÷ quantity</span>`, (yi, y) => { const u = uvA(yi, "V"); return `<td class="v${bc(y)}">${has(u) ? fmt(u) : ""}</td>`; });
+  h += tsRow(`Average base unit value <span class="u">[$/t] real value ÷ quantity</span>`, (yi, y) => { const b = uvA(yi, "R"), u = uvA(yi, "V"); const off = has(b) && has(u) && offX(b / u); return `<td class="v${bc(y)}${off ? " cc" : ""}"${off ? ` title="${ratio(b >= u ? b / u : u / b)}× ${b >= u ? "above" : "below"} the unit value"` : ""}>${has(b) ? fmt(b) : ""}</td>`; });
   h += tsGrp("Change from the previous year");
   const chg = (k) => (yi, y) => { if (!yi) return `<td class="v${bc(y)}"></td>`; const a = aVals(gs, yi)[k], b = aVals(gs, yi - 1)[k]; const r = a > 0 && b > 0 ? a / b : null; return `<td class="v${bc(y)}${r !== null && (r >= 10 || r <= 0.1) ? " cw" : ""}">${r === null ? "" : rt(r)}</td>`; };
   h += tsRow(`Real value`, chg("R"));
@@ -1840,7 +1936,7 @@ function jFillSelects() {
 }
 
 // ================================================================ DISSEMINATION GROUPS
-let PSORT = { k: "world_value", d: -1 }, PTHR_LV = 0;
+let PSORT = { k: "world_value", d: -1 };
 const PCOLS = [
   { k: "tick", t: "", tick: true, v: r => PSEL.has(r.grp) ? 1 : 0, h: "Ticked for dissemination" },
   { k: "grp_name", t: "Item group", f: (r) => `${esc(r.grp_name)}<span class="code">${esc(r.grp)}</span>`, s: "str", cls: "gname" },
@@ -1940,22 +2036,6 @@ function pDrawLevels() {
   }
   $("#pLevels").innerHTML = h + `</tbody></table></div><p class="note" style="margin:10px 0 0">Region levels follow the regional groups of the aggregation table; "Special groupings" are EU (27), LDCs, LLDCs, SIDS, LIFDCs and NFIDCs.</p>`;
 }
-function pDrawThr() {
-  const S = AD.series, F = AD.sflags, idx = [];
-  for (let s = 0; s < S.a.length; s++) if (S.lv[s] === PTHR_LV && S.size[s] > 0) idx.push(s);
-  const tot = { n: idx.length, sz: 0, c: 0, a: 0, j: 0 };
-  for (const s of idx) { tot.sz += S.size[s]; tot.c += F.crit[s]; tot.a += F.any[s]; tot.j += F.jump[s]; }
-  const thr = [0, 10, 100, 1000, 10000, 100000];
-  let h = `<div class="tblx"><table class="list"><thead><tr><th>Publish series of at least</th><th class="r">Series kept</th><th class="r">Trade covered</th><th class="r">Critical index issues removed</th><th class="r">Any index issues removed</th><th class="r">Real value jumps removed</th></tr></thead><tbody>`;
-  for (const t of thr) {
-    const k = { n: 0, sz: 0, c: 0, a: 0, j: 0 };
-    for (const s of idx) if (S.size[s] >= t) { k.n++; k.sz += S.size[s]; k.c += F.crit[s]; k.a += F.any[s]; k.j += F.jump[s]; }
-    const rem = (a, b) => b ? `${fmtN(b - a)} <span class="code">${pct((b - a) / b)}</span>` : "–";
-    h += `<tr><td>${t ? fmtN(t) + " thousand USD a year" : "No minimum"}</td><td class="r num">${fmtN(k.n)} <span class="code">${pct(k.n / tot.n)}</span></td><td class="r num">${(k.sz / tot.sz * 100).toFixed(k.sz < tot.sz ? 2 : 0)}%</td>
-      <td class="r num">${rem(k.c, tot.c)}</td><td class="r num">${rem(k.a, tot.a)}</td><td class="r num">${rem(k.j, tot.j)}</td></tr>`;
-  }
-  $("#pThr").innerHTML = h + `</tbody></table></div><p class="note" style="margin:10px 0 0">Series = area × item group × flow with trade in the latest five years. Removed = flagged series below the minimum.</p>`;
-}
 function pDraw() {
   const P = AD.pub, n = P.grp.length, noLvl = P.lvl ? P.lvl.filter(v => !has(v)).length : 0, withData = P.world_value.filter(v => v > 0).length;
   const L = AD.publ, ci = L.ltype.indexOf("Countries");
@@ -1963,8 +2043,7 @@ function pDraw() {
     <div class="tile"><div class="k">Item groups</div><div class="val">${n}</div><div class="hint">${withData} with trade data · ${n - withData} without${noLvl ? ` · ${noLvl} without a level` : ""}${AD.pubx && AD.pubx.grp && AD.pubx.grp.length ? ` · ${AD.pubx.grp.length} more excluded from the calculations` : ""}</div></div>
     <div class="tile"><div class="k">Country series with an index issue</div><div class="val">${ci >= 0 ? pct(L.p_any[ci]) : "–"}</div><div class="hint">${ci >= 0 ? pct(L.p_crit[ci]) + " critical · " + fmtN(L.n_series[ci]) + " series" : ""}</div></div>`;
   $("#pTinyLbl").textContent = pct1(PUB_TINY);
-  pLoadSel(); pDrawSel(); pDrawGroups(); pDrawExcl(); pDrawLevels(); pDrawThr(); pKeyFindings();
-  $("#pThrLvl").querySelectorAll("button").forEach(b => b.onclick = () => { PTHR_LV = +b.dataset.l; $("#pThrLvl").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); pDrawThr(); });
+  pLoadSel(); pDrawSel(); pDrawGroups(); pDrawExcl(); pDrawLevels(); pKeyFindings();
 }
 
 
@@ -2005,24 +2084,12 @@ function jKeyFindings(GJ, crit, byC, sh) {
     rvo && `Strongest warning sign: <b>${fmtN(rvo)}</b> jumps where only the real value moved and the trade value stayed flat — a quantity or base unit value error.`
   ]);
 }
-function thrStats(lv, t) {
-  const S = AD.series, F = AD.sflags, o = { n: 0, sz: 0, c: 0, kn: 0, ksz: 0, kc: 0 };
-  for (let s = 0; s < S.a.length; s++) if (S.lv[s] === lv && S.size[s] > 0) {
-    o.n++; o.sz += S.size[s]; o.c += F.crit[s];
-    if (S.size[s] >= t) { o.kn++; o.ksz += S.size[s]; o.kc += F.crit[s]; }
-  }
-  return o;
-}
 function pKeyFindings() {
   const L = AD.publ, i = k => L.ltype.indexOf(k), ci = i("Countries");
   const others = ["Sub-regions", "Continents", "World"].filter(k => i(k) >= 0).map(k => `${k.toLowerCase()} ${pct(L.p_crit[i(k)])}`);
-  // largest minimum size that still keeps 99.9% of the trade of country series
-  let best = null;
-  for (const t of [10, 100, 1000, 10000, 100000]) { const o = thrStats(0, t); if (o.sz && o.ksz / o.sz >= 0.999) best = { t, o }; }
   const tiny = pRows().filter(r => has(r.world_share) && r.world_share < PUB_TINY).map(r => esc(r.grp_name));
   kfBox("pKey", [
     ci >= 0 && `Countries are the weak level: <b>${pct(L.p_crit[ci])}</b> of country series have a critical index issue, against ${others.join(", ")}.`,
-    best && best.o.c && `A minimum size removes problems at almost no cost: publishing only country series of at least <b>${fmtN(best.t)} thousand USD a year</b>${best.t >= 1000 ? ` (${fmtN(best.t / 1000)} million USD)` : ""} keeps <b>${(best.o.ksz / best.o.sz * 100).toFixed(2)}%</b> of the trade and ${kfPct(best.o.kn, best.o.n)} of the series, but removes <b>${kfPct(best.o.c - best.o.kc, best.o.c)}</b> of the series with a critical index issue.`,
     tiny.length && `${tiny.length === 1 ? "One item group is" : tiny.length + " item groups are"} below ${pct1(PUB_TINY)} of Agricultural Products: <b>${tiny.join(", ")}</b> — a candidate to drop.`
   ]);
 }
@@ -2216,6 +2283,7 @@ async function boot() {
   JBY = new Map(); JISS.forEach(o => { let a = JBY.get(o.s); if (!a) JBY.set(o.s, a = []); a.push(o); });
   JTOPBY = new Map(); AD.jtop.r.forEach((r, k) => { let a = JTOPBY.get(r); if (!a) JTOPBY.set(r, a = []); a.push(k); });
   JPEERBY = new Map(); AD.jpeer.r.forEach((r, k) => { let a = JPEERBY.get(r); if (!a) JPEERBY.set(r, a = []); a.push(k); });
+  JCAUSEBY = new Map(); if (AD.jcause) AD.jcause.r.forEach((r, k) => JCAUSEBY.set(r, k));
   JCAT_ORDER = AD.jcats.id.map((_, i) => i).filter(ci => JISS.some(o => o.c === ci));
   $("#meta").textContent = `Outputs of ${D.meta.outputs_date} · diagnostics built ${D.meta.generated}`;
   aFillSelects(); aDrawSummary(); aRenderList();

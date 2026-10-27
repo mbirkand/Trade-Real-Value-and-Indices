@@ -400,6 +400,22 @@ J[lvl == "Region" & jcat == "j_shared" & top_share >= CFG$dominant,
   jcat := fifelse(!is.na(vr) & abs(log10(vr)) < 0.5, "j_rv_only", "j_both")]
 cat("Real values: jumps", format(nrow(J), big.mark = ","), "\n")
 print(J[, .(jumps = .N, critical = sum(sev == 2)), by = .(lvl, jcat)][order(lvl, jcat)])
+# the cause of every jump: the one item (country x item x flow) behind most of the change.
+# Country jump: its own items. Region jump: the items of the member country that contributed most.
+# Quantities are tonnes as reported (no item factor), so quantity x base UV = real value.
+s0 <- function(x) if (all(is.na(x))) NA_real_ else sum(x, na.rm = TRUE)
+JX <- J[, .(k, area = fifelse(lvl == "Country", area, top_member), grp, flow, year, dtot = R - pR)][!is.na(area)]
+JX <- rbind(JX[, .(k, area, grp, flow, year, dtot, cur = TRUE)], JX[, .(k, area, grp, flow, year = year - 1L, dtot, cur = FALSE)])
+JI <- merge(JX, TIM, by = c("area", "grp", "year"), allow.cartesian = TRUE)
+rm(JX)
+JI[, `:=`(mR = fifelse(flow == "Import", real_v_imp, real_v_exp), mQ = fifelse(flow == "Import", imp_q, exp_q),
+          mV = fifelse(flow == "Import", imp_v, exp_v))]
+JI <- JI[, .(pR = s0(mR[!cur]), cR = s0(mR[cur]), pQ = s0(mQ[!cur]), cQ = s0(mQ[cur]),
+             pV = s0(mV[!cur]), cV = s0(mV[cur]), dtot = dtot[1]), by = .(k, area, item = member, flow)]
+JI[, sh := fifelse(dtot != 0, (fcoalesce(cR, 0) - fcoalesce(pR, 0)) / dtot, 0)]
+setorder(JI, k, -sh)
+JC1 <- JI[rowid(k) == 1L & sh > 0]
+rm(JI)
 
 # -----------------------------------------------------------------------------
 # 4. Base unit values: compared with other countries' and with the country's own years
@@ -894,8 +910,16 @@ setorder(JM, rank, rk)
 PP <- merge(PP, J[, .(k, rank)], by = "k")
 PP[, pa := match(paste("Country", PP$area), paste(areasA$lvl, areasA$area)) - 1L]
 setorder(PP, rank, -pR)
+# the cause of every jump (section 3) with its base unit value
+JC1 <- merge(JC1, J[, .(k, rank)], by = "k")
+JC1[, narea := norm_a(area)]
+JC1 <- merge(JC1, BU[, .(narea = area, item, flow, cbuv = buv, csrc = src, cgb = gb)], by = c("narea", "item", "flow"), all.x = TRUE)
+JC1 <- merge(JC1, S[, .(narea = area, item, flow, c_sid = sid)], by = c("narea", "item", "flow"), all.x = TRUE)
+JC1[, `:=`(cname = area_nm$area_name[match(narea, area_nm$area)], iname = item_nm$item_name[match(item, item_nm$item)])]
+JC1[is.na(cname), cname := narea]; JC1[is.na(iname), iname := item]
+setorder(JC1, rank)
 mnames <- unique(c(TOPI$mname, JM$mname))
-srcsA <- sort(unique(JM$msrc[!is.na(JM$msrc)]))
+srcsA <- sort(unique(c(JM$msrc, JC1$csrc)[!is.na(c(JM$msrc, JC1$csrc))]))
 setorder(J, rank)
 payload_agg <- list(
   years = yrs, base_years = CFG$base_years, cfg = CFG, mnames = mnames, srcs = srcsA,
@@ -924,6 +948,9 @@ payload_agg <- list(
               buv = sg6(JM$mbuv), src = match(JM$msrc, srcsA) - 1L, rp = signif(JM$mrp, 3),
               ms = JM$m_sid - 1L, mg = JM$m_gsid - 1L),
   jpeer = list(r = PP$rank - 1L, a = PP$pa, pr = sg6(PP$pR), cr = sg6(PP$R)),
+  jcause = list(r = JC1$rank - 1L, a = JC1$cname, i = JC1$iname, ic = JC1$item, sh = round(JC1$sh, 3),
+                pq = sg6(JC1$pQ), cq = sg6(JC1$cQ), pv = sg6(JC1$pV), cv = sg6(JC1$cV), pr = sg6(JC1$pR), cr = sg6(JC1$cR),
+                buv = sg6(JC1$cbuv), gb = sg6(JC1$cgb), src = match(JC1$csrc, srcsA) - 1L, ms = JC1$c_sid - 1L),
   pub = PUBG[, .(grp, grp_name, diss = as.integer(diss), n_items, n_items_data, world_value = round(world_value), world_share = signif(world_share, 4),
                  n_countries, n_series, n_small, median_size = signif(median_size, 4), p_crit = round(p_crit, 4),
                  p_any = round(p_any, 4), p_jump = round(p_jump, 4), r_series, r_crit = round(r_crit, 4),
