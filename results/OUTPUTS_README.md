@@ -4,7 +4,8 @@ Base period 2014–2016 = 100. Values in 1,000 USD, quantities in tonnes.
 
 All outputs are aggregates: item groups, for countries and for regions, built
 from all items. Each file has one row per area × item group × year, with import
-and export columns side by side. Only disseminated areas are included. Nothing is
+and export columns side by side. Only disseminated areas are included; "excluding intra-trade" regions are not
+built or published. Base years 2014–2016 are included. Nothing is
 published for single items; no unit value or real value indices are produced.
 No data are filtered out.
 
@@ -30,10 +31,12 @@ or Region (e.g. Eastern Africa × Cereals).
 
 **`base_unit_values.csv`**
 The 2014–2016 base unit value behind every real value (all items), and how it
-was built: `Base_Yrs_Own` years from the country's own data, `N_Imputed` years
-rebuilt from a parent group's trend, `N_Direct` years taken straight from a
-group. The three add up to 3. Treat rows where `UV_Source` is not "country" as
-less certain.
+was built: `UV_Rule` is the branch of the 3× rule applied (`own_3` kept,
+`fix_3` a year more than 3× from the median replaced, `fill_2` missing year
+estimated, `group_2_far` / `group_1` / `group_0` the group's base unit value used);
+`Base_Yrs_Own` years with own data, `N_Imputed` years estimated from a group's
+trend, `N_Direct` years taken straight from a group. Treat rows where
+`UV_Source` is not "country" as less certain.
 
 **`outlier_check_aggregates.csv`**
 Aggregate value and quantity index values above 5000, with the previous year's

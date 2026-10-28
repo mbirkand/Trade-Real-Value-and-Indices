@@ -421,13 +421,15 @@ rm(JI)
 # 4. Base unit values: compared with other countries' and with the country's own years
 # -----------------------------------------------------------------------------
 cat("Base unit values ...\n")
+# 3x rule applied to each base unit value (pipeline Step 4, decided 2026-10-27)
+RULES <- c("own_3", "fix_3", "fill_2", "group_2_far", "group_1", "group_0")
 BUV <- rbind(
   get("imp_uv_base")[, .(area = norm_a(geographicAreaM49), item = norm_i(measuredItemCPC), flow = "Import",
                          buv = base_uv_imp, src = uv_source_imp, own = base_imp_yrs_valid,
-                         nimp = n_imp_imputed, ndir = n_imp_direct)],
+                         nimp = n_imp_imputed, ndir = n_imp_direct, rule = uv_rule_imp)],
   get("exp_uv_base")[, .(area = norm_a(geographicAreaM49), item = norm_i(measuredItemCPC), flow = "Export",
                          buv = base_uv_exp, src = uv_source_exp, own = base_exp_yrs_valid,
-                         nimp = n_exp_imputed, ndir = n_exp_direct)])
+                         nimp = n_exp_imputed, ndir = n_exp_direct, rule = uv_rule_exp)])
 BUV <- BUV[!is.na(buv)]
 countries_in <- unique(c(norm_a(scope[lvl == "Country"]$area), norm_a(amap$member)))
 TC <- get("trade_calc")[, .(area = norm_a(geographicAreaM49), item = norm_i(measuredItemCPC),
@@ -463,17 +465,18 @@ BU[, eff := fifelse(!is.na(qs) & !is.na(gb), qs * (buv - gb), NA_real_)]   # rea
 BU[, off_p := lp >= log10(CFG$uv_w)]
 BU[, off_o := lo >= log10(CFG$uv_w)]
 BU[, off_d := ld >= log10(CFG$uv_w)]
-BU[, bsev := fifelse(lp >= log10(CFG$uv_c), 2L, fifelse(off_p | off_o | off_d, 1L, 0L))]
+# base years that disagree are now handled by the 3x rule in the pipeline (2026-10-27),
+# so the spread of the own base-year unit values is no longer a flag on its own
+BU[, bsev := fifelse(lp >= log10(CFG$uv_c), 2L, fifelse(off_p | off_o, 1L, 0L))]
 BU[, borrowed := !(src %in% c("country", "imputed"))]
 same_dir <- function(a, b) !is.na(a) & !is.na(b) & sign(log10(a)) == sign(log10(b))
 BU[bsev > 0, bcat := fcase(
   off_p & borrowed, "b_borrowed",
   off_p & tiny_b, "b_tiny",
-  off_p & off_d, "b_disagree",
+  off_p & rule %in% "fix_3", "b_disagree",
   off_p & src == "imputed", "b_rebuilt",
   off_p & off_o & same_dir(rp, ro), "b_own_off",
   off_p, "b_consistent",
-  off_d, "b_disagree",
   default = "b_own_only")]
 BI <- BU[bsev > 0]
 BI[, tier := match(bcat, c("b_borrowed", "b_tiny", "b_disagree", "b_rebuilt", "b_own_off", "b_consistent", "b_own_only"))]
@@ -486,6 +489,10 @@ BU[, srcg := fifelse(src %in% "country", "Own data", fifelse(src %in% "imputed",
 BU[, rb := fifelse(is.na(rp), NA_integer_, as.integer(pmin(pmax(findInterval(log10(rp), c(-2, -1, -log10(3), log10(3), 1, 2)), 0L), 6L)))]
 BDIST <- dcast(BU[!is.na(rb)], srcg ~ rb, value.var = "rb", fun.aggregate = length)
 BSRC  <- BU[, .(n = .N, flagged = sum(bsev > 0), critical = sum(bsev == 2), no_peer = sum(is.na(gb))), by = srcg]
+# how many base unit values each branch of the 3x rule produced, by flow
+BRULE <- dcast(BU[!is.na(rule)], rule ~ flow, value.var = "rule", fun.aggregate = length)
+for (cc in c("Import", "Export")) if (!cc %in% names(BRULE)) BRULE[, (cc) := 0L]
+BRULE <- BRULE[order(match(rule, RULES))]
 
 # -----------------------------------------------------------------------------
 # 5. Item series shown in the dashboard: flagged base UVs + items behind a flagged aggregate
@@ -553,7 +560,7 @@ CATS <- data.table(
             "Negligible flow in year", "Sustained change"))
 
 S <- unique(L[, .(sid, area, item, flow)], by = "sid")
-S <- merge(S, BU[, .(area, item, flow, buv, src, own, nimp, ndir, gb, ou, u_min, u_max, n_u, qs, vs, rp, ro, disp)],
+S <- merge(S, BU[, .(area, item, flow, buv, src, own, nimp, ndir, rule, gb, ou, u_min, u_max, n_u, qs, vs, rp, ro, disp)],
            by = c("area", "item", "flow"), all.x = TRUE)
 SZ <- L[!is.na(v) & v > 0][order(sid, -year)][, .(size = mean(head(v, CFG$size_years))), by = sid]
 S <- merge(S, SZ, by = "sid", all.x = TRUE)
@@ -569,6 +576,7 @@ if (exists("imp_uv_how") && exists("exp_uv_how")) {
   HOW <- rbind(cbind(get("imp_uv_how"), flow = "Import"), cbind(get("exp_uv_how"), flow = "Export"))
   HOW[, `:=`(area = norm_a(geographicAreaM49), item = norm_i(measuredItemCPC))]
   HOW[, c("geographicAreaM49", "measuredItemCPC") := NULL]
+  HOW[, rule := NULL]   # already in S (from the base unit values)
   S <- merge(S, HOW, by = c("area", "item", "flow"), all.x = TRUE)
   setorder(S, sid)
   rm(HOW)
@@ -586,7 +594,10 @@ how_payload <- function() {
     o[[paste0("m", k)]] <- sg6(S[[paste0("gm", y)]])
     o[[paste0("n", k)]] <- sg6(S[[paste0("ga", y)]])
     o[[paste0("h", k)]] <- signif(S[[paste0("sh", y)]], 4)
+    xc <- paste0("x", y)   # own value set aside under the 3x rule
+    o[[paste0("x", k)]] <- if (xc %in% names(S)) as.integer(S[[xc]] %in% TRUE) else NULL
   }
+  if ("own_md" %in% names(S)) o$md <- sg6(S$own_md)
   o
 }
 
@@ -679,7 +690,7 @@ cat("Saved: results/checks/diagnostics_real_value_jumps.csv (", nrow(J), "jumps 
 
 BCATS <- data.table(
   id = c("b_borrowed", "b_tiny", "b_disagree", "b_rebuilt", "b_own_off", "b_consistent", "b_own_only"),
-  label = c("Taken from a group", "Negligible base-year record", "Base years disagree", "Rebuilt base year off",
+  label = c("Taken from a group", "Negligible base-year record", "Base year replaced, still off", "Rebuilt base year off",
             "Base period out of line", "Country always differs", "Off the country's own other years"))
 BI <- merge(BI, area_nm, by = "area", all.x = TRUE)
 BI <- merge(BI, item_nm, by = "item", all.x = TRUE)
@@ -824,9 +835,18 @@ srcs  <- sort(unique(S$src[!is.na(S$src)]))
 setorder(L, sid, year)
 ny <- length(yrs)
 stopifnot(nrow(L) == nrow(S) * ny, all(L$year == rep(yrs, nrow(S))))
-# parent group's unit value every year, for the item view: pooled sum(V) / sum(Q) of the OTHER member
-# countries (leave-one-out, as in Step 4). Group = the one used to build the base unit value
+# parent group's unit value every year, for the item view, from the OTHER member countries
+# (leave-one-out, as in Step 4): quantity-weighted median for a regional group (2026-10-27),
+# pooled sum(V) / sum(Q) for all countries. Group = the one used to build the base unit value
 # (2015's first), otherwise the country's smallest regional group (tier 1).
+if (!exists("wmed")) wmed <- function(uv, w) { o <- order(uv); cw <- cumsum(w[o]); uv[o][which(cw >= cw[length(cw)] / 2)[1]] }
+if (!exists("loo_wmed")) loo_wmed <- function(uv, w) {
+  n <- length(uv); if (n < 2L) return(rep(NA_real_, n))
+  o <- order(uv); us <- uv[o]; ws <- w[o]; cw <- cumsum(ws); j <- seq_len(n); h <- (cw[n] - ws) / 2
+  k <- findInterval(h, cw, left.open = TRUE) + 1L
+  k2 <- pmax(findInterval(h + ws, cw, left.open = TRUE) + 1L, j + 1L)
+  out <- numeric(n); out[o] <- us[fifelse(k < j, k, pmin(k2, n))]; out
+}
 GU_NAMES <- character(0); L[, GU := NA_real_]; S[, gu_i := NA_integer_]
 if (exists("country_region_map")) {
   crm <- unique(get("country_region_map")[, .(area = norm_a(member_code), gcode = norm_a(group_code), gname = group_name, tier)])
@@ -839,19 +859,40 @@ if (exists("country_region_map")) {
   TV <- TL[!is.na(uv) & item %in% unique(SG$item), .(area, item, flow, year, q, v)]
   MEM <- unique(crm[gcode %in% SG$gcode, .(gcode, area)])
   need <- unique(SG[!is.na(gcode), .(gcode, item, flow)])
-  GT <- TV[MEM, on = .(area), allow.cartesian = TRUE, nomatch = 0][need, on = .(gcode, item, flow), nomatch = 0][
-          , .(V = sum(v), Q = sum(q), N = .N), by = .(gcode, item, flow, year)]
+  # donor records only (Q >= 1 t, V >= 1 thousand USD) and regional groups with at least
+  # 3 donor countries (without the country itself), as in Step 4
+  mq <- if (exists("MIN_DONOR_Q")) MIN_DONOR_Q else 1
+  mv <- if (exists("MIN_DONOR_V")) MIN_DONOR_V else 1
+  mn <- if (exists("MIN_GROUP_N")) MIN_GROUP_N else 3
+  ds <- if (exists("DOM_SHARE")) DOM_SHARE else 0.5
+  if (!exists("loo_dom")) loo_dom <- function(q) { n <- length(q); if (n < 2L) return(rep(NA_real_, n))
+    o <- order(-q); mx <- fifelse(seq_len(n) == o[1], q[o[2]], q[o[1]]); mx / (sum(q) - q) }
+  TV <- TV[q >= mq & v >= mv]
+  GM <- TV[MEM, on = .(area), allow.cartesian = TRUE, nomatch = 0][need, on = .(gcode, item, flow), nomatch = 0]
+  GM[, uv := v / q]
+  GM[, gl := if (.N - 1L >= mn) fifelse(loo_dom(q) <= ds, loo_wmed(uv, q), NA_real_) else NA_real_, by = .(gcode, item, flow, year)]
+  GM[, isd := TRUE]
+  GR <- GM[, .(gm = if (.N >= mn && max(q) / sum(q) <= ds) wmed(uv, q) else NA_real_), by = .(gcode, item, flow, year)]
+  GT <- NULL
   if (any(SG$gcode %in% "ALL"))
-    GT <- rbind(GT, TV[item %in% SG[gcode %in% "ALL"]$item, .(V = sum(v), Q = sum(q), N = .N), by = .(item, flow, year)][, gcode := "ALL"], use.names = TRUE)
+    GT <- TV[item %in% SG[gcode %in% "ALL"]$item, .(V = sum(v), Q = sum(q), N = .N), by = .(item, flow, year)][, gcode := "ALL"]
   L[SG, gcode := i.gcode, on = .(sid)]
-  L[GT, `:=`(gV = i.V, gQ = i.Q, gN = i.N), on = .(gcode, item, flow, year)]
-  L[, GU := fifelse(is.na(gN), NA_real_,
-              fifelse(!is.na(uv), fifelse(gN > 1 & (gQ - q) > 0, (gV - v) / (gQ - q), NA_real_), gV / gQ))]
-  L[, c("gcode", "gV", "gQ", "gN") := NULL]
+  L[GR, gm := i.gm, on = .(gcode, item, flow, year)]
+  L[GM, `:=`(gl = i.gl, isd = i.isd), on = .(gcode, area, item, flow, year)]
+  if (!is.null(GT)) L[GT, `:=`(gV = i.V, gQ = i.Q, gN = i.N), on = .(gcode, item, flow, year)]
+  for (cc in c("gm", "gl", "gV", "gQ", "gN")) if (!cc %in% names(L)) L[, (cc) := NA_real_]
+  if (!"isd" %in% names(L)) L[, isd := NA]
+  # the country lends a price only when its record is a donor record
+  L[, dn := !is.na(uv) & q >= mq & v >= mv]
+  L[, GU := fifelse(gcode %in% "ALL",
+              fifelse(is.na(gN), NA_real_,
+                fifelse(dn, fifelse(gN > 1 & (gQ - q) > 0, (gV - v) / (gQ - q), NA_real_), gV / gQ)),
+              fifelse(isd %in% TRUE, gl, gm))]
+  L[, c("gcode", "gm", "gl", "isd", "dn", "gV", "gQ", "gN") := NULL]
   setorder(L, sid, year)
   GU_NAMES <- sort(unique(na.omit(SG$gname)))
   S[SG, gu_i := match(i.gname, GU_NAMES) - 1L, on = .(sid)]
-  rm(crm, SG, TV, MEM, need, GT)
+  rm(crm, SG, TV, MEM, need, GT, GM, GR)
 } else cat("Note: country_region_map not found - group unit values not shown in the item view\n")
 BI <- merge(BI, S[, .(area, item, flow, sid)], by = c("area", "item", "flow"))
 setorder(BI, rank)
@@ -863,13 +904,14 @@ payload <- list(
   series = list(
     a = match(S$area, areas$area) - 1L, i = match(S$item, items$item) - 1L, f = as.integer(S$flow == "Export"),
     buv = sg6(S$buv), src = match(S$src, srcs) - 1L, own = S$own, nimp = S$nimp, ndir = S$ndir,
+    rule = match(S$rule, RULES) - 1L,
     gb = sg6(S$gb), ou = sg6(S$ou), u0 = sg6(S$u2014), u1 = sg6(S$u2015), u2 = sg6(S$u2016),
     qs = sg6(S$qs), size = signif(S$size, 4)),
   q = sg6(L$q0), v = sg6(L$v0), qf = match(L$qf, flags) - 1L, vf = match(L$vf, flags) - 1L, G = signif(L$G, 4),
   GU = signif(L$GU, 4), gu_names = GU_NAMES, gu_i = S$gu_i,
   bissues = list(s = BI$sid - 1L, c = BI$bcat_i, sev = BI$bsev, rp = signif(BI$rp, 4), ro = signif(BI$ro, 4),
                  d = signif(BI$disp, 4), eff = signif(BI$eff, 4)),
-  bsrc = BSRC, bdist = BDIST, how = how_payload(),
+  bsrc = BSRC, bdist = BDIST, how = how_payload(), rules = RULES, brule = BRULE,
   meta = list(generated = format(Sys.time(), "%Y-%m-%d %H:%M"),
               outputs_date = format(file.mtime("results/real_values_aggregates.csv"), "%Y-%m-%d %H:%M"),
               n_buv = nrow(BU), n_items_series = nrow(S))

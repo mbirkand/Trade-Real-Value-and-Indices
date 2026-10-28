@@ -69,7 +69,7 @@ Real value_t = Q_t × base UV — thousand USD at 2014–16 prices
 ```
 
 - **Inputs:** The year's quantity and the base unit value from section 5.
-- **Calculated when:** Both exist — including flows whose base unit value was rebuilt or taken from a group.
+- **Calculated when:** Both exist — including flows whose base unit value was estimated, corrected or taken from a group (3× rule, section 5).
 - **Used for:** Only as the building block of the aggregate real value (4.2). Not published.
 
 ### 4.2 Aggregate real value *(item groups and regions)*
@@ -94,33 +94,44 @@ UV_t = V_t ÷ Q_t
 base UV = (UV_{2014} + UV_{2015} + UV_{2016}) ÷ 3 — simple average of the three yearly unit values
 ```
 
-#### When a base year is missing
+A base year counts as the country's own data when it has both a quantity and a value above zero.
 
-A base year counts as the country's own data when it has both a quantity and a value above zero. A year without own data is estimated from a year that has it: take the country's own unit value in that year and move it up or down by as much as the parent group's unit value moved between the two years.
+#### The 3× rule — by number of own base years
 
-Only the group's change is used, not its price. The country keeps its own price level, which can be higher or lower than its neighbours' for good reasons. The flip side: if the country's own year is wrong, the estimated years copy the error.
+| Own base years | Rule |
+|---|---|
+| 0 or 1 of 3 | The group's base unit value is used. |
+| 2 of 3 | Within 3× of each other: the missing year is estimated with the growth rate approach. More than 3× apart: the group's base unit value is used. |
+| 3 of 3 | All within 3× of their median: no change. A year more than 3× above or below the median of the three is replaced with the growth rate approach. |
 
-**The country itself is left out of the group.** The parent group's unit values used for a country are calculated from the other member countries only (leave-one-out). Otherwise the country's own record — often a large share of a small group — would move the group's price and feed back into its own estimate. If no other member has data for both years, the next group up is used.
+The 3× range is checked within the country's own series. Group = the first group of the fallback hierarchy (below) that has a unit value.
 
-> **Changed on 22 October 2026.** Until then the parent group's unit values included the country being estimated.
+> **Changed on 27 October 2026.** Until then a single own base year was enough to estimate the other two, own base years were not checked against each other, and regional groups' unit values were pooled (ΣV ÷ ΣQ).
+
+#### Growth rate approach
+
+A year without usable own data is estimated from a year that has it: take the country's own unit value in that year and move it up or down by as much as the group's unit value moved between the two years. Only the group's change is used, not its price, so the country keeps its own price level.
 
 ```text
-UV_{missing} = UV_{anchor} × (parent UV_{missing} ÷ parent UV_{anchor})    parent = the other member countries
+UV_{missing} = UV_{anchor} × (group UV_{missing} ÷ group UV_{anchor})    group = the other member countries
 ```
 
-1. Fill **2015** first — from 2016 if the country has it, otherwise from 2014.
+1. Fill **2015** first — from 2016 if the country has a usable value, otherwise from 2014.
 2. Then fill **2014** and **2016** from 2015. Every remaining gap is a single step.
-3. If no parent group has a unit value for both years of a step, the parent's own unit value for the missing year is used.
-4. If the country has **no base-year data at all**, the parent group's base unit value is used as it is.
+3. If no group has a unit value for both years of a step, the group's own unit value for the missing year is used.
 
-#### Parent groups
+#### Group's base unit value
+
+- The average of the group's 2014, 2015 and 2016 unit values, without the country itself.
+
+#### Fallback hierarchy
 
 - The country's regional groups, smallest first: tier 1 → tier 2 → tier 3 → global (all countries).
-- A group's unit value for a year is pooled: ΣV ÷ ΣQ over its member countries, leaving out the country being estimated.
+- A regional group's unit value for a year is the **weighted median** of its member countries' unit values, weighted by quantity (tonnes). The global level stays pooled: ΣV ÷ ΣQ over all countries.
+- **The country itself is left out of the group** (leave-one-out, since 22 October 2026). The group is used because the country's own data are missing or unusable, so its own record must not move the group's price. If no other member has data, the next group up is used.
 - Not used as parents: EU (27), Australia and New Zealand, LDCs, landlocked and small-island developing states, LIFDCs, net food-importing developing countries, and all "excluding intra-trade" groups.
-- No outlier filtering is applied to base unit values.
 
-Every flow records where its base unit value came from: **country** (all three years own data), **imputed** (some years rebuilt) or the **group name** / **global** (taken from a group).
+Every flow records where its base unit value came from: **country** (three own years, all within 3×), **imputed** (some years estimated or replaced with the growth rate approach) or the **group name** / **global** (the group's base unit value), and which branch of the 3× rule was applied.
 
 ## 6. How aggregates are built
 
@@ -142,6 +153,7 @@ Aggregate real value_t = Σ Q_{i,t} × base UV_i — thousand USD at 2014–16 p
 #### Region × item group
 
 - Sum of the country × item group aggregates over member countries with Aggregation = TRUE.
+- "Excluding intra-trade" regions are not built or published (decided 27 October 2026).
 
 #### Base of the aggregate indices
 
@@ -182,7 +194,7 @@ These 11 item groups are in `DisseminationList.csv` but are not calculated: no a
 3. Fix one-sided zeros: if Q = 0 but V > 0, Q is set to missing; if V = 0 but Q > 0, V is set to missing. The other side still counts in its own total.
 4. A **valid observation** is one with Q > 0 and V > 0 — enough to compute a unit value.
 
-> **No data are filtered.** Every record is used as reported, even when the source data look problematic: very small records (Q < 10 t or V < 10 thousand USD), unusual unit values, and estimated, imputed or missing-flagged records all stay in. Records flagged as missing (M) that carry a 0 enter as 0. There is no coverage rule and no minimum number of base years. The other pages of the dashboard flag values for review; they never remove them.
+> **No data are filtered.** Every record is used as reported, even when the source data look problematic: very small records (Q < 10 t or V < 10 thousand USD), unusual unit values, and estimated, imputed or missing-flagged records all stay in. Records flagged as missing (M) that carry a 0 enter as 0. There is no coverage rule and no minimum number of base years. The other pages of the dashboard flag values for review; they never remove them. The only correction is the 3× rule for base unit values (section 5): a base year far from the country's other base years is replaced in the base unit value; the record itself stays in.
 
 ---
 
@@ -199,12 +211,15 @@ These 11 item groups are in `DisseminationList.csv` but are not calculated: no a
 | Valid observation | Q > 0 and V > 0 |
 | Filtering of problematic data | None — flagged for review only |
 | Minimum base years | None |
-| Output scope | Disseminated areas; aggregates only, built from all items; 11 item groups excluded (section 6) |
+| Output scope | Disseminated areas; aggregates only, built from all items; 11 item groups excluded (section 6); "excluding intra-trade" regions not published; base years published too |
 | **Base unit value and aggregates** |  |
 | Base UV | Per-year unit values, simple average |
-| Missing base year | Parent group's rate of change, without the country itself; 2015 first, then 2014 and 2016 |
-| No base-year data | Parent group's base UV |
-| Parent order | Tier 1 → tier 2 → tier 3 → global |
+| 0–1 own base years | Group's base UV |
+| 2 own base years | Within 3×: growth rate approach for the missing year · more than 3× apart: group's base UV |
+| 3 own base years | A year more than 3× from the median of the three: replaced with the growth rate approach · otherwise no change |
+| Growth rate approach | Group's rate of change, without the country itself; 2015 first, then 2014 and 2016 |
+| Fallback hierarchy | Tier 1 → tier 2 → tier 3 → global |
+| Group unit value | Regions: quantity-weighted median of the other members · global: ΣV ÷ ΣQ of the other countries |
 | Item factor | Quantity only |
 | Aggregate base | 2014–16 average of the aggregate |
 | Excluded item groups | 11 groups not calculated (section 6); their items still count in other groups. Natural rubber and Textile fibres may be added next year |
@@ -219,7 +234,7 @@ These 11 item groups are in `DisseminationList.csv` but are not calculated: no a
 | **Dashboard checks (review only)** |  |
 | Indices | Critical: index > 5,000 or < 1 · Warning: index > 1,000 or < 10, or a 10× change from the previous year |
 | Real values | Aggregate real value 10× or more (critical 100×) above or below the previous year, compared with other countries |
-| Base unit values | Base UV 10× or more (critical 100×) above or below other countries' base UV, or 10× or more above or below the country's own other years. Also flagged: the highest base year's UV 10× or more the lowest |
+| Base unit values | Base UV 10× or more (critical 100×) above or below other countries' base UV, or 10× or more above or below the country's own other years. Base years that disagree are handled by the 3× rule |
 | Dissemination groups | Open — chosen on the Dissemination groups tab, from the size and reliability of each group and area level. The 11 excluded groups are listed there in their own section |
 
 ## 9. Outputs

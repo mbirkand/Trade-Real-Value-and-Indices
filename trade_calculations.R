@@ -253,6 +253,64 @@ cat("\n--- Step 3 complete (reference tables loaded; no rows removed). ---\n")
 
 cat("\n=== STEP 4: BASE UNIT VALUES — PER-YEAR RECONSTRUCTION ===\n")
 
+# --- 3x rule for base-year unit values (decided 2026-10-27), checked within the
+# country's own base-year series:
+#   0 or 1 own base year  -> the group's base unit value is used
+#   2 own base years      -> within 3x of each other: the missing year is estimated
+#                            with the growth rate approach; more than 3x apart: the
+#                            group's base unit value is used
+#   3 own base years      -> a year more than 3x above or below the median of the three
+#                            is replaced with the growth rate approach; otherwise no change
+UV_RANGE <- 3
+
+# Valid base-year records (2026-10-27, from the Discussions section): Q >= 1 t and
+# V >= 1 thousand USD. Near-zero records give meaningless unit values (e.g. pears in Middle
+# Africa at 34,160,000; Argentina raw milk imports at 188,480 $/t from 0.013 t).
+#   - a smaller record is not used as the country's own base year (treated as missing)
+#   - nor as a donor to a group unit value
+#   (all records still count in quantities, values and real values of every year)
+#   - a regional group needs at least 3 donor countries other than the country being
+#     estimated, otherwise the next (bigger) group is used
+# The global level has no minimum, and falls back to all records if no donor exists.
+MIN_DONOR_Q <- 1
+MIN_DONOR_V <- 1
+MIN_GROUP_N <- 3
+# A regional group is skipped in a year when one country (other than the country being
+# estimated) holds more than DOM_SHARE of the group's valid tonnes: its weighted median
+# would just be that country's price (2026-10-27; e.g. Western Africa wine exports,
+# Ghana 82% of the tonnes). The next, bigger group is used. Not applied to all countries.
+DOM_SHARE <- 0.5
+# largest share of the group's tonnes held by one of the OTHER countries, for every member
+loo_dom <- function(q) {
+  n <- length(q)
+  if (n < 2L) return(rep(NA_real_, n))
+  o <- order(-q)
+  mx <- fifelse(seq_len(n) == o[1], q[o[2]], q[o[1]])
+  mx / (sum(q) - q)
+}
+
+# Quantity-weighted median unit value (decided 2026-10-27 for the regional groups of
+# the fallback hierarchy): the lowest unit value at which the members' cumulative
+# quantity reaches half of the group's total quantity.
+wmed <- function(uv, w) {
+  o <- order(uv); cw <- cumsum(w[o])
+  uv[o][which(cw >= cw[length(cw)] / 2)[1]]
+}
+# Leave-one-out version: for every member, the weighted median of the OTHER members
+# (NA when it is the only member).
+loo_wmed <- function(uv, w) {
+  n <- length(uv)
+  if (n < 2L) return(rep(NA_real_, n))
+  o <- order(uv); us <- uv[o]; ws <- w[o]; cw <- cumsum(ws)
+  j <- seq_len(n)
+  h <- (cw[n] - ws) / 2                                    # half of the others' total
+  k <- findInterval(h, cw, left.open = TRUE) + 1L          # first position with cw >= h
+  k2 <- pmax(findInterval(h + ws, cw, left.open = TRUE) + 1L, j + 1L)
+  pos <- fifelse(k < j, k, pmin(k2, n))
+  out <- numeric(n); out[o] <- us[pos]
+  out
+}
+
 # --- 4A: Regional hierarchy (most specific = smallest group)
 # Donor groups excluded from the UV fallback hierarchy. These are either
 # "excluding intra-trade" variants (any code containing a dot) or economic /
@@ -299,7 +357,11 @@ build_base_uv <- function(qcol, vcol) {
   ]
 
   base_sub[, uv := v / q]
-  own <- dcast(base_sub, geographicAreaM49 + measuredItemCPC ~ timePointYears,
+  # valid records (Q >= 1 t and V >= 1 thousand USD): the only ones used as the country's own
+  # base years (2026-10-27) and as donors to group unit values. A smaller own record is
+  # treated as a missing base year, so the 3x rule and the fallback hierarchy take over.
+  base_d <- base_sub[q >= MIN_DONOR_Q & v >= MIN_DONOR_V]
+  own <- dcast(base_d, geographicAreaM49 + measuredItemCPC ~ timePointYears,
                value.var = "uv")
   for (y in c("2014", "2015", "2016")) if (!y %in% names(own)) own[, (y) := NA_real_]
   setnames(own, c("2014", "2015", "2016"), c("o14", "o15", "o16"))
@@ -307,8 +369,15 @@ build_base_uv <- function(qcol, vcol) {
 
   bg <- merge(base_sub, area_map[, .(member_code, group_code, group_name)],
               by.x = "geographicAreaM49", by.y = "member_code", allow.cartesian = TRUE)
-  grp <- bg[, .(uv = sum(v) / sum(q)),
-            by = .(group_code, group_name, measuredItemCPC, timePointYears)]
+  # regional groups: quantity-weighted median of the member countries' unit values (2026-10-27),
+  # donor records only, and only with at least MIN_GROUP_N donor countries
+  bgd <- bg[q >= MIN_DONOR_Q & v >= MIN_DONOR_V]
+  grp <- bgd[, .(uv = if (.N >= MIN_GROUP_N && max(q) / sum(q) <= DOM_SHARE) wmed(uv, q) else NA_real_),
+             by = .(group_code, group_name, measuredItemCPC, timePointYears)]
+  # without the country: needs MIN_GROUP_N donors other than the country, none of them
+  # holding more than DOM_SHARE of the others' tonnes
+  bgd[, uv_loo := if (.N - 1L >= MIN_GROUP_N) fifelse(loo_dom(q) <= DOM_SHARE, loo_wmed(uv, q), NA_real_) else NA_real_,
+      by = .(group_code, measuredItemCPC, timePointYears)]
   grp_w <- dcast(grp, group_code + group_name + measuredItemCPC ~ timePointYears,
                  value.var = "uv")
   for (y in c("2014", "2015", "2016")) if (!y %in% names(grp_w)) grp_w[, (y) := NA_real_]
@@ -316,7 +385,10 @@ build_base_uv <- function(qcol, vcol) {
   grp_w[, gb := rowMeans(.SD, na.rm = TRUE), .SDcols = c("g14", "g15", "g16")]
   grp_w[is.nan(gb), gb := NA_real_]
 
-  gl <- base_sub[, .(uv = sum(v) / sum(q)), by = .(measuredItemCPC, timePointYears)]
+  gl_d <- base_d[, .(uv_d = sum(v) / sum(q)), by = .(measuredItemCPC, timePointYears)]
+  gl <- base_sub[, .(uv_a = sum(v) / sum(q)), by = .(measuredItemCPC, timePointYears)]
+  gl <- merge(gl, gl_d, by = c("measuredItemCPC", "timePointYears"), all.x = TRUE)
+  gl[, uv := fcoalesce(uv_d, uv_a)]   # donor records; all records only if the item has no donor
   gl_w <- dcast(gl, measuredItemCPC ~ timePointYears, value.var = "uv")
   for (y in c("2014", "2015", "2016")) if (!y %in% names(gl_w)) gl_w[, (y) := NA_real_]
   setnames(gl_w, c("2014", "2015", "2016"), c("gg_14", "gg_15", "gg_16"))
@@ -353,10 +425,12 @@ build_base_uv <- function(qcol, vcol) {
   # Leave-one-out (2026-10-22): a country's own record is taken out of its parent groups'
   # (and the global) unit values before they are used for that country. Its estimated base
   # years then depend only on the other countries' prices, never on its own data.
-  # Group UV without country c = (sum V - v_c) / (sum Q - q_c); NA when c is the only member
-  # with data that year, so the next tier is used. Years where c has no own data are unchanged.
-  gsum  <- bg[, .(V = sum(v), Q = sum(q), N = .N), by = .(group_code, measuredItemCPC, timePointYears)]
-  glsum <- base_sub[, .(V = sum(v), Q = sum(q), N = .N), by = .(measuredItemCPC, timePointYears)]
+  # Regional groups (tiers 1-3): weighted median of the other members' unit values (2026-10-27).
+  # All countries (global): (sum V - v_c) / (sum Q - q_c).
+  # NA when c is the only member with data that year, so the next tier is used.
+  # Years where c has no own data are unchanged.
+  glsum   <- base_sub[, .(V = sum(v), Q = sum(q), N = .N), by = .(measuredItemCPC, timePointYears)]
+  glsum_d <- base_d[, .(V = sum(v), Q = sum(q), N = .N), by = .(measuredItemCPC, timePointYears)]
   loo_uv <- function(cur, s, o) {
     inside <- !is.na(o$q) & !is.na(s$N)
     fifelse(inside, fifelse(s$N > 1 & (s$Q - o$q) > 0, (s$V - o$v) / (s$Q - o$q), NA_real_), cur)
@@ -365,16 +439,36 @@ build_base_uv <- function(qcol, vcol) {
     yy <- substr(y, 3, 4)
     oy <- base_sub[timePointYears == y, .(geographicAreaM49, measuredItemCPC, q, v)]
     o  <- oy[res[, .(geographicAreaM49, measuredItemCPC)], on = .(geographicAreaM49, measuredItemCPC), mult = "first"]
+    # the country's record as a donor (NA when it is below the donor minimum)
+    od <- copy(o)[!(q >= MIN_DONOR_Q & v >= MIN_DONOR_V), `:=`(q = NA_real_, v = NA_real_)]
     for (k in 1:3) {
-      key <- data.table(group_code = res[[paste0("gc", k)]], measuredItemCPC = res$measuredItemCPC)
-      s <- gsum[timePointYears == y][key, on = .(group_code, measuredItemCPC), mult = "first"]
+      key <- data.table(geographicAreaM49 = res$geographicAreaM49, group_code = res[[paste0("gc", k)]],
+                        measuredItemCPC = res$measuredItemCPC)
+      lw <- bgd[timePointYears == y][key, on = .(geographicAreaM49, group_code, measuredItemCPC),
+                                     uv_loo, mult = "first"]
       col <- paste0("g", k, "_", yy)
-      set(res, j = col, value = loo_uv(res[[col]], s, o))
+      # country is a donor in the group: the group without it; otherwise the group as it is
+      set(res, j = col, value = fifelse(!is.na(od$q), lw, res[[col]]))
     }
-    s <- glsum[timePointYears == y][res[, .(measuredItemCPC)], on = .(measuredItemCPC), mult = "first"]
+    ykey <- res[, .(measuredItemCPC)]
+    s_d <- glsum_d[timePointYears == y][ykey, on = .(measuredItemCPC), mult = "first"]
+    s_a <- glsum[timePointYears == y][ykey, on = .(measuredItemCPC), mult = "first"]
+    g_d <- gl[timePointYears == y][ykey, on = .(measuredItemCPC), uv_d, mult = "first"]
+    g_a <- gl[timePointYears == y][ykey, on = .(measuredItemCPC), uv_a, mult = "first"]
     col <- paste0("gg_", yy)
-    set(res, j = col, value = loo_uv(res[[col]], s, o))
+    # donor records first; all records only when no other country is a donor
+    set(res, j = col, value = fcoalesce(loo_uv(g_d, s_d, od), loo_uv(g_a, s_a, o)))
   }
+  # group base unit values (average of the group's base-year prices), also without the country.
+  # A regional group's base UV needs a unit value (>= MIN_GROUP_N valid donors) in ALL three
+  # base years; otherwise the next, bigger group is used (2026-10-27: a base built from one
+  # thin year, e.g. South America palm kernel exports for Chile, 2016 only, 240,153 $/t).
+  for (k in 1:3) {
+    gbk <- rowMeans(as.matrix(res[, paste0("g", k, "_", c("14", "15", "16")), with = FALSE]))
+    set(res, j = paste0("gb", k), value = gbk)
+  }
+  ggb <- rowMeans(as.matrix(res[, c("gg_14", "gg_15", "gg_16")]), na.rm = TRUE)
+  res[, global_base := fifelse(is.nan(ggb), NA_real_, ggb)]
 
   pr <- function(res, tn, an) {
     g <- function(k, s) res[[paste0("g", k, s)]]
@@ -400,10 +494,32 @@ build_base_uv <- function(qcol, vcol) {
                                 !is.na(gb3), gn3, !is.na(global_base), "global",
                                 default = NA_character_)]
 
+  res[, n_own := as.integer(!is.na(o14)) + as.integer(!is.na(o15)) + as.integer(!is.na(o16))]
+
+  # --- 3x rule (2026-10-27), within the country's own base-year series
+  res[, own_hi := pmax(o14, o15, o16, na.rm = TRUE)]
+  res[, own_lo := pmin(o14, o15, o16, na.rm = TRUE)]
+  res[, own_md := fifelse(n_own == 3L, o14 + o15 + o16 - own_hi - own_lo, NA_real_)]
+  far <- function(x, m) !is.na(x) & !is.na(m) & (x > UV_RANGE * m | x * UV_RANGE < m)
+  res[, `:=`(x14 = far(o14, own_md), x15 = far(o15, own_md), x16 = far(o16, own_md))]
+  res[, uv_rule := fcase(
+        n_own == 0L, "group_0",
+        n_own == 1L, "group_1",
+        n_own == 2L & own_hi > UV_RANGE * own_lo, "group_2_far",
+        n_own == 2L, "fill_2",
+        n_own == 3L & (x14 | x15 | x16), "fix_3",
+        default = "own_3")]
+  # the group's base unit value replaces the country's (only if a group has one)
+  res[, swap := uv_rule %in% c("group_0", "group_1", "group_2_far") & !is.na(group_base_co)]
+  # 3 own years: the year(s) far from the median are set aside and re-estimated below
+  res[x14 == TRUE, o14 := NA_real_]
+  res[x15 == TRUE, o15 := NA_real_]
+  res[x16 == TRUE, o16 := NA_real_]
+
   res[, h14 := !is.na(o14)]
   res[, h15 := !is.na(o15)]
   res[, h16 := !is.na(o16)]
-  res[, n_own := as.integer(h14) + as.integer(h15) + as.integer(h16)]
+  res[, n_use := as.integer(h14) + as.integer(h15) + as.integer(h16)]
 
   res[, u15 := fifelse(h15, o15,
         fifelse(h16, fifelse(!is.na(ratio_15_16), o16 * ratio_15_16, direct_15),
@@ -418,18 +534,21 @@ build_base_uv <- function(qcol, vcol) {
         h15, "own",
         !h15 & h16 & !is.na(ratio_15_16), "imputed",
         !h15 & !h16 & h14 & !is.na(ratio_15_14), "imputed",
-        n_own > 0 & !h15, "direct",
+        n_use > 0 & !h15, "direct",
         default = NA_character_)]
   res[, s14 := fcase(
         h14, "own",
-        n_own > 0 & !h14 & !is.na(u15) & !is.na(ratio_14_15), "imputed",
-        n_own > 0 & !h14, "direct",
+        n_use > 0 & !h14 & !is.na(u15) & !is.na(ratio_14_15), "imputed",
+        n_use > 0 & !h14, "direct",
         default = NA_character_)]
   res[, s16 := fcase(
         h16, "own",
-        n_own > 0 & !h16 & !is.na(u15) & !is.na(ratio_16_15), "imputed",
-        n_own > 0 & !h16, "direct",
+        n_use > 0 & !h16 & !is.na(u15) & !is.na(ratio_16_15), "imputed",
+        n_use > 0 & !h16, "direct",
         default = NA_character_)]
+
+  # swapped to the group's base unit value: no base year is built from the country's data
+  res[swap == TRUE, `:=`(s14 = NA_character_, s15 = NA_character_, s16 = NA_character_)]
 
   res[, n_imputed := (s14 == "imputed" & !is.na(s14)) +
                      (s15 == "imputed" & !is.na(s15)) +
@@ -476,7 +595,7 @@ build_base_uv <- function(qcol, vcol) {
   how <- res[, .(geographicAreaM49, measuredItemCPC)]
   for (y in c("14", "15", "16")) {
     st <- res[[paste0("s", y)]]
-    st[res$n_own == 0 & !is.na(base_tier)] <- "group"
+    st[res$swap] <- "group"
     anc <- if (y == "15") fifelse(res$h16, "16", "14") else rep("15", nrow(res))
     rt_ <- if (y == "15") fifelse(res$h16, ratio_tier("_15", "_16"), ratio_tier("_15", "_14")) else ratio_tier(paste0("_", y), "_15")
     t <- fcase(st %in% "imputed", rt_, st %in% "direct", first_tier(y), st %in% "group", base_tier, default = NA_integer_)
@@ -491,18 +610,21 @@ build_base_uv <- function(qcol, vcol) {
     how[, (paste0("gm", y)) := gm]
     how[, (paste0("ga", y)) := fifelse(imp, ga, NA_real_)]
     how[, (paste0("sh", y)) := fifelse(st %in% c("imputed", "direct", "group"), shr, NA_real_)]
+    how[, (paste0("x", y)) := res[[paste0("x", y)]]]   # own value set aside (more than 3x from the median)
   }
+  how[, rule := res$uv_rule]
+  how[, own_md := res$own_md]
 
-  res[, base_uv := fifelse(n_own == 0, group_base_co, (u14 + u15 + u16) / 3)]
+  res[, base_uv := fifelse(swap, group_base_co, (u14 + u15 + u16) / 3)]
   res[, uv_source := fcase(
-        n_own == 3, "country",
-        n_own == 0, group_base_src,
+        swap, group_base_src,
+        uv_rule == "own_3", "country",
         default    = "imputed")]
   res[is.na(base_uv), uv_source := NA_character_]
 
   list(
     base = res[, .(geographicAreaM49, measuredItemCPC, base_uv, uv_source,
-                   n_own, n_imputed, n_direct)],
+                   n_own, n_imputed, n_direct, uv_rule)],
     base_sub = base_sub[, .(geographicAreaM49, measuredItemCPC, timePointYears, q, v)],
     how = how
   )
@@ -513,12 +635,12 @@ exp_built <- build_base_uv("exp_q", "exp_v")
 
 imp_uv_base <- copy(imp_built$base)
 setnames(imp_uv_base,
-         c("base_uv", "uv_source", "n_own", "n_imputed", "n_direct"),
-         c("base_uv_imp", "uv_source_imp", "base_imp_yrs_valid", "n_imp_imputed", "n_imp_direct"))
+         c("base_uv", "uv_source", "n_own", "n_imputed", "n_direct", "uv_rule"),
+         c("base_uv_imp", "uv_source_imp", "base_imp_yrs_valid", "n_imp_imputed", "n_imp_direct", "uv_rule_imp"))
 exp_uv_base <- copy(exp_built$base)
 setnames(exp_uv_base,
-         c("base_uv", "uv_source", "n_own", "n_imputed", "n_direct"),
-         c("base_uv_exp", "uv_source_exp", "base_exp_yrs_valid", "n_exp_imputed", "n_exp_direct"))
+         c("base_uv", "uv_source", "n_own", "n_imputed", "n_direct", "uv_rule"),
+         c("base_uv_exp", "uv_source_exp", "base_exp_yrs_valid", "n_exp_imputed", "n_exp_direct", "uv_rule_exp"))
 
 imp_uv_how <- imp_built$how   # per-year build of the base UV, for the diagnostics dashboard
 exp_uv_how <- exp_built$how
@@ -530,6 +652,13 @@ cat("\n-- Import base-UV source breakdown --\n")
 print(imp_uv_base[, .N, by = uv_source_imp][order(-N)])
 cat("\n-- Export base-UV source breakdown --\n")
 print(exp_uv_base[, .N, by = uv_source_exp][order(-N)])
+UV_RULE_LAB <- c(own_3 = "3 own years, within 3x - kept", fix_3 = "3 own years, year(s) >3x from median - growth rate",
+                 fill_2 = "2 own years, within 3x - growth rate", group_2_far = "2 own years, >3x apart - group's UV",
+                 group_1 = "1 own year - group's UV", group_0 = "0 own years - group's UV")
+cat("\n-- Base-UV rule applied (3x rule, 2026-10-27) --\n")
+print(merge(imp_uv_base[, .(Import = .N), by = .(rule = uv_rule_imp)],
+            exp_uv_base[, .(Export = .N), by = .(rule = uv_rule_exp)], by = "rule", all = TRUE)[
+        order(match(rule, names(UV_RULE_LAB)))][, label := UV_RULE_LAB[rule]][])
 
 report_uv <- function(b, uvc, srcc, yrsc, impc, dirc, label) {
   cat(sprintf("\n%s: %s flows with a base UV  |  %s with none\n", label,
@@ -611,11 +740,11 @@ cat("\n=== STEP 5 OUTPUT: WRITING FILES ===\n")
 # disseminated areas.
 base_uv_chk <- rbindlist(list(
   Import = imp_uv_base[, .(Area_M49 = geographicAreaM49, Item_CPC = measuredItemCPC,
-                           Base_UV = base_uv_imp, UV_Source = uv_source_imp,
+                           Base_UV = base_uv_imp, UV_Source = uv_source_imp, UV_Rule = uv_rule_imp,
                            Base_Yrs_Own = base_imp_yrs_valid,
                            N_Imputed = n_imp_imputed, N_Direct = n_imp_direct)],
   Export = exp_uv_base[, .(Area_M49 = geographicAreaM49, Item_CPC = measuredItemCPC,
-                           Base_UV = base_uv_exp, UV_Source = uv_source_exp,
+                           Base_UV = base_uv_exp, UV_Source = uv_source_exp, UV_Rule = uv_rule_exp,
                            Base_Yrs_Own = base_exp_yrs_valid,
                            N_Imputed = n_exp_imputed, N_Direct = n_exp_direct)]
 ), idcol = "Flow")
@@ -681,7 +810,9 @@ cat(sprintf("Items in trade data: %d  |  Mapped to a group: %d  |  Unmapped: %d\
 
 # --- 6B: Area group mapping for aggregation
 
-area_agg_map <- agg_table[var_type == "area" & as.numeric(factor) == 1, .(
+# "Excluding intra-trade" regions (codes with a dot, e.g. 002.03) are not published
+# (decided 2026-10-27), so they are not built.
+area_agg_map <- agg_table[var_type == "area" & as.numeric(factor) == 1 & !grepl("\\.", group_code), .(
   area_group_code   = group_code,
   area_group_name   = group_name,
   geographicAreaM49 = member_code
@@ -1238,6 +1369,10 @@ if (exists("imp_uv_base") && exists("exp_uv_base")) {
          "base_imp_yrs_valid", "n_imp_imputed", "n_imp_direct", "Import")
   uvline(exp_uv_base, "base_uv_exp", "uv_source_exp",
          "base_exp_yrs_valid", "n_exp_imputed", "n_exp_direct", "Export")
+  cat("   3x rule applied (Import | Export):\n")
+  for (r in names(UV_RULE_LAB))
+    cat(sprintf("     %-58s: %s | %s\n", UV_RULE_LAB[[r]],
+                fm(imp_uv_base[uv_rule_imp == r, .N]), fm(exp_uv_base[uv_rule_exp == r, .N])))
 
   RUN_STATS$uv_imp_country  <- imp_uv_base[uv_source_imp == "country", .N]
   RUN_STATS$uv_imp_imputed  <- imp_uv_base[uv_source_imp == "imputed", .N]

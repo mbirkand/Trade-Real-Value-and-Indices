@@ -453,6 +453,8 @@ td .code { margin-left: 5px; }
         <a href="#m-dec">8 · Decisions at a glance</a>
         <a href="#m-out">9 · Outputs</a>
         <a href="#m-dec19">10 · Decisions on indices and real values, 19 Oct 2026</a>
+        <a href="#m-dec27">11 · Decisions on indices and real values, 27 Oct 2026</a>
+        <a href="#m-disc">12 · Discussions</a>
       </nav>
       <div class="doc-body">
         <div class="cmt-row"><a class="btn" href="https://github.com/mbirkand/Trade-Real-Value-and-Indices/pull/1/files" target="_blank" rel="noopener" title="Opens the Methodology review pull request. Click + next to any line to comment. Needs a GitHub account.">Comment on GitHub ↗</a></div>
@@ -530,26 +532,38 @@ td .code { margin-left: 5px; }
             <span class="row"><span class="lhs">UV<sub>t</sub></span> = V<sub>t</sub> ÷ Q<sub>t</sub></span>
             <span class="row"><span class="lhs">base UV</span> = (UV<sub>2014</sub> + UV<sub>2015</sub> + UV<sub>2016</sub>) ÷ 3<span class="c">simple average of the three yearly unit values</span></span>
           </div>
-          <h4>When a base year is missing</h4>
-          <p>A base year counts as the country's <b>own data</b> when it has both a quantity and a value above zero. A year without own data is estimated from a year that has it: take the country's own unit value in that year and move it up or down by as much as the parent group's unit value moved between the two years.</p>
-          <p>Only the group's <b>change</b> is used, not its price. The country keeps its own price level, which can be higher or lower than its neighbours' for good reasons. The flip side: if the country's own year is wrong, the estimated years copy the error.</p>
-          <p><b>The country itself is left out of the group.</b> The parent group's unit values used for a country are calculated from the <b>other</b> member countries only (leave-one-out). Otherwise the country's own record — often a large share of a small group — would move the group's price and feed back into its own estimate. If no other member has data for both years, the next group up is used.</p>
-          <div class="callout"><b>Changed on 22 October 2026.</b> Until then the parent group's unit values included the country being estimated.</div>
-          <div class="eq"><span class="row"><span class="lhs">UV<sub>missing</sub></span> = UV<sub>anchor</sub> × (parent UV<sub>missing</sub> ÷ parent UV<sub>anchor</sub>)<span class="c">parent = the other member countries</span></span></div>
+          <p>A base year counts as the country's <b>own data</b> when it has both a quantity and a value above zero.</p>
+          <h4>The 3× rule — by number of own base years</h4>
+          <table class="plain">
+            <thead><tr><th>Own base years</th><th>Rule</th></tr></thead>
+            <tbody>
+              <tr><td>0 or 1 of 3</td><td>The group's base unit value is used.</td></tr>
+              <tr><td>2 of 3</td><td>Within 3× of each other: the missing year is estimated with the growth rate approach. More than 3× apart: the group's base unit value is used.</td></tr>
+              <tr><td>3 of 3</td><td>All within 3× of their median: no change. A year more than 3× above or below the median of the three is replaced with the growth rate approach.</td></tr>
+            </tbody>
+          </table>
+          <p class="note">The 3× range is checked within the country's own series. Group = the first group of the fallback hierarchy (below) that has a unit value.</p>
+          <div class="callout"><b>Changed on 27 October 2026.</b> Until then a single own base year was enough to estimate the other two, own base years were not checked against each other, and regional groups' unit values were pooled (ΣV ÷ ΣQ).</div>
+          <h4>Growth rate approach</h4>
+          <p>A year without usable own data is estimated from a year that has it: take the country's own unit value in that year and move it up or down by as much as the group's unit value moved between the two years. Only the group's <b>change</b> is used, not its price, so the country keeps its own price level.</p>
+          <div class="eq"><span class="row"><span class="lhs">UV<sub>missing</sub></span> = UV<sub>anchor</sub> × (group UV<sub>missing</sub> ÷ group UV<sub>anchor</sub>)<span class="c">group = the other member countries</span></span></div>
           <ol class="steps">
-            <li>Fill <b>2015</b> first — from 2016 if the country has it, otherwise from 2014.</li>
+            <li>Fill <b>2015</b> first — from 2016 if the country has a usable value, otherwise from 2014.</li>
             <li>Then fill <b>2014</b> and <b>2016</b> from 2015. Every remaining gap is a single step.</li>
-            <li>If no parent group has a unit value for both years of a step, the parent's own unit value for the missing year is used.</li>
-            <li>If the country has <b>no base-year data at all</b>, the parent group's base unit value is used as it is.</li>
+            <li>If no group has a unit value for both years of a step, the group's own unit value for the missing year is used.</li>
           </ol>
-          <h4>Parent groups</h4>
+          <h4>Group's base unit value</h4>
+          <ul>
+            <li>The average of the group's 2014, 2015 and 2016 unit values, without the country itself.</li>
+          </ul>
+          <h4>Fallback hierarchy</h4>
           <ul>
             <li>The country's regional groups, smallest first: tier 1 → tier 2 → tier 3 → global (all countries).</li>
-            <li>A group's unit value for a year is pooled: ΣV ÷ ΣQ over its member countries, leaving out the country being estimated.</li>
+            <li>A regional group's unit value for a year is the <b>weighted median</b> of its member countries' unit values, weighted by quantity (tonnes). The global level stays pooled: ΣV ÷ ΣQ over all countries.</li>
+            <li><b>The country itself is left out of the group</b> (leave-one-out, since 22 October 2026). The group is used because the country's own data are missing or unusable, so its own record must not move the group's price. If no other member has data, the next group up is used.</li>
             <li>Not used as parents: EU (27), Australia and New Zealand, LDCs, landlocked and small-island developing states, LIFDCs, net food-importing developing countries, and all "excluding intra-trade" groups.</li>
-            <li>No outlier filtering is applied to base unit values.</li>
           </ul>
-          <p>Every flow records where its base unit value came from: <b>country</b> (all three years own data), <b>imputed</b> (some years rebuilt) or the <b>group name</b> / <b>global</b> (taken from a group).</p>
+          <p>Every flow records where its base unit value came from: <b>country</b> (three own years, all within 3×), <b>imputed</b> (some years estimated or replaced with the growth rate approach) or the <b>group name</b> / <b>global</b> (the group's base unit value), and which branch of the 3× rule was applied.</p>
         </div>
 
         <div class="doc-sec" id="m-agg">
@@ -570,6 +584,7 @@ td .code { margin-left: 5px; }
           <h4>Region × item group</h4>
           <ul>
             <li>Sum of the country × item group aggregates over member countries with Aggregation = TRUE.</li>
+            <li>"Excluding intra-trade" regions are not built or published (decided 27 October 2026).</li>
           </ul>
           <h4>Base of the aggregate indices</h4>
           <ul>
@@ -611,7 +626,7 @@ td .code { margin-left: 5px; }
             <li>Fix one-sided zeros: if Q = 0 but V &gt; 0, Q is set to missing; if V = 0 but Q &gt; 0, V is set to missing. The other side still counts in its own total.</li>
             <li>A <b>valid observation</b> is one with Q &gt; 0 and V &gt; 0 — enough to compute a unit value.</li>
           </ol>
-          <div class="callout"><b>No data are filtered.</b> Every record is used as reported, even when the source data look problematic: very small records (Q &lt; 10 t or V &lt; 10 thousand USD), unusual unit values, and estimated, imputed or missing-flagged records all stay in. Records flagged as missing (M) that carry a 0 enter as 0. There is no coverage rule and no minimum number of base years. The other pages of this dashboard flag values for review; they never remove them.</div>
+          <div class="callout"><b>No data are filtered.</b> Every record is used as reported, even when the source data look problematic: very small records (Q &lt; 10 t or V &lt; 10 thousand USD), unusual unit values, and estimated, imputed or missing-flagged records all stay in. Records flagged as missing (M) that carry a 0 enter as 0. There is no coverage rule and no minimum number of base years. The other pages of this dashboard flag values for review; they never remove them. The only correction is the 3× rule for base unit values (section 5): a base year far from the country's other base years is replaced in the base unit value; the record itself stays in.</div>
         </div>
 
         <div class="doc-grp" id="m-pr">Reference</div>
@@ -627,12 +642,15 @@ td .code { margin-left: 5px; }
               <tr><td>Valid observation</td><td>Q &gt; 0 and V &gt; 0</td></tr>
               <tr><td>Filtering of problematic data</td><td>None — flagged for review only</td></tr>
               <tr><td>Minimum base years</td><td>None</td></tr>
-              <tr><td>Output scope</td><td>Disseminated areas; aggregates only, built from all items; 11 item groups excluded (section 6)</td></tr>
+              <tr><td>Output scope</td><td>Disseminated areas; aggregates only, built from all items; 11 item groups excluded (section 6); "excluding intra-trade" regions not published; base years published too</td></tr>
               <tr class="grp"><td colspan="2">Base unit value and aggregates</td></tr>
               <tr><td>Base UV</td><td>Per-year unit values, simple average</td></tr>
-              <tr><td>Missing base year</td><td>Parent group's rate of change, without the country itself; 2015 first, then 2014 and 2016</td></tr>
-              <tr><td>No base-year data</td><td>Parent group's base UV</td></tr>
-              <tr><td>Parent order</td><td>Tier 1 → tier 2 → tier 3 → global</td></tr>
+              <tr><td>0–1 own base years</td><td>Group's base UV</td></tr>
+              <tr><td>2 own base years</td><td>Within 3×: growth rate approach for the missing year · more than 3× apart: group's base UV</td></tr>
+              <tr><td>3 own base years</td><td>A year more than 3× from the median of the three: replaced with the growth rate approach · otherwise no change</td></tr>
+              <tr><td>Growth rate approach</td><td>Group's rate of change, without the country itself; 2015 first, then 2014 and 2016</td></tr>
+              <tr><td>Fallback hierarchy</td><td>Tier 1 → tier 2 → tier 3 → global</td></tr>
+              <tr><td>Group unit value</td><td>Regions: quantity-weighted median of the other members · global: ΣV ÷ ΣQ of the other countries</td></tr>
               <tr><td>Item factor</td><td>Quantity only</td></tr>
               <tr><td>Aggregate base</td><td>2014–16 average of the aggregate</td></tr>
               <tr><td>Excluded item groups</td><td>11 groups not calculated (section 6); their items still count in other groups. Natural rubber and Textile fibres may be added next year</td></tr>
@@ -647,7 +665,7 @@ td .code { margin-left: 5px; }
               <tr class="grp"><td colspan="2">Dashboard checks (review only)</td></tr>
               <tr><td>Indices</td><td>Critical: index &gt; 5,000 or &lt; 1 · Warning: index &gt; 1,000 or &lt; 10, or a 10× change from the previous year</td></tr>
               <tr><td>Real values</td><td>Aggregate real value 10× or more (critical 100×) above or below the previous year, compared with other countries and traced to the one item behind most of the change (quantity × base unit value)</td></tr>
-              <tr><td>Base unit values</td><td>Base UV 10× or more (critical 100×) above or below other countries' base UV, or 10× or more above or below the country's own other years. Also flagged: the highest base year's UV 10× or more the lowest</td></tr>
+              <tr><td>Base unit values</td><td>Base UV 10× or more (critical 100×) above or below other countries' base UV, or 10× or more above or below the country's own other years. Base years that disagree are handled by the 3× rule</td></tr>
               <tr><td>Dissemination groups</td><td>Open — chosen on the Dissemination groups tab, from the size and reliability of each group and area level. The 11 excluded groups are listed there in their own section</td></tr>
             </tbody>
           </table>
@@ -683,6 +701,70 @@ td .code { margin-left: 5px; }
             <li>A section for UVs will be added to see if there are strange base UVs.</li>
             <li>Birkan will create a new dashboard upon these decisions.</li>
             <li>We will try to identify at which aggregate level we will publish these all; it's possible to remove tiny groups.</li>
+          </ul>
+        </div>
+
+        <div class="doc-sec" id="m-dec27">
+          <h2><span class="n">11</span>Decisions on indices and real values, 27 Oct 2026</h2>
+          <h4>Outputs</h4>
+          <ul>
+            <li>We will not publish results for “Excluding intra-trade” regions.</li>
+            <li>We will publish real values for the base years as well (already being done).</li>
+          </ul>
+          <h4>Fallback hierarchy</h4>
+          <ul>
+            <li>For regional unit values in the fallback hierarchy we will use the <b>weighted median unit value</b>.</li>
+            <li>We will swap problematic unit values with the group's UV, following the fallback hierarchy.</li>
+          </ul>
+          <h4>Base unit values — by number of base years available</h4>
+          <table class="plain">
+            <thead><tr><th>Base years available</th><th>Rule</th></tr></thead>
+            <tbody>
+              <tr><td>0 or 1 of 3</td><td>Swap directly with the group's UV.</td></tr>
+              <tr><td>2 of 3</td><td>If the 2 values are within a 3× range: growth rate approach for the missing year. If they differ by more than 3×: use the group's UV.</td></tr>
+              <tr><td>3 of 3</td><td>Values within a 3× range: no change. If any year is more than 3× (above or below the median of the three years): correct the problematic value with the growth rate approach.</td></tr>
+            </tbody>
+          </table>
+          <p class="note">The 3× range is checked within the country's own series.</p>
+        </div>
+
+        <div class="doc-sec" id="m-disc">
+          <h2><span class="n">12</span>Discussions</h2>
+          <h4>Minimum number of observations in the fallback hierarchy (raised 27 Oct 2026)</h4>
+          <ul>
+            <li><b>Proposal:</b> if a group has fewer than 3 valid observations, check the bigger group in the fallback hierarchy.</li>
+            <li><b>Example:</b> pears in the Middle Africa group have a unit value of 34,160,000. It is one observation from one country, with a quantity close to 0, which makes the unit value very high.</li>
+            <li><b>Proposal:</b> records with a quantity or value very close to 0 (for example 0.001) may not count as valid observations.</li>
+          </ul>
+          <h4>Applied in the code (27 Oct 2026)</h4>
+          <ul>
+            <li>A regional group needs at least <b>3 valid observations from other countries</b> (the country being estimated is left out); otherwise the next, bigger group is used.</li>
+            <li>A record counts as valid for a group's unit value only with <b>Q ≥ 1 t and V ≥ 1 thousand USD</b>.</li>
+            <li>Applies only to the group unit values. The country's own base years and all outputs still use every record.</li>
+            <li>The global level has no minimum; it uses all records only if no country passes the threshold.</li>
+          </ul>
+          <h4>Own base years below 1 t or 1 thousand USD (raised 27 Oct 2026)</h4>
+          <ul>
+            <li><b>Proposal:</b> base-year records with a quantity or value below 1 are not used as base years; the fallback is used instead. Very small values create very high unit values.</li>
+            <li><b>Example:</b> Argentina, raw milk of cattle (02211), imports: 0.013 t in 2014 and 0.03 t in 2015 give 188,480 and 142,177 $/t, against about 1,000 $/t for other countries. The base unit value became 154,612 $/t.</li>
+            <li><b>Applied in the code:</b> a base year counts as the country's own only with Q ≥ 1 t and V ≥ 1 thousand USD. A smaller record is treated as a missing base year, so the 3× rule and the fallback hierarchy apply (Argentina: 0 valid base years → group's base unit value). The records still count in quantities, values and real values.</li>
+          </ul>
+          <h4>The country itself is left out of the group (leave-one-out)</h4>
+          <ul>
+            <li>When a group's unit value is used for a country, that country's own record is removed from the group's calculation: the weighted median of the other members for a regional group, ΣV ÷ ΣQ of the other countries at the global level.</li>
+            <li><b>Why:</b> the group is used because the country's own data are missing or not usable. If its own record stayed in, it would move the group's price and feed its own error back into its base unit value — often a large share of a small group.</li>
+            <li>The minimum of 3 valid observations is counted without the country. If too few other countries remain, the next, bigger group is used.</li>
+          </ul>
+          <h4>Group's base unit value needs all three base years (raised 27 Oct 2026)</h4>
+          <ul>
+            <li><b>Example:</b> Chile, palm kernels (01491.02), exports. South America without Chile has 3 valid observations only in 2016 (Colombia 2.1 t, Ecuador 2.5 t, Paraguay 2.05 t); 2014 and 2015 have fewer than 3. The group's base unit value was that one year: 240,153 $/t, against about 700 $/t for other countries.</li>
+            <li><b>Applied in the code:</b> a regional group's base unit value is used only if the group has a unit value (at least 3 valid observations from other countries) in <b>each</b> of 2014, 2015 and 2016. Otherwise the next, bigger group is used. Chile now takes Americas: 308 $/t.</li>
+          </ul>
+          <h4>Skip a group dominated by one country (raised 27 Oct 2026)</h4>
+          <ul>
+            <li><b>Example:</b> Togo, wine (24212.02), exports. In Western Africa without Togo, Ghana has 82% of the valid tonnes (1,273 of 1,551 t in 2015), so the weighted median is simply Ghana's price: 323 $/t in 2015 and 2,945 $/t in 2016. Togo's 2016 year was estimated with that ×9.11 change, giving 65,481 $/t and a base unit value of 25,491 $/t, against 3,159 $/t for all countries.</li>
+            <li><b>Applied in the code:</b> a regional group is skipped in a year when one country (other than the country being estimated) holds more than <b>50%</b> of the group's valid tonnes; the next, bigger group is used. Not applied at the all-countries level. Togo's base unit value becomes about 6,000 $/t.</li>
+            <li><b>Tested before applying</b> (experiment on the same data): base unit values 10× or more off all countries' fell from 2,690 to 1,490, and 100× or more from 140 to 40. Using only continents and the world instead gave 2,343 and 124.</li>
           </ul>
         </div>
 
@@ -923,8 +1005,13 @@ td .code { margin-left: 5px; }
       <div class="tiles" id="bTiles"></div>
       <section class="card">
         <h2>How close base unit values are to other countries'</h2>
-        <p class="sub">Each base unit value is compared with the typical (median) base unit value of other countries for the same item and flow. Rows: how many of the three base years are the country's own data.</p>
+        <p class="sub">Each base unit value is compared with the typical (median) base unit value of other countries for the same item and flow. Rows: how the base unit value was built under the 3× rule.</p>
         <div id="bDist"></div>
+      </section>
+      <section class="card" id="bRuleCard">
+        <h2>How base unit values were set — the 3× rule</h2>
+        <p class="sub">Every base unit value, by the number of own base years and whether they are within 3× of each other (methodology, section 5).</p>
+        <div id="bRule"></div>
       </section>
       <section class="card">
         <h2>Causes</h2>
@@ -943,14 +1030,15 @@ td .code { margin-left: 5px; }
             <h3>Flags</h3>
             <ul class="tight">
               <li><span class="sev c">Critical</span>&nbsp; <b id="cfgUc"></b>× or more above or below other countries' base unit value.</li>
-              <li><span class="sev w">Warning</span>&nbsp; <b id="cfgUw"></b>× or more above or below other countries' base unit value, or 10× or more above or below the country's own unit value in the other years, or the three base-year unit values differ 10× or more.</li>
+              <li><span class="sev w">Warning</span>&nbsp; <b id="cfgUw"></b>× or more above or below other countries' base unit value, or 10× or more above or below the country's own unit value in the other years.</li>
+              <li>Base years more than 3× apart are not flagged here: the pipeline already replaces them, or uses the group's base unit value (3× rule).</li>
               <li>Other countries = median of the countries whose base unit value is all their own data, at least <span id="cfgUp"></span> countries.</li>
             </ul>
           </div>
           <div>
             <h3>Cause — in this order</h3>
             <ul class="tight">
-              <li><b>Taken from a group</b> → <b>Negligible base-year record</b> → <b>Base years disagree</b> → <b>Rebuilt base year off</b> → <b>Base period out of line</b> → <b>Country always differs</b>.</li>
+              <li><b>Taken from a group</b> → <b>Negligible base-year record</b> → <b>Base year replaced, still off</b> → <b>Rebuilt base year off</b> → <b>Base period out of line</b> → <b>Country always differs</b>.</li>
               <li><b>Off the country's own other years</b> when only the own-years check fires.</li>
             </ul>
           </div>
@@ -965,7 +1053,7 @@ td .code { margin-left: 5px; }
         <div class="filters">
           <label>Severity<select id="bSev"><option value="">All</option><option value="2">Critical</option><option value="1">Warning</option></select></label>
           <label>Cause<select id="bCat"><option value="">All</option></select></label>
-          <label>Built from<select id="bSrc"><option value="">All</option><option value="own">All 3 years own</option><option value="imp">1–2 years own, rest estimated</option><option value="grp">Group's base unit value</option></select></label>
+          <label>Built from<select id="bSrc"><option value="">All</option><option value="own">3 own years, within 3×</option><option value="imp">Partly estimated (growth rate)</option><option value="grp">Group's base unit value</option></select></label>
           <label>Flow<select id="bFlow"><option value="">All</option><option value="0">Import</option><option value="1">Export</option></select></label>
           <label>Area<select id="bArea"><option value="">All</option></select></label>
           <label>Item<select id="bItem"><option value="">All</option></select></label>
@@ -1080,6 +1168,13 @@ function tsHead(label) {
 const tsRow = (label, fn) => { let r = `<tr><td class="lab">${label}</td>`; for (let yi = 0; yi < NY; yi++) r += fn(yi, Y0 + yi); return r + `</tr>`; };
 const tsGrp = label => `<tr class="grp"><td class="lab">${label}</td><td colspan="${NY}"></td></tr>`;
 function scrollFocus(el) { const f = el.querySelector("td.focus"), wrap = el.querySelector(".ts-wrap"); if (f && wrap) wrap.scrollLeft = Math.max(0, f.offsetLeft - wrap.clientWidth / 2); }
+// items never used as examples (27 Oct 2026); they stay in the lists, the look-ups and the counts
+const NOEX = [["02959.30", "Hides nes; dry salted"], ["02955.01", "Skins; karakul"], ["02955.90", "Skins; furs"], ["21932.02", "Residues of fatty substances"]];
+const NOEX_CODE = new Set(NOEX.map(x => x[0])), NOEX_NAME = new Set(NOEX.map(x => x[1].toLowerCase()));
+const noexItem = (code, name) => NOEX_CODE.has(code) || (!!name && NOEX_NAME.has(String(name).toLowerCase()));
+const bEx = o => !noexItem(D.items.code[D.series.i[o.s]], D.items.name[D.series.i[o.s]]);
+const aEx = o => { const tk = TOPBY.get(o.rank - 1) || []; return !(tk.length && noexItem(null, AD.mnames[AD.top.m[tk[0]]])); };
+const jEx = o => { const c = jCause(o); return !(c && noexItem(c.icode, c.item)); };
 function picks3(L, sizeOf, areaOf) {
   const pool = L.filter(o => o.sev === 2 && sizeOf(o) > 0).concat(L), out = [], seenS = new Set(), seenA = new Set();
   for (const pass of [true, false]) for (const o of pool) {
@@ -1115,26 +1210,41 @@ function seriesName(sid) {
   return { area: D.areas.name[S.a[sid]], acode: D.areas.code[S.a[sid]], item: D.items.name[S.i[sid]], icode: D.items.code[S.i[sid]], flow: S.f[sid] ? "Export" : "Import" };
 }
 const srcOf = sid => has(D.series.src[sid]) ? D.srcs[D.series.src[sid]] : null;
-const SRCLAB = { "Own data": "All 3 years", "Partly rebuilt": "1 or 2 years — others estimated", "From a group": "None — group's base unit value used" };
+const SRCLAB = { "Own data": "3 own years, within 3× — kept", "Partly rebuilt": "Growth rate approach — 2 own years within 3×, or 3 with a year replaced", "From a group": "Group's base unit value — 0–1 own years, or 2 more than 3× apart" };
+// branch of the 3x rule applied to each base unit value (pipeline Step 4, 27 Oct 2026)
+const RULELAB = {
+  own_3: "3 own base years, all within 3× of their median — kept",
+  fix_3: "3 own base years, a year more than 3× from the median — replaced with the growth rate approach",
+  fill_2: "2 own base years within 3× — the missing year estimated with the growth rate approach",
+  group_2_far: "2 own base years more than 3× apart — the group's base unit value is used",
+  group_1: "1 own base year — the group's base unit value is used",
+  group_0: "No own base year — the group's base unit value is used"
+};
+const ruleOf = sid => { const r = D.series.rule; return D.rules && r && has(r[sid]) ? D.rules[r[sid]] : null; };
 const srcGroup = src => !src ? null : src === "country" ? "own" : src === "imputed" ? "imp" : "grp";
 function srcText(sid) {
   const S = D.series, src = srcOf(sid);
   if (!src) return "no base unit value";
-  if (src === "country") return "all three base years are the country's own data";
+  const rl = ruleOf(sid);
+  if (src === "country") return "all three base years are the country's own data, within 3× of each other";
+  if (src === "imputed" && rl === "fix_3") { const k = (S.nimp[sid] || 0) + (S.ndir[sid] || 0); return `all three base years are own data, but ${k} year${k > 1 ? "s" : ""} more than 3× from their median ${k > 1 ? "were" : "was"} replaced with the growth rate approach — see how below`; }
+  if (rl === "group_2_far") return `the two own base years are more than 3× apart, so the base unit value of <b>${esc(src)}</b> is used`;
+  if (rl === "group_1") return `only one own base year, so the base unit value of <b>${esc(src)}</b> is used`;
   if (src === "imputed") return `${S.own[sid]} own base year${S.own[sid] > 1 ? "s" : ""}, ${S.nimp[sid]} estimated from ${S.own[sid] > 1 ? "them" : "it"} — see how below${S.ndir[sid] ? `, ${S.ndir[sid]} taken from a group` : ""}`;
   return `taken directly from <b>${esc(src)}</b> — the country has no usable base-year data`;
 }
 function srcShort(sid) {
   const S = D.series, src = srcOf(sid);
+  if (src === "imputed" && ruleOf(sid) === "fix_3") return `3 own, ${(S.nimp[sid] || 0) + (S.ndir[sid] || 0)} replaced`;
   return !src ? "none" : src === "country" ? "own data" : src === "imputed" ? `${S.own[sid]} own, ${S.nimp[sid]} estimated` : "from " + esc(src);
 }
 const usd = x => has(x) ? fmt(x * 1000) : "—";   // 1000 USD per tonne -> $/t
 let BISS = [], BISSIDX = new Map(), BCAT_ORDER = [], BPAGE = 0, BGROUPS_DRAWN = false;
 const BDEF = {
-  b_borrowed: ["The country has no usable base-year data, so its base unit value was taken from a regional group — and it is far from other countries'.", "The group's price does not fit this country's trade (another product mix or quality). Every year's real value is off by the same factor."],
+  b_borrowed: ["The country has 0–1 own base years, or 2 more than 3× apart, so the group's base unit value was used (3× rule) — and it is far from other countries'.", "The group's price does not fit this country's trade (another product mix or quality). Every year's real value is off by the same factor."],
   b_tiny: ["At least one base-year record is negligible (under 10 t or 10 thousand USD) and the base unit value is far from other countries'.", "A unit value from a tiny shipment is unreliable — one such record can pull the whole base."],
-  b_disagree: ["The country's own unit values in 2014, 2015 and 2016 differ 10× or more.", "One base-year record is probably wrong (quantity or value). The simple average is pulled towards it."],
-  b_rebuilt: ["Some base years had no own data and were estimated from the country's own year(s) and the group's price change, and the result is far from other countries'.", "The estimated years copy the price level of the country's own year — if that year is wrong, all three are."],
+  b_disagree: ["A base year more than 3× from the median of the three was replaced with the growth rate approach (3× rule), and the base unit value is still far from other countries'.", "The remaining own years set the price level, so the country's prices differ from other countries' in every base year — check the units or the product mix."],
+  b_rebuilt: ["One base year had no own data and was estimated from the country's two own years (within 3×) and the group's price change, and the result is far from other countries'.", "The estimated years copy the price level of the country's own year — if that year is wrong, all three are."],
   b_own_off: ["Far from other countries' base unit value and from the country's own unit value in the other years.", "Something went wrong in the base period only — the other years look normal."],
   b_consistent: ["Far from other countries' base unit value, but in line with the country's own unit value in the other years.", "The country's prices are always different: another product mix, unit or quality, or a reporting habit. Real values are consistent over time but not comparable with other countries."],
   b_own_only: ["10× or more from the country's own unit value in the other years, while close to other countries' (or no comparison available).", "Either the base years or the later years are unusual for this country — check which."]
@@ -1142,7 +1252,7 @@ const BDEF = {
 const EXB = {
   b_borrowed: { cols: ["2014", "2015", "2016", "Base"], b: [0, 1, 2, 3], rows: [["Own unit value ($/t)", ["–", "–", "–", "–"]], ["Group's unit value ($/t)", ["8,800", "9,100", "9,100", "9,000"]], ["Other countries ($/t)", ["", "", "", "520"]]], hl: [1, 3, "c"], note: "Base taken from the group: 9,000 $/t, 17× other countries' 520 $/t." },
   b_tiny: { cols: ["2014", "2015", "2016", "Base"], b: [0, 1, 2, 3], rows: [["Quantity (t)", ["0.01", "800", "760", ""]], ["Value (1000 $)", ["2", "400", "390", ""]], ["Unit value ($/t)", ["200,000", "500", "513", "67,004"]]], hl: [2, 3, "c"], note: "A 10 kg record at 200,000 $/t lifts the base to 67,004 $/t." },
-  b_disagree: { cols: ["2014", "2015", "2016", "Base"], b: [0, 1, 2, 3], rows: [["Quantity (t)", ["1,000", "10", "1,100", ""]], ["Value (1000 $)", ["600", "580", "650", ""]], ["Unit value ($/t)", ["600", "58,000", "591", "19,730"]]], hl: [2, 3, "w"], note: "2015's quantity looks 100× too small; the base is pulled 33× up." },
+  b_disagree: { cols: ["2014", "2015", "2016", "Base"], b: [0, 1, 2, 3], rows: [["Own unit value ($/t)", ["6,000", "580,000", "5,900", ""]], ["Used ($/t)", ["6,000", "6,100", "5,900", "6,000"]], ["Other countries ($/t)", ["", "", "", "520"]]], hl: [1, 3, "w"], note: "2015 is 98× the median and is replaced; the base is still 12× other countries'." },
   b_rebuilt: { cols: ["2014", "2015", "2016", "Base"], b: [0, 1, 2, 3], rows: [["Own unit value ($/t)", ["–", "–", "4,800"]], ["Rebuilt ($/t)", ["4,700", "4,750", ""]], ["Base vs other countries", ["", "", "", "×9.6"]]], hl: [2, 3, "w"], note: "Only 2016 is own data; the rebuilt years copy its level." },
   b_own_off: { cols: ["2012", "Base", "2018", "2020"], b: [1], rows: [["Unit value ($/t)", ["410", "5,200", "430", "450"]], ["Other countries ($/t)", ["400", "420", "440", "460"]]], hl: [0, 1, "w"], note: "Only the base period is out of line, for this country and against others." },
   b_consistent: { cols: ["2012", "Base", "2018", "2020"], b: [1], rows: [["Unit value ($/t)", ["9,500", "9,800", "10,100", "10,400"]], ["Other countries ($/t)", ["800", "820", "850", "870"]]], hl: [0, 1, "w"], note: "Always ~12× other countries — a consistent difference, not a one-off." },
@@ -1165,7 +1275,7 @@ function bExplain(o) {
   switch (id) {
     case "b_borrowed": t = `${head} The group's price does not fit this country.`; break;
     case "b_tiny": t = `${head} At least one base-year record is negligible — own base-year unit values: ${by}.`; break;
-    case "b_disagree": t = `Own base-year unit values differ <b>${ratio(o.d)}×</b>: ${by}. The base unit value (${buv} $/t, the simple average) is pulled towards the outlying year. It is ${vsP}.`; break;
+    case "b_disagree": t = `${head} Own base-year unit values: ${by}; the year${(S.nimp[sid] || 0) + (S.ndir[sid] || 0) > 1 ? "s" : ""} more than 3× from their median ${(S.nimp[sid] || 0) + (S.ndir[sid] || 0) > 1 ? "were" : "was"} replaced with the growth rate approach.`; break;
     case "b_rebuilt": {
       const own = [0, 1, 2].map(i => S["u" + i][sid]).filter(has), om = own.length ? own.reduce((x, y) => x + y, 0) / own.length : null;
       t = `${head} Own base-year unit values: ${by}.${om ? ` The rebuilt years, moved by the parent group's trend, put the base at ${rt(S.buv[sid] / om)} the country's own base-year level.` : ""}`; break;
@@ -1186,9 +1296,14 @@ function howBuilt(sid) {
   const u = i => H["u" + i][sid], yi = y => D.years.indexOf(y);
   const ST = ["own", "imputed", "direct", "group"];
   const li = [], warn = [];
+  const rl = ruleOf(sid), xs = i => H["x" + i] && H["x" + i][sid] === 1, ownU = i => S["u" + i][sid];
+  const ownList = [0, 1, 2].map(i => `${yrs[i]}: ${has(ownU(i)) ? P(ownU(i)) : "–"}`).join(" · ");
   if ([0, 1, 2].some(i => ST[st(i)] === "group")) {
     const i0 = [0, 1, 2].find(i => ST[st(i)] === "group");
-    li.push(`No own data in any base year, so the base unit value of <b>${gn(i0)}</b> is used as it is: the average of its prices ${[0, 1, 2].map(i => `${yrs[i]}: ${P(H["m" + i][sid])}`).join(" · ")} $/t = <b>${P(S.buv[sid])} $/t</b>.`);
+    const why = rl === "group_2_far" ? `The two own base-year unit values (${ownList} $/t) are more than 3× apart, so they are not used` :
+                rl === "group_1" ? `Only one valid own base year (${ownList} $/t), so it is not used` :
+                [0, 1, 2].some(i => has(ownU(i))) ? `Own base-year records are all below 1 t or 1 thousand USD (${ownList} $/t), so they are not used` : `No own data in any base year`;
+    li.push(`${why}: the base unit value of <b>${gn(i0)}</b> is used as it is — the average of its prices without this country, ${[0, 1, 2].map(i => `${yrs[i]}: ${P(H["m" + i][sid])}`).join(" · ")} $/t = <b>${P(S.buv[sid])} $/t</b>.`);
   } else {
     // own years first, then the estimated years in the order they are filled (2015, then 2014 and 2016)
     const ord = [0, 1, 2].filter(i => ST[st(i)] === "own").concat([1, 0, 2].filter(i => ST[st(i)] !== "own"));
@@ -1199,16 +1314,19 @@ function howBuilt(sid) {
         li.push(`<b>${y}</b> — own data: ${fmt(r.v)} thousand $ ÷ ${fmt(r.q)} t = <b>${P(u(i))} $/t</b>`);
       } else if (k === "imputed") {
         const a = H["a" + i][sid], ai = yrs.indexOf(a), m = H["m" + i][sid], n = H["n" + i][sid], c = m / n;
-        li.push(`<b>${y}</b> — no own data, estimated from ${a}: ${P(u(ai))} × ${gn(i)}'s price change ${a}→${y}, other countries only (${P(n)} → ${P(m)} $/t, ×${c >= 10 ? ratio(c) : c.toPrecision(3)}) = <b>${P(u(i))} $/t</b>`);
+        const pre = xs(i) ? `own ${P(ownU(i))} $/t is more than 3× from the median of the three base years (${P(H.md && H.md[sid])} $/t), so it is replaced — estimated` :
+                    has(ownU(i)) ? `own record below 1 t or 1 thousand USD (${P(ownU(i))} $/t), not used — estimated` : `no own data, estimated`;
+        li.push(`<b>${y}</b> — ${pre} from ${a}: ${P(u(ai))} × ${gn(i)}'s price change ${a}→${y}, other countries only (${P(n)} → ${P(m)} $/t, ×${c >= 10 ? ratio(c) : c.toPrecision(3)}) = <b>${P(u(i))} $/t</b>`);
       } else if (k === "direct") {
-        li.push(`<b>${y}</b> — no own data and no group has prices in both years, so ${gn(i)}'s ${y} price is used: <b>${P(u(i))} $/t</b>`);
+        li.push(`<b>${y}</b> — ${xs(i) ? `own ${P(ownU(i))} $/t is more than 3× from the median of the three base years, and` : "no own data and"} no group has prices in both years, so ${gn(i)}'s ${y} price is used: <b>${P(u(i))} $/t</b>`);
       }
     }
     li.push(`<b>Base unit value</b> = (${[0, 1, 2].map(i => P(u(i))).join(" + ")}) ÷ 3 = <b>${P(S.buv[sid])} $/t</b>`);
   }
   const gl = [0, 1, 2].map(i => ST[st(i)] === "imputed" ? i : -1).find(i => i >= 0);
   const foot = gl !== undefined ? `<p class="note">Only ${gn(gl)}'s <b>change</b> is used, not its price, so the estimated years stay at this country's own price level. The group's prices leave this country out.</p>` : "";
-  return `<div class="how"><div class="hd">How the base unit value was built</div><ol>${li.map(x => `<li>${x}</li>`).join("")}</ol>${warn.map(w => `<p class="hw">${w}</p>`).join("")}${foot}</div>`;
+  const rnote = rl && RULELAB[rl] ? `<p class="note" style="margin:0 0 8px">3× rule: ${RULELAB[rl]}.</p>` : "";
+  return `<div class="how"><div class="hd">How the base unit value was built</div>${rnote}<ol>${li.map(x => `<li>${x}</li>`).join("")}</ol>${warn.map(w => `<p class="hw">${w}</p>`).join("")}${foot}</div>`;
 }
 function renderItem(sid, focus) {
   const S = D.series, nm = seriesName(sid), o = BISSIDX.get(sid), compact = !!(focus && focus.compact);
@@ -1232,10 +1350,10 @@ function renderItem(sid, focus) {
   h += tsRow(`${nm.flow} Value <span class="u">[1000 $]</span>`, (yi, y) => { const r = raw(sid, yi); return `<td class="v${bc(y)}">${has(r.v) ? fmt(r.v) : ""}${flagChips(r.vf)}</td>`; });
   h += tsRow(`${nm.flow} Unit value <span class="u">[$/t]</span>`, (yi, y) => {
     const u = iuv(sid, yi), G = raw(sid, yi).G; let cls = "v" + bc(y), tip = "";
-    if (u !== null && has(G) && G > 0 && (u / G >= 10 || u / G <= 0.1)) { cls += " cw"; tip = ` title="${rt(u / G)} other countries this year"`; }
+    if (u !== null && has(G) && G > 0 && (u / G >= 10 || u / G <= 0.1)) { cls += " cw"; tip = ` title="${rt(u / G)} all countries this year"`; }
     return `<td class="${cls}"${tip}>${u === null ? "" : fmt(u * 1000)}</td>`;
   });
-  h += tsRow(`Other countries' unit value <span class="u">[$/t, median]</span>`, (yi, y) => { const G = raw(sid, yi).G; return `<td class="v${bc(y)}">${has(G) ? fmt(G * 1000) : ""}</td>`; });
+  h += tsRow(`All countries' unit value <span class="u">[$/t, median]</span>`, (yi, y) => { const G = raw(sid, yi).G; return `<td class="v${bc(y)}">${has(G) ? fmt(G * 1000) : ""}</td>`; });
   // the parent group's unit value in the base years, where the group was used (pipeline Step 4)
   const H = D.how, BST = ["own", "rebuilt", "group's", "group's"], hasHow = H && H.s0 && [0, 1, 2].some(i => has(H["s" + i][sid]));
   const GU = new Map();   // group index -> { base-year index: group's unit value }
@@ -1304,7 +1422,7 @@ function bGoList(f) {
   Object.entries(f || {}).forEach(([k, v]) => $("#" + k).value = v);
   BPAGE = 0; bRenderList(); showSub("b", "list"); showPage("buv"); window.scrollTo(0, 0);
 }
-function bPicks(ci) { return picks3(BISS.filter(o => o.c === ci), o => D.series.size[o.s] || 0, o => D.series.a[o.s]); }
+function bPicks(ci) { return picks3(BISS.filter(o => o.c === ci && bEx(o)), o => D.series.size[o.s] || 0, o => D.series.a[o.s]); }
 function bDrawSummary() {
   const n = D.meta.n_buv, crit = BISS.filter(o => o.sev === 2).length, src = D.bsrc;
   const grp = src.srcg.map((g, i) => ({ g, n: src.n[i], f: src.flagged[i], c: src.critical[i] }));
@@ -1320,13 +1438,21 @@ function bDrawSummary() {
   const order = ["Own data", "Partly rebuilt", "From a group"];
   rows.sort((a, b) => order.indexOf(a.g) - order.indexOf(b.g));
   const pct = (r, j) => { const t = r.v.reduce((a, b) => a + b, 0); return t ? r.v[j] / t * 100 : 0; };
-  let h = `<div class="tblx"><table class="list dist"><thead><tr><th>Base years with own data</th>${lab.map((l, j) => `<th class="r ${j === 0 ? "mid" : ""}">${l}</th>`).join("")}<th class="r">Total</th></tr></thead><tbody>`;
+  let h = `<div class="tblx"><table class="list dist"><thead><tr><th>Base unit value built from</th>${lab.map((l, j) => `<th class="r ${j === 0 ? "mid" : ""}">${l}</th>`).join("")}<th class="r">Total</th></tr></thead><tbody>`;
   for (const r of rows) {
     const tot = r.v.reduce((a, b) => a + b, 0);
     h += `<tr><td>${SRCLAB[r.g] || r.g}</td>${r.v.map((x, j) => { const p = pct(r, j); return `<td class="r num ${j === 2 && x ? "offc" : ""}">${fmtN(x)}<span class="code">${p >= 0.1 ? p.toFixed(p < 10 ? 1 : 0) + "%" : ""}</span></td>`; }).join("")}<td class="r num">${fmtN(tot)}</td></tr>`;
   }
   $("#bDist").innerHTML = h +
     `</tbody></table></div><p class="note" style="margin:10px 0 0">"Off" counts both too high and too low. Not counted: series with no comparison (fewer than ${D.cfg.uv_peers} other countries with three own years).</p>`;
+  // the 3x rule: how many base unit values each branch produced
+  const BR = D.brule;
+  if (BR && BR.rule && BR.rule.length) {
+    const tI = BR.Import.reduce((a, b) => a + b, 0), tE = BR.Export.reduce((a, b) => a + b, 0);
+    let r = `<div class="tblx"><table class="list"><thead><tr><th>Rule applied</th><th class="r">Import</th><th class="r">Export</th><th class="r">Total</th><th class="r">Share</th></tr></thead><tbody>`;
+    BR.rule.forEach((k, i) => { const t = BR.Import[i] + BR.Export[i]; r += `<tr><td>${RULELAB[k] || esc(k)}</td><td class="r num">${fmtN(BR.Import[i])}</td><td class="r num">${fmtN(BR.Export[i])}</td><td class="r num">${fmtN(t)}</td><td class="r num">${kfPct(t, tI + tE, 1)}</td></tr>`; });
+    $("#bRule").innerHTML = r + `<tr><td><b>Total</b></td><td class="r num"><b>${fmtN(tI)}</b></td><td class="r num"><b>${fmtN(tE)}</b></td><td class="r num"><b>${fmtN(tI + tE)}</b></td><td></td></tr></tbody></table></div>`;
+  } else $("#bRuleCard").style.display = "none";
   // causes
   let c = `<div class="causes">`;
   for (const ci of BCAT_ORDER) {
@@ -1338,7 +1464,7 @@ function bDrawSummary() {
   $("#bCauseCards").innerHTML = c + `</div>`;
   $("#bCauseCards").querySelectorAll("[data-bgo]").forEach(b => b.onclick = () => bGoList({ bCat: b.dataset.bgo }));
   $("#bCauseCards").querySelectorAll("[data-breal]").forEach(b => b.onclick = () => { const p = bPicks(+b.dataset.breal)[0]; if (p) openDetail("b", p.s); });
-  $("#bTop").innerHTML = bRows(BISS.slice(0, 10)); bBind($("#bTop"));
+  $("#bTop").innerHTML = bRows(BISS.filter(bEx).slice(0, 10)); bBind($("#bTop"));
   bKeyFindings(n, crit, rows, pct);
   $("#cfgUc").textContent = D.cfg.uv_c; $("#cfgUw").textContent = D.cfg.uv_w; $("#cfgUp").textContent = D.cfg.uv_peers;
 }
@@ -1595,7 +1721,7 @@ function aGoList(f) {
   Object.entries(f || {}).forEach(([k, v]) => $("#" + k).value = v);
   APAGE = 0; aRenderList(); showSub("a", "list"); showPage("agg"); window.scrollTo(0, 0);
 }
-const aPicks = ci => picks3(AISS.filter(o => o.c === ci), o => AD.series.size[o.s] || 0, o => AD.series.a[o.s]);
+const aPicks = ci => picks3(AISS.filter(o => o.c === ci && aEx(o)), o => AD.series.size[o.s] || 0, o => AD.series.a[o.s]);
 function aDrawSummary() {
   const GA = aggGrid(); dataGrid("gridAgg", GA);
   const nS = AD.series.a.length, nCrit = new Set(AISS.filter(o => o.sev === 2).map(o => o.s)).size, nAny = new Set(AISS.map(o => o.s)).size;
@@ -1624,7 +1750,7 @@ function aDrawSummary() {
   $("#aCauseCards").innerHTML = h;
   $("#aCauseCards").querySelectorAll("[data-ago]").forEach(b => b.onclick = () => aGoList({ aCat: b.dataset.ago }));
   $("#aCauseCards").querySelectorAll("[data-areal]").forEach(b => b.onclick = () => { const p = aPicks(+b.dataset.areal)[0]; if (p) openDetail("a", p.s, { cat: p.c }); });
-  $("#aTop").innerHTML = aRows(AISS.slice(0, 10)); aBind($("#aTop"));
+  $("#aTop").innerHTML = aRows(AISS.filter(aEx).slice(0, 10)); aBind($("#aTop"));
   aKeyFindings(GA, nCrit, nS);
   const cnt = ACAT_ORDER.map(ci => ({ ci, c: AISS.filter(o => o.c === ci && o.sev === 2).length, w: AISS.filter(o => o.c === ci && o.sev === 1).length }));
   const mx = Math.max(...cnt.map(o => o.c + o.w));
@@ -1880,7 +2006,7 @@ function jGoList(f) {
   Object.entries(f || {}).forEach(([k, v]) => $("#" + k).value = v);
   JPAGE = 0; jRenderList(); showSub("j", "list"); showPage("rv"); window.scrollTo(0, 0);
 }
-const jPicks = ci => picks3(JISS.filter(o => o.c === ci), o => AD.series.size[o.s] || 0, o => AD.series.a[o.s]);
+const jPicks = ci => picks3(JISS.filter(o => o.c === ci && jEx(o)), o => AD.series.size[o.s] || 0, o => AD.series.a[o.s]);
 function jGrid() {
   const S = AD.series, rows = mkRows(["Countries · Import", "Countries · Export", "Regions · Import", "Regions · Export"]);
   for (let s = 0; s < S.a.length; s++) {
@@ -2053,11 +2179,11 @@ const kfPct = (a, b, d = 0) => b ? (a / b * 100).toFixed(d) + "%" : "–";
 function bKeyFindings(n, crit, rows, pct) {
   const r = g => rows.find(x => x.g === g), p = (g, j) => r(g) ? pct(r(g), j) : null, f1 = x => x === null ? "–" : x.toFixed(x < 10 ? 1 : 0) + "%";
   const byCrit = BCAT_ORDER.map(ci => ({ ci, n: BISS.filter(o => o.c === ci && o.sev === 2).length })).sort((a, b) => b.n - a.n)[0];
-  const top = BISS.slice().sort((a, b) => Math.abs(b.eff || 0) - Math.abs(a.eff || 0))[0];
+  const top = BISS.filter(bEx).sort((a, b) => Math.abs(b.eff || 0) - Math.abs(a.eff || 0))[0];
   const tn = top ? seriesName(top.s) : null;
   kfBox("bKey", [
     `<b>${kfPct(BISS.length, n, 1)}</b> of base unit values are flagged (${fmtN(BISS.length)} of ${fmtN(n)}); <b>${fmtN(crit)}</b> are critical — ${D.cfg.uv_c}× or more off other countries'.`,
-    p("Partly rebuilt", 2) !== null && `Estimated base years are the weak spot: <b>${f1(p("Partly rebuilt", 2))}</b> of base unit values built from one or two own years are 10× or more off, against <b>${f1(p("Own data", 2))}</b> when all three years are own data.`,
+    p("Partly rebuilt", 2) !== null && `Estimated base years are the weak spot: <b>${f1(p("Partly rebuilt", 2))}</b> of base unit values with an estimated or replaced year are 10× or more off, against <b>${f1(p("Own data", 2))}</b> when all three own years are kept.`,
     byCrit && byCrit.n && `Most critical cases are <b>${esc(bLabel(byCrit.ci))}</b> (${fmtN(byCrit.n)} of ${fmtN(crit)}): ${BDEF[D.bcats.id[byCrit.ci]][1].charAt(0).toLowerCase() + BDEF[D.bcats.id[byCrit.ci]][1].slice(1)}`,
     top && has(top.eff) && `Largest single effect: <b>${esc(tn.area)}, ${esc(tn.item)}</b> (${tn.flow.toLowerCase()}s) — real value ${top.eff > 0 ? "higher" : "lower"} by about <b>${fmt(Math.abs(top.eff) / 1000)} million USD a year</b>. <button class="btn link" data-bopen="${top.s}">Open →</button>`
   ]);
@@ -2097,6 +2223,7 @@ function pKeyFindings() {
 function jTopList(k) {
   const out = [];
   for (const o of JISS) {
+    if (!jEx(o)) continue;
     const pair = out.find(p => p.s === o.s && Math.abs(p.y - o.y) === 1 && (p.r > 1) !== (o.r > 1) && !p.back);
     if (pair) { pair.back = o; continue; }
     out.push({ ...o, back: null });

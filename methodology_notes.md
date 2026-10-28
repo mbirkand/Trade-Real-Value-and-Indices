@@ -85,12 +85,26 @@ base_UV = (UV_2014 + UV_2015 + UV_2016) / 3
 This is a simple average of the three yearly unit values, not a pooled
 sum-of-values over sum-of-quantities.
 
-Where the country reported that year, its own `V / Q` is used. Where a year is
-missing, it is rebuilt from the nearest known year by borrowing the parent
-group's rate of change:
+**3× rule (decided 2026-10-27).** Checked within the country's own base-year
+series, per flow (`uv_rule` in Step 4):
+
+| Own base years | Rule | `uv_rule` |
+|---|---|---|
+| 0 | Group's base UV | `group_0` |
+| 1 | Group's base UV | `group_1` |
+| 2, more than 3× apart | Group's base UV | `group_2_far` |
+| 2, within 3× | Missing year by the growth rate approach | `fill_2` |
+| 3, a year more than 3× above/below the median of the three | That year set aside and re-estimated by the growth rate approach | `fix_3` |
+| 3, all within 3× of the median | No change | `own_3` |
+
+If no group in the hierarchy has a base UV, the country's own years are used
+as before rather than leaving the flow without a base UV.
+
+**Growth rate approach.** A missing (or set-aside) year is rebuilt from the
+nearest usable year by borrowing the group's rate of change:
 
 ```
-UV_missing = UV_anchor × (parentUV_missing / parentUV_anchor)
+UV_missing = UV_anchor × (groupUV_missing / groupUV_anchor)
 ```
 
 Only the rate of change is borrowed — the country's own level is kept.
@@ -98,35 +112,38 @@ Only the rate of change is borrowed — the country's own level is kept.
 The fill order pivots on 2015. If 2015 is missing it is anchored on 2016 where
 available, otherwise on 2014; then 2014 and 2016 are filled from 2015. 2015 is
 adjacent to both other years, so once it is known every remaining gap is a
-single step. Anchoring on 2016 first rebuilds the base period backward from the
-latest observation. Where the same parent supplies both steps the ratios
-telescope and the order makes no difference; it only matters when different
-tiers supply different steps.
+single step. Where the same parent supplies both steps the ratios telescope and
+the order makes no difference; it only matters when different tiers supply
+different steps.
 
 If no parent has a unit value for both years a step needs, that year is filled
 with the parent's own UV for that year instead.
 
-**Flows with no base-year data at all** skip the reconstruction and take the
-parent group's base UV directly.
+**Group's base UV** = the average of the group's 2014–2016 unit values, without
+the country itself.
 
 ### The parent hierarchy
 
 For each country its area groups are ranked smallest first, and the search walks
-tier 1 → tier 2 → tier 3 → global (all countries pooled for that item). Group
-unit values are pooled per year, `sum(V) / sum(Q)` across members.
+tier 1 → tier 2 → tier 3 → global (all countries for that item).
+
+**Regional groups use the quantity-weighted median (changed 2026-10-27)** of the
+member countries' unit values for the year: the lowest unit value at which the
+members' cumulative tonnes reach half of the group total. The global level stays
+pooled, `sum(V) / sum(Q)`. (Before the change every level was pooled.)
 
 **Leave-one-out (changed 2026-10-22).** The group unit values used for a
-country exclude that country's own record:
-`(sum(V) - v_c) / (sum(Q) - q_c)`. A country's estimated base years therefore
-depend only on the other members' prices, never on its own data (before the
-change, a country that was most of a small group moved the group's price and
-fed its own error back into its estimate). When the country is the only member
-with data in a year, the group has no unit value for it and the next tier is
-used. Years in which the country has no own data are unaffected.
+country exclude that country's own record: the weighted median of the other
+members, or `(sum(V) - v_c) / (sum(Q) - q_c)` at the global level. A country's
+estimated base years therefore depend only on the other members' prices, never
+on its own data. When the country is the only member with data in a year, the
+group has no unit value for it and the next tier is used. Years in which the
+country has no own data are unaffected.
 
-Every flow records where its base UV came from: `country` if all three years
-were observed, `imputed` if any were rebuilt, or the group name (or `global`) if
-it was taken from the hierarchy. No outlier filtering is applied to base UVs.
+Every flow records where its base UV came from: `country` (three own years kept),
+`imputed` (some years estimated or replaced), or the group name (or `global`) if
+the group's base UV was used. Beyond the 3× rule no outlier filtering is applied
+to base UVs.
 
 ## Real values
 
@@ -200,14 +217,15 @@ saved.
 | Valid observation | Q > 0 and V > 0 |
 | Coverage gate / minimum base years | None |
 | Base UV | Per-year reconstruction, then simple average |
-| Missing base year | Parent's rate of change (without the country itself), chained from nearest known year |
+| 3× rule (2026-10-27) | 0–1 own base years or 2 more than 3× apart: group's base UV · 2 within 3×: growth rate · 3 with a year >3× from the median: that year by growth rate |
+| Growth rate approach | Parent's rate of change (without the country itself), chained from nearest usable year |
 | Fill order | 2015 first (on 2016 if present, else 2014), then 2014 and 2016 |
-| No base-year data at all | Parent group's base UV taken directly |
 | Parent hierarchy | Tier 1 → tier 2 → tier 3 → global, smallest group first |
-| Base UV outlier filtering | None |
+| Group unit value | Regions: quantity-weighted median (2026-10-27); global: sum(V) / sum(Q); both without the country |
+| Base UV outlier filtering | Only the 3× rule |
 | Factor | Quantities only |
 | Indices | Aggregates only: value and quantity (no UV or real value index) |
 | Outlier rule | Aggregate index > 5000, informational |
-| Output scope (areas) | Disseminated areas only |
+| Output scope (areas) | Disseminated areas only; "excluding intra-trade" regions not built or published (2026-10-27) |
 | Output scope (items) | Aggregates only, built from all items; nothing published per item |
 | Excluded item groups | 11 groups not calculated (F1898, F1900, F1846, F1901, F2076, F1902, F1845, F1892, F1849, F1847, F1848); items still count in other groups. Natural rubber and Textile fibres may be added next year |
