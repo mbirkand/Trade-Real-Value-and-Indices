@@ -1,0 +1,1494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Trade Indices Diagnostics</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f8f8f6; --surface: #ffffff; --surface-2: #f3f3f0; --surface-3: #ebeae6;
+  --border: #e5e4df; --border-strong: #d2d0c8;
+  --text: #17171a; --text-2: #3d3d42; --muted: #6b6b70;
+  --accent: #2a6fc9; --accent-soft: #eaf1fb;
+  --crit: #d03b3b; --crit-tint: #fbe4e2;
+  --warn: #f0a500; --warn-tint: #fff1cf;
+  --good: #1a8a1a;
+  --base-col: #f1f6fd;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --chip: #ecebe6; --chip-text: #55554f;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); }
+body { color: var(--text); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+.num { font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+button, select, input { font: inherit; color: inherit; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+b, strong { font-weight: 600; }
+
+/* ---------- shell ---------- */
+header.top { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; }
+.top-inner { max-width: 1320px; margin: 0 auto; padding: 18px 40px 0; }
+.title-row { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+.title-row h1 { font-size: 19px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+.title-row .meta { color: var(--muted); font-size: 13px; }
+nav.tabs { display: flex; gap: 6px; margin-top: 12px; overflow-x: auto; }
+nav.tabs button { border: 0; background: none; padding: 10px 16px 13px; cursor: pointer; color: var(--text-2); border-bottom: 2px solid transparent; font-weight: 550; white-space: nowrap; font-size: 15px; }
+nav.tabs button:hover:not(:disabled) { color: var(--text); }
+nav.tabs button.on { color: var(--text); border-bottom-color: var(--accent); }
+nav.tabs button:disabled { color: #a3a3a6; cursor: default; font-weight: 450; }
+nav.tabs .soon { font-size: 11px; background: var(--chip); color: var(--chip-text); border-radius: 6px; padding: 1px 7px; margin-left: 6px; }
+main { max-width: 1320px; margin: 0 auto; padding: 36px 40px 48px; }
+.page { display: none; } .page.on { display: block; }
+section.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px 36px; margin-bottom: 28px; }
+h2 { font-size: 19px; margin: 0 0 6px; font-weight: 650; letter-spacing: -.01em; }
+h3 { font-size: 13px; margin: 26px 0 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; }
+h3:first-child { margin-top: 0; }
+.sub { color: var(--text-2); margin: 0 0 22px; }
+ul.tight { margin: 0; padding-left: 20px; } ul.tight li { margin: 6px 0; }
+.note { color: var(--text-2); }
+
+/* ---------- methodology ---------- */
+.doc { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 56px; align-items: start; }
+.toc { position: sticky; top: 140px; font-size: 14px; }
+.toc .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; margin-bottom: 10px; }
+.toc a { display: block; color: var(--text-2); text-decoration: none; padding: 5px 0 5px 12px; border-left: 2px solid var(--border); }
+.toc a:hover { color: var(--text); border-left-color: var(--accent); }
+.doc-body { max-width: 860px; }
+.doc-body .lead { font-size: 17px; color: var(--text-2); margin: 0 0 12px; line-height: 1.65; }
+.doc-sec { padding-top: 44px; margin-top: 44px; border-top: 1px solid var(--border); scroll-margin-top: 130px; }
+.doc-sec:first-of-type { border-top: 0; margin-top: 8px; padding-top: 16px; }
+.doc-sec h2 { font-size: 21px; margin-bottom: 14px; display: flex; gap: 12px; align-items: baseline; }
+.doc-sec h2 .n { color: var(--accent); font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 600; }
+.doc-sec h4 { font-size: 15.5px; margin: 26px 0 8px; font-weight: 650; }
+.doc-sec p { margin: 0 0 12px; }
+.doc-sec ul { margin: 0 0 12px; padding-left: 22px; } .doc-sec li { margin: 7px 0; }
+.eq { background: var(--surface-2); border-radius: 10px; padding: 14px 20px; margin: 14px 0 18px; font-size: 16px; line-height: 2; font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+.eq .row { display: block; }
+.eq .lhs { font-weight: 600; }
+.eq .c { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; color: var(--muted); margin-left: 10px; }
+.steps { counter-reset: st; list-style: none; padding: 0 !important; }
+.steps li { counter-increment: st; position: relative; padding-left: 40px; margin: 12px 0 !important; }
+.steps li::before { content: counter(st); position: absolute; left: 0; top: 1px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 650; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.callout { border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 10px 10px 0; padding: 12px 18px; margin: 16px 0; color: var(--text-2); }
+table.plain { border-collapse: collapse; width: 100%; font-size: 14.5px; margin: 8px 0 12px; }
+table.plain th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; padding: 10px 14px; border-bottom: 1px solid var(--border-strong); }
+table.plain td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+table.plain td:first-child { font-weight: 550; }
+@media (min-width: 701px) { table.plain td:first-child { white-space: nowrap; } }
+table.plain code { overflow-wrap: anywhere; }
+.toc .toc-grp { font-size: 12.5px; color: var(--muted); font-weight: 600; margin: 14px 0 4px; }
+.doc-sec h2 .lv { font-size: 13px; font-weight: 550; color: var(--chip-text); background: var(--chip); border-radius: 6px; padding: 1px 8px; letter-spacing: 0; }
+.doc-sec p.what { font-size: 16px; color: var(--text); margin-bottom: 4px; }
+dl.facts { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 8px 20px; margin: 0 0 8px; }
+dl.facts dt { color: var(--muted); font-weight: 550; font-size: 14.5px; padding-top: 1px; }
+dl.facts dd { margin: 0; }
+@media (max-width: 700px) { dl.facts { grid-template-columns: minmax(0, 1fr); gap: 2px; } dl.facts dd { margin-bottom: 8px; } }
+.mex { overflow-x: auto; border: 1px solid var(--border); border-radius: 9px; margin: 10px 0 14px; }
+.mex table { border-collapse: collapse; font-size: 14px; width: 100%; }
+.mex th, .mex td { padding: 7px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.mex tr:last-child td { border-bottom: 0; }
+.mex th { background: var(--surface-2); font-weight: 600; }
+.mex th:first-child, .mex td:first-child, .mex td.l { text-align: left; color: var(--text-2); font-weight: 500; }
+.mex th.b { background: #e6eefa; color: var(--accent); } .mex td.b { background: var(--base-col); }
+.mex .m { font-size: 11.5px; color: var(--muted); margin-left: 4px; }
+table.plain th.r, table.plain td.r { text-align: right; font-variant-numeric: tabular-nums; }
+/* methodology: parts and sub-sections */
+.doc-part { margin: 56px 0 0; padding: 18px 22px; background: var(--accent-soft); border-radius: 12px; scroll-margin-top: 130px; }
+.doc-part .pl { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); font-weight: 700; }
+.doc-part .pt { display: block; font-size: 24px; font-weight: 700; margin: 2px 0 4px; }
+.doc-part .pd { display: block; color: var(--text-2); font-size: 15px; }
+.doc-body > .doc-part:first-child { margin-top: 8px; }
+.doc-grp { margin: 52px 0 0; padding-bottom: 8px; border-bottom: 2px solid var(--accent); color: var(--accent); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; scroll-margin-top: 130px; }
+.doc-grp + .doc-sec { border-top: 0; margin-top: 4px; padding-top: 20px; }
+.doc-part + .doc-sec { border-top: 0; margin-top: 8px; padding-top: 24px; }
+.doc-sec h3 { font-size: 18px; text-transform: none; letter-spacing: 0; color: var(--text); font-weight: 650; margin: 36px 0 8px; display: flex; gap: 10px; align-items: baseline; scroll-margin-top: 130px; }
+.doc-sec h3 .lv { font-size: 12.5px; font-weight: 550; color: var(--chip-text); background: var(--chip); border-radius: 6px; padding: 1px 8px; }
+.mex th.l { text-align: left; }
+.doc-sec h4 .hl2 { font-size: 12.5px; font-weight: 500; color: var(--muted); margin-left: 8px; }
+table.plain.out td:first-child { white-space: nowrap; }
+table.plain tr.grp.fn td { text-transform: none; letter-spacing: 0; font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--text-2); }
+table.plain.out .ref { font-size: 11.5px; background: var(--chip); color: var(--chip-text); border-radius: 5px; padding: 1px 6px; margin-left: 6px; white-space: nowrap; font-style: normal; }
+table.plain.out td.na { color: var(--muted); font-style: italic; }
+.doc-sec h3 .n { color: var(--accent); font-variant-numeric: tabular-nums; font-size: 15px; font-weight: 600; }
+.toc a.tsub { padding: 3px 0 3px 26px; font-size: 13px; color: var(--muted); }
+.toc a.tsub:hover { color: var(--text); }
+table.plain tr.grp td { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; padding: 7px 14px; white-space: normal; }
+@media (max-width: 700px) { .doc-body table.plain { display: block; overflow-x: auto; } }
+@media (max-width: 1000px) { .doc { grid-template-columns: minmax(0, 1fr); } .toc { display: none; } }
+.doc-body, .cause, .tile { min-width: 0; }
+
+/* ---------- tiles ---------- */
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-bottom: 28px; }
+@media (max-width: 900px) { .tiles { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; }
+.tile .k { font-size: 13.5px; color: var(--text-2); }
+.tile .val { font-size: 30px; font-weight: 650; letter-spacing: -.02em; margin-top: 4px; line-height: 1.25; }
+.tile .hint { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+/* ---------- chips ---------- */
+.sev { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; border-radius: 999px; padding: 2px 10px 2px 8px; white-space: nowrap; }
+.sev::before { content: ""; width: 8px; height: 8px; }
+.sev.c { background: var(--crit-tint); } .sev.c::before { background: var(--crit); transform: rotate(45deg); border-radius: 1px; }
+.sev.w { background: var(--warn-tint); } .sev.w::before { background: var(--warn); border-radius: 50%; }
+.drv { font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .05em; color: var(--chip-text); background: var(--chip); border-radius: 5px; padding: 2px 7px; }
+.tag { display: inline-block; font-size: 12px; color: var(--chip-text); background: var(--chip); border-radius: 5px; padding: 0 7px; margin-right: 4px; }
+
+/* ---------- cause cards ---------- */
+.cause-group { margin-top: 30px; }
+.cause-group:first-of-type { margin-top: 6px; }
+.gnote { border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 10px 10px 0; padding: 12px 18px; margin: 0 0 16px; color: var(--text-2); font-size: 14.5px; }
+.gnote b { color: var(--text); }
+.cause-group > .gh { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.cause-group > .gh .t { font-size: 15px; font-weight: 650; }
+.cause-group > .gh .d { color: var(--muted); font-size: 14px; }
+.causes { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
+.cause { border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); }
+.cause .hd { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cause .hd .name { font-size: 17px; font-weight: 650; }
+.cause .hd .spacer { flex: 1; }
+.cause .cnt { font-size: 13.5px; color: var(--text-2); }
+.cause .cnt b { color: var(--text); }
+.cause p { margin: 0; }
+.cause .rule { color: var(--text); }
+.cause .means { color: var(--text-2); font-size: 14.5px; }
+.cause .exl { font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; margin-top: 6px; }
+.cause .ex { overflow-x: auto; border: 1px solid var(--border); border-radius: 9px; }
+.cause .ex table { border-collapse: collapse; font-size: 13px; width: 100%; }
+.cause .ex th, .cause .ex td { padding: 6px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.cause .ex tr:last-child td { border-bottom: 0; }
+.cause .ex th { background: var(--surface-2); font-weight: 600; }
+.cause .ex th:first-child, .cause .ex td:first-child { text-align: left; color: var(--text-2); font-weight: 500; }
+.cause .ex .b { background: var(--base-col); }
+.cause .ex th.b { background: #e6eefa; color: var(--accent); }
+.cause .ex .hc { background: var(--crit-tint); font-weight: 650; }
+.cause .ex .hw { background: var(--warn-tint); font-weight: 650; }
+.cause .exn { font-size: 13.5px; color: var(--text-2); }
+.cause .foot { margin-top: auto; padding-top: 4px; }
+
+/* ---------- lists ---------- */
+.tblx { overflow-x: auto; }
+.seg { display: inline-flex; background: var(--surface-3); border-radius: 9px; padding: 3px; gap: 2px; margin-bottom: 14px; }
+.seg button { border: 0; background: none; padding: 5px 14px; border-radius: 7px; cursor: pointer; color: var(--text-2); font-size: 13.5px; font-weight: 550; }
+.seg button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+table.dg { border-collapse: separate; border-spacing: 0; font-size: 12px; width: 100%; table-layout: fixed; }
+table.dg th, table.dg td { padding: 7px 2px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+table.dg thead th { background: var(--surface-2); font-weight: 600; border-bottom: 1px solid var(--border-strong); }
+table.dg .lab { position: sticky; left: 0; background: var(--surface); text-align: left; font-weight: 550; border-right: 1px solid var(--border); z-index: 1; width: 150px; padding-left: 10px; padding-right: 8px; overflow: hidden; text-overflow: ellipsis; }
+table.dg th:not(.lab), table.dg td:not(.lab) { text-align: center; }
+table.dg td.rt, table.dg thead th:last-child { width: 52px; }
+table.dg thead .lab { background: var(--surface-2); }
+table.dg tr.tot td { font-weight: 650; border-top: 2px solid var(--border-strong); }
+table.dg td.rt { border-left: 2px solid var(--border-strong); font-weight: 650; }
+table.dg td.dk { color: #fff; }
+.dg-legend { display: flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--text-2); margin-top: 10px; flex-wrap: wrap; }
+.dg-legend i { display: inline-block; width: 26px; height: 12px; border-radius: 2px; border: 1px solid var(--border); }
+.dg-legend span { margin: 0 8px 0 3px; }
+table.list { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.list th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12.5px; padding: 10px 10px; border-bottom: 1px solid var(--border-strong); vertical-align: bottom; line-height: 1.35; }
+table.list td { padding: 12px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.list td.r, table.list th.r { text-align: right; }
+table.list tbody tr { cursor: pointer; } table.list tbody tr:hover td { background: #f6f8fc; }
+table.list .code { color: var(--muted); font-size: 12.5px; margin-left: 6px; }
+table.list .area { font-weight: 550; }
+table.list td:nth-child(3) { white-space: nowrap; }
+
+/* ---------- series table (FAOSTAT style) ---------- */
+.ts-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+table.ts { border-collapse: separate; border-spacing: 0; font-size: 14px; min-width: 100%; }
+table.ts th, table.ts td { padding: 10px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+table.ts tbody tr:last-child td { border-bottom: 0; }
+table.ts thead th { font-weight: 600; text-align: right; background: var(--surface-2); border-bottom: 1px solid var(--border-strong); }
+table.ts .lab { position: sticky; left: 0; background: var(--surface); z-index: 2; text-align: left; min-width: 240px; border-right: 1px solid var(--border); font-weight: 500; }
+table.ts thead .lab { background: var(--surface-2); text-align: left; }
+table.ts td.v { text-align: right; min-width: 104px; font-variant-numeric: tabular-nums; }
+table.ts .bcol { background: var(--base-col); }
+table.ts thead th.bcol { color: var(--accent); background: #e6eefa; }
+table.ts tr.grp td { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; padding: 7px 14px; }
+table.ts td.v.cc { background: var(--crit-tint); }
+table.ts td.v.cw { background: var(--warn-tint); }
+table.ts td.v.focus { box-shadow: inset 0 0 0 2px var(--text); }
+table.ts .fl { display: inline-block; min-width: 16px; text-align: center; font-size: 11px; line-height: 17px; background: var(--chip); color: var(--chip-text); border-radius: 4px; margin-left: 4px; padding: 0 4px; font-family: ui-monospace, Menlo, monospace; }
+table.ts td.lab .u { color: var(--muted); font-weight: 400; }
+table.ts td.v[title] { cursor: help; }
+
+/* ---------- detail ---------- */
+.dd-head { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+.dd-head .t { font-size: 20px; font-weight: 650; letter-spacing: -.01em; }
+.dd-head .t .code { color: var(--muted); font-weight: 500; }
+.dd-head .spacer { flex: 1; }
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px 28px; margin: 0 0 22px; padding: 18px 22px; background: var(--surface-2); border-radius: 12px; }
+.kv .k { font-size: 12.5px; color: var(--muted); }
+.kv .v { font-size: 15px; font-weight: 600; }
+.kv .v span { font-weight: 400; color: var(--text-2); font-size: 13.5px; }
+.why { display: grid; gap: 14px; margin-bottom: 24px; }
+.why .item { border: 1px solid var(--border); border-left: 4px solid var(--border-strong); border-radius: 10px; padding: 16px 20px; background: var(--surface); }
+.why .item.c { border-left-color: var(--crit); } .why .item.w { border-left-color: var(--warn); }
+.why .item .hd { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.why .item .hd b { font-weight: 650; font-size: 15.5px; }
+.why .item .hd .yrs { color: var(--muted); font-size: 13.5px; }
+.why .item p { margin: 0; font-size: 15px; line-height: 1.65; }
+.split { display: flex; align-items: center; gap: 12px; margin-top: 10px; font-size: 13px; color: var(--text-2); flex-wrap: wrap; }
+.split .bar { display: flex; width: 160px; height: 8px; border-radius: 4px; overflow: hidden; background: var(--surface-3); gap: 2px; }
+.split .bar i { display: block; height: 100%; }
+.split .lg i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 5px 0 12px; }
+.p-base { background: var(--s1); } .p-one { background: var(--s2); } .p-sus { background: var(--s3); }
+.back { margin-bottom: 22px; }
+.dbar { display: flex; gap: 10px; align-items: center; margin-bottom: 22px; }
+.dbar .back { margin-bottom: 0; }
+a.btn { text-decoration: none; display: inline-block; }
+.rev-note { margin: 0 0 4px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; font-size: 14.5px; color: var(--text-2); }
+.cmt-row { display: flex; justify-content: flex-end; margin-bottom: 6px; }
+.doc-body > .cmt-row + .doc-part { margin-top: 8px; }
+.pagebar .cmt { margin-left: auto; }
+
+/* ---------- real examples: one distinct section per cause ---------- */
+.g-base { --gc: #2a78d6; --gt: #eef4fc; }
+.g-year { --gc: #6250d6; --gt: #f1effc; }
+.g-level { --gc: #13936a; --gt: #eaf6f1; }
+.g-coverage { --gc: #4d6a86; --gt: #edf2f6; }
+.g-member { --gc: #b0447e; --gt: #fbeff5; }
+.inside { margin-top: 12px; }
+.inside .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; margin-bottom: 6px; }
+.inside table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+.inside th { text-align: right; font-weight: 600; color: var(--muted); font-size: 12px; padding: 6px 10px; border-bottom: 1px solid var(--border-strong); white-space: nowrap; }
+.inside th:first-child, .inside td:first-child { text-align: left; }
+.inside td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.inside td:first-child { white-space: normal; }
+.inside tr.top1 td { background: #fbf6e9; font-weight: 600; }
+.inside a { cursor: pointer; }
+.jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.jump button { border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 5px 14px 5px 6px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; color: var(--text); }
+.jump button:hover { border-color: var(--gc); background: var(--gt); }
+.jump .no { width: 22px; height: 22px; border-radius: 50%; background: var(--gc); color: #fff; font-size: 12px; font-weight: 650; display: inline-flex; align-items: center; justify-content: center; }
+section.card.cause-sec { padding: 0; overflow: visible; border-left: 6px solid var(--gc); scroll-margin-top: calc(var(--hdr, 110px) + 12px); }
+.cs-head { position: sticky; top: var(--hdr, 110px); z-index: 5; background: var(--gt); border-bottom: 1px solid var(--border); border-radius: 0 13px 0 0; padding: 16px 30px; box-shadow: 0 1px 0 var(--border); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.cs-head .no { width: 34px; height: 34px; border-radius: 50%; background: var(--gc); color: #fff; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none; }
+.cs-head .ttl { display: flex; flex-direction: column; line-height: 1.25; }
+.cs-head .grp { font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--gc); font-weight: 700; }
+.cs-head .name { font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.cs-head .cnt { color: var(--text-2); font-size: 14px; }
+.cs-head .cnt b { color: var(--text); }
+.cs-head .spacer { flex: 1; }
+.cs-body { padding: 26px 30px 32px; }
+.cs-what { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 32px; align-items: start; margin-bottom: 28px; }
+.cs-what .rule { font-size: 16px; font-weight: 550; margin: 0 0 8px; }
+.cs-what .means { color: var(--text-2); margin: 0; }
+.cs-what .exl, .cs-real { font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+.cs-real { display: flex; align-items: center; gap: 10px; margin: 34px 0 14px; padding-top: 22px; border-top: 1px dashed var(--border-strong); color: var(--gc) !important; }
+.cs-what + .cs-real { margin-top: 0; }
+.cs-what .ex { overflow-x: auto; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.cs-what .ex table { border-collapse: collapse; font-size: 13px; width: 100%; }
+.cs-what .ex th, .cs-what .ex td { padding: 6px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.cs-what .ex tr:last-child td { border-bottom: 0; }
+.cs-what .ex th { background: var(--surface-2); font-weight: 600; }
+.cs-what .ex th:first-child, .cs-what .ex td:first-child { text-align: left; color: var(--text-2); font-weight: 500; }
+.cs-what .ex .b { background: var(--base-col); } .cs-what .ex th.b { background: #e6eefa; color: var(--accent); }
+.cs-what .ex .hc { background: var(--crit-tint); font-weight: 650; } .cs-what .ex .hw { background: var(--warn-tint); font-weight: 650; }
+.cs-what .exn { font-size: 13.5px; color: var(--text-2); margin-top: 6px; }
+@media (max-width: 900px) { .cs-what { grid-template-columns: minmax(0, 1fr); } .cs-head, .cs-body { padding-left: 18px; padding-right: 18px; } }
+
+/* ---------- groups ---------- */
+.cat-sec { border-top: 1px solid var(--border); padding-top: 36px; margin-top: 36px; }
+.cat-sec:first-of-type { border-top: 0; margin-top: 8px; padding-top: 8px; }
+.cat-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.cat-head .name { font-size: 18px; font-weight: 650; }
+.cat-head .cnt { color: var(--text-2); font-size: 14px; }
+.cat-head .spacer { flex: 1; }
+.cat-def { color: var(--text-2); margin: 0 0 20px; max-width: 900px; }
+.btn { border: 1px solid var(--border-strong); background: var(--surface); border-radius: 9px; padding: 6px 14px; cursor: pointer; font-size: 14px; color: var(--text); white-space: nowrap; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.link { border: 0; padding: 0; background: none; color: var(--accent); font-weight: 550; }
+.btn.link:hover { background: none; text-decoration: underline; }
+
+/* ---------- filters ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; margin-bottom: 20px; }
+.filters label { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.filters select { border: 1px solid var(--border-strong); background: var(--surface); border-radius: 9px; padding: 7px 10px; font-size: 14px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text); min-width: 130px; max-width: 280px; }
+.pager { display: flex; gap: 12px; align-items: center; justify-content: flex-end; margin-top: 18px; color: var(--text-2); font-size: 14px; }
+.count-line { color: var(--text-2); font-size: 14px; margin-bottom: 12px; }
+.subnav { display: inline-flex; background: var(--surface-3); border-radius: 11px; padding: 4px; margin-bottom: 28px; gap: 2px; flex-wrap: wrap; }
+.subnav button { border: 0; background: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; color: var(--text-2); font-weight: 550; font-size: 14.5px; }
+.subnav button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.sp { display: none; } .sp.on { display: block; }
+.pagebar { display: flex; align-items: center; gap: 14px 22px; flex-wrap: wrap; margin-bottom: 28px; }
+.pagebar .subnav { margin-bottom: 0; }
+.level { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 11px; overflow: hidden; background: var(--surface); }
+.level button { border: 0; background: none; padding: 9px 18px; cursor: pointer; color: var(--text-2); font-weight: 600; font-size: 14.5px; }
+.level button + button { border-left: 1px solid var(--border-strong); }
+.level button.on { background: var(--accent); color: #fff; }
+.level button:focus-visible, .subnav button:focus-visible, nav.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+p.scope { margin: -12px 0 24px; color: var(--text-2); max-width: 860px; }
+
+/* ---------- bars ---------- */
+.hbar { display: grid; grid-template-columns: 220px 1fr 90px; gap: 12px 16px; align-items: center; font-size: 14.5px; }
+.hbar .lbl { cursor: pointer; } .hbar .lbl:hover { color: var(--accent); }
+.hbar .track { display: flex; height: 14px; gap: 2px; cursor: pointer; }
+.hbar .track i { display: block; height: 100%; }
+.hbar .track i:last-child { border-radius: 0 4px 4px 0; }
+.hbar .n { text-align: right; color: var(--text-2); }
+.legend-row { display: flex; gap: 20px; font-size: 13.5px; color: var(--text-2); margin: 0 0 18px; }
+.legend-row i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 7px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.grid2 > * { min-width: 0; }
+@media (max-width: 960px) { .grid2 { grid-template-columns: 1fr; } }
+.foot-meta { max-width: 1320px; margin: 0 auto; padding: 0 40px 40px; color: var(--muted); font-size: 12.5px; text-align: right; }
+@media (max-width: 700px) { .foot-meta { padding: 0 16px 28px; text-align: left; } }
+.loading { padding: 120px 0; text-align: center; color: var(--muted); display: none; }
+@media (max-width: 700px) {
+  .top-inner, main { padding-left: 16px; padding-right: 16px; }
+  main { padding-top: 22px; }
+  section.card { padding: 22px 18px; }
+  .hbar { grid-template-columns: 130px 1fr 60px; }
+  .causes { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- added for the aggregate-only dashboard ---------- */
+.pb-title { font-size: 17px; font-weight: 650; }
+.pdist { margin: 4px 0 14px; }
+.pdist .bar { display: flex; height: 14px; border-radius: 4px; overflow: hidden; gap: 2px; background: var(--surface-3); max-width: 640px; }
+.pdist .bar i { display: block; height: 100%; }
+.pdist .lg { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--text-2); margin-top: 8px; }
+.pdist .lg i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.pb0 { background: #b8322f; } .pb1 { background: #eba38f; } .pb2 { background: #c9c8c2; } .pb3 { background: #8fb6e8; } .pb4 { background: #2a6fc9; }
+.inside td.hot { background: var(--warn-tint); font-weight: 600; }
+.inside + .inside { margin-top: 18px; }
+/* (unused) */
+.jc { margin-top: 14px; border: 1px solid var(--border-strong); border-radius: 10px; padding: 14px 18px; background: var(--surface-2); }
+.jc .hl { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; }
+.jc .verdict { font-size: 16.5px; font-weight: 650; margin: 2px 0 6px; }
+.jc .verdict.c { color: var(--crit); }
+.jc p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.6; }
+.jc table.calc { border-collapse: collapse; font-size: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.jc table.calc th, .jc table.calc td { padding: 6px 14px; border-bottom: 1px solid var(--border); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.jc table.calc th { background: var(--surface-3); font-weight: 600; font-size: 12.5px; color: var(--text-2); }
+.jc table.calc th:first-child, .jc table.calc td:first-child { text-align: left; color: var(--text-2); }
+.jc table.calc tr:last-child td { border-bottom: 0; }
+.jc table.calc tr.res td { font-weight: 650; }
+.jc table.calc td.hot { background: var(--crit-tint); font-weight: 650; }
+.jc table.calc td .op { color: var(--muted); margin-right: 6px; font-weight: 600; }
+.jc .lk { margin-top: 10px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+.jc .lk a { cursor: pointer; }
+.inside p.ans { margin: 0 0 8px; font-size: 14.5px; }
+details.more { margin-top: 6px; }
+details.more > summary { cursor: pointer; color: var(--accent); font-size: 14px; padding: 4px 0; }
+details.more[open] > summary { margin-bottom: 6px; }
+table.list.dist td.offc { background: var(--warn-tint); }
+p.read { margin: 0 0 14px; font-size: 15px; line-height: 1.6; max-width: 900px; }
+.how { border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin: 0 0 24px; background: var(--surface); }
+.how .hd { font-weight: 650; font-size: 15.5px; margin-bottom: 8px; }
+.how ol { margin: 0; padding-left: 20px; font-size: 14.5px; line-height: 1.7; }
+.how .hw { margin: 10px 0 0; padding: 8px 12px; background: var(--warn-tint); border-radius: 8px; font-size: 14px; }
+.how .note { margin: 10px 0 0; }
+table.list.dist th.mid { color: var(--good); }
+table.list.pub th.sortable { cursor: pointer; user-select: none; }
+table.list.pub th.sortable:hover { color: var(--accent); }
+table.list.pub th.sorted { color: var(--text); }
+table.list td.tinyc { background: #f3e9fb; font-weight: 600; }
+table.list td.badc { background: var(--warn-tint); }
+table.list tr.nodata td { color: var(--muted); }
+table.list.pub td { white-space: nowrap; }
+table.list.pub th { white-space: normal; min-width: 58px; vertical-align: bottom; }
+table.list.pub th, table.list.pub td { padding-left: 7px; padding-right: 7px; }
+table.list.pub td.gname { white-space: normal; min-width: 160px; }
+table.list.pub th.tick, table.list.pub td.tick { width: 34px; min-width: 34px; text-align: center; padding-left: 6px; padding-right: 6px; }
+table.list.pub input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+table.list.pub tr.off td:not(.tick) { color: var(--muted); }
+table.list.pubx td { white-space: nowrap; }
+table.list.pubx td.gname { white-space: normal; min-width: 200px; }
+.selbar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 0 0 16px; padding: 12px 16px; background: var(--accent-soft); border-radius: 10px; font-size: 14px; }
+.selbar .sp2 { flex: 1; }
+.selbar .hint { color: var(--text-2); font-size: 13px; }
+/* key findings: the page's message in three or four lines */
+.keyf { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 12px; padding: 18px 24px 16px; margin: 0 0 20px; }
+.keyf .kh { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
+.keyf ul { margin: 0; padding-left: 20px; }
+.keyf li { margin: 5px 0; font-size: 15.5px; line-height: 1.55; }
+.keyf li::marker { color: var(--accent); }
+.keyf .btn.link { font-size: 14px; }
+td .code { margin-left: 5px; }
+.rv-back { display: block; color: var(--muted); font-size: 12.5px; font-weight: 400; white-space: nowrap; }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-inner">
+  <div class="title-row">
+    <h1>Trade Indices</h1>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-p="method" class="on">Methodology</button>
+    <button data-p="agg">Indices</button>
+    <button data-p="pub">Dissemination groups</button>
+  </nav>
+</div></header>
+
+<main>
+  <!-- =============================== METHODOLOGY =============================== -->
+  <div class="page on" id="p-method">
+    <section class="card">
+    <div class="doc">
+      <nav class="toc">
+        <div class="lbl">Contents</div>
+        <div class="toc-grp">What we calculate</div>
+        <a href="#m-measures">1 · The measures</a>
+        <div class="toc-grp">Indices — aggregates only</div>
+        <a href="#m-v">2 · Value index</a>
+        <a href="#m-q">3 · Quantity index</a>
+        <div class="toc-grp">Supporting steps</div>
+        <a href="#m-agg">4 · How aggregates are built</a>
+        <a class="tsub" href="#m-excl">Excluded item groups</a>
+        <a href="#m-data">5 · Data and preparation</a>
+        <div class="toc-grp">Reference</div>
+        <a href="#m-dec">6 · Decisions at a glance</a>
+        <a href="#m-out">7 · Outputs</a>
+        <a href="#m-dec19">8 · Decisions on indices, 19 Oct 2026</a>
+        <a href="#m-dec27">9 · Decisions on indices, 27 Oct 2026</a>
+      </nav>
+      <div class="doc-body">
+        <div class="cmt-row"><a class="btn" href="https://github.com/mbirkand/Trade-Real-Value-and-Indices/pull/1/files" target="_blank" rel="noopener" title="Opens the Methodology review pull request. Click + next to any line to comment. Needs a GitHub account.">Comment on GitHub ↗</a></div>
+
+        <div class="doc-part" id="m-p1"><span class="pl">Part 1</span><span class="pt">What we calculate</span></div>
+
+        <div class="doc-sec" id="m-measures">
+          <h2><span class="n">1</span>The measures</h2>
+          <table class="plain">
+            <thead><tr><th>Measure</th><th>The question it answers</th><th>Produced for</th></tr></thead>
+            <tbody>
+              <tr><td>Value index</td><td>How much more or less is the trade of a group worth in current US dollars than in 2014–16?</td><td>Item groups — countries and regions</td></tr>
+              <tr><td>Quantity index</td><td>How many more or fewer tonnes of the group are traded?</td><td>Item groups — countries and regions</td></tr>
+            </tbody>
+          </table>
+          <div class="callout"><b>Aggregates only.</b> Every output is for item groups, for countries and for regions. Nothing is published for single items. Not produced at all: unit value indices and real value indices.</div>
+          <div class="callout"><b>Changed on 5 November 2026.</b> Real values, base unit values and every calculation behind them were removed from this pipeline and this dashboard. Real values are now calculated on SWS with the new methodology. The value and quantity indices do not use real values or base unit values, so they are unchanged.</div>
+        </div>
+
+        <div class="doc-part" id="m-p2"><span class="pl">Part 2</span><span class="pt">How we calculate it</span><span class="pd">Each measure, then the supporting steps.</span></div>
+
+        <div class="doc-grp" id="m-pa">Indices — aggregates only</div>
+
+        <div class="doc-sec" id="m-v">
+          <h2><span class="n">2</span>Value index <span class="lv">item groups and regions</span></h2>
+          <p class="what">How the trade value of a group in current US dollars changed since 2014–16. It moves with both prices and volumes.</p>
+          <div class="eq"><span class="row"><span class="lhs">Value index<sub>t</sub></span> = Aggregate value<sub>t</sub> ÷ mean(Aggregate value<sub>2014–16</sub>) × 100</span></div>
+          <dl class="facts">
+            <dt>Aggregate</dt><dd>A country × item group, or a region × item group. The aggregate value is the sum of the items' values (section 4).</dd>
+            <dt>Denominator</dt><dd>The average of the aggregate value over the 2014–16 years in which the aggregate has a value.</dd>
+            <dt>No index when</dt><dd>The aggregate has no value in any base year, or its base average is 0.</dd>
+          </dl>
+        </div>
+
+        <div class="doc-sec" id="m-q">
+          <h2><span class="n">3</span>Quantity index <span class="lv">item groups and regions</span></h2>
+          <p class="what">How the traded tonnage of a group changed since 2014–16. Prices play no part; every tonne counts the same.</p>
+          <div class="eq"><span class="row"><span class="lhs">Quantity index<sub>t</sub></span> = Aggregate quantity<sub>t</sub> ÷ mean(Aggregate quantity<sub>2014–16</sub>) × 100</span></div>
+          <dl class="facts">
+            <dt>Aggregate</dt><dd>The sum of the items' tonnes, each multiplied by its item factor (section 4).</dd>
+            <dt>Denominator</dt><dd>The average of the aggregate quantity over the 2014–16 years in which the aggregate has a quantity.</dd>
+            <dt>No index when</dt><dd>The aggregate has no quantity in any base year, or its base average is 0.</dd>
+          </dl>
+          <div class="callout">An item reported with value but no quantity counts in the value index but not in the quantity index. In groups where most of the trade has no quantity, the quantity index covers only a small part of the group.</div>
+        </div>
+
+        <div class="doc-grp" id="m-ps">Supporting steps</div>
+
+        <div class="doc-sec" id="m-agg">
+          <h2><span class="n">4</span>How aggregates are built</h2>
+          <p class="what">Aggregates are not averages of item results. Items are first summed into item groups, and countries into regions; the aggregate indices are calculated on these sums.</p>
+          <h4>Country × item group</h4>
+          <div class="eq">
+            <span class="row"><span class="lhs">Aggregate value<sub>t</sub></span> = Σ V<sub>i,t</sub><span class="c">thousand USD</span></span>
+            <span class="row"><span class="lhs">Aggregate quantity<sub>t</sub></span> = Σ Q<sub>i,t</sub> × factor<sub>i</sub><span class="c">tonnes</span></span>
+          </div>
+          <ul>
+            <li>The item factor applies to quantity.</li>
+            <li>The factor is 1 for almost every item. Only a limited number use another factor to convert them to a common equivalent, for example <b>rice, milled equivalent</b>, cassava equivalent, some <b>milk groups</b> (cheese, butter and ghee, whey, condensed and dry milk) and some meat groups.</li>
+            <li>An item can belong to more than one group.</li>
+            <li>An item with no data in a year drops out of that year's sum. An item reported with value but no quantity counts in the aggregate value, but not in the aggregate quantity.</li>
+          </ul>
+          <h4>Region × item group</h4>
+          <ul>
+            <li>Sum of the country × item group aggregates over member countries with Aggregation = TRUE.</li>
+            <li>"Excluding intra-trade" regions are not built or published (decided 27 October 2026).</li>
+          </ul>
+          <h4>Base of the aggregate indices</h4>
+          <ul>
+            <li>The average of the <b>aggregate</b> over 2014–16 — not the sum of the items' own bases. An item or country that enters the group after the base adds to later years but not to the base.</li>
+          </ul>
+          <h4 id="m-excl">Item groups excluded from the calculations</h4>
+          <p>These 11 item groups are in <code>DisseminationList.csv</code> but are not calculated: no indices, for countries or for regions. Their items are still calculated and still count in every other group they belong to (for example Agricultural Products). They are listed in their own section of the Dissemination groups tab.</p>
+          <table class="plain">
+            <thead><tr><th>Code</th><th>Item group</th><th>Note</th></tr></thead>
+            <tbody>
+              <tr><td>F1898</td><td>Hides and skins</td><td>—</td></tr>
+              <tr><td>F1900</td><td>Natural rubber</td><td><b>May be added next year</b></td></tr>
+              <tr><td>F1846</td><td>Non-edible fats and oils</td><td>—</td></tr>
+              <tr><td>F1901</td><td>Textile fibres</td><td><b>May be added next year</b></td></tr>
+              <tr><td>F2076</td><td>Other meat</td><td>—</td></tr>
+              <tr><td>F1902</td><td>Crude materials nes</td><td>—</td></tr>
+              <tr><td>F1845</td><td>Non-edible crude materials</td><td>—</td></tr>
+              <tr><td>F1892</td><td>Fodder and feeding stuff</td><td>—</td></tr>
+              <tr><td>F1849</td><td>Other food nes</td><td>—</td></tr>
+              <tr><td>F1847</td><td>Non-food</td><td>—</td></tr>
+              <tr><td>F1848</td><td>Other food</td><td>—</td></tr>
+            </tbody>
+          </table>
+          <div class="callout"><b>Note for next year.</b> Natural rubber (F1900) and Textile fibres (F1901) may be added to the calculations next year.</div>
+        </div>
+
+        <div class="doc-sec" id="m-data">
+          <h2><span class="n">5</span>Data and preparation</h2>
+          <ul>
+            <li><b>Source:</b> FAO trade data (June 2026 extract), 2000–2024: import and export quantity and value by country × CPC item × year.</li>
+            <li>Base period <b>2014–2016 = 100</b>.</li>
+            <li>Values are in thousand USD, quantities in tonnes. Unit values (value ÷ quantity, shown as $/t) appear only in the item view, as a check on quantities.</li>
+          </ul>
+          <div class="callout"><b>Data snapshot.</b> The trade data were extracted in June 2026, so results run up to 2024. They may not match the current data in SWS exactly.</div>
+          <h4>Preparation</h4>
+          <ol class="steps">
+            <li>Reshape to one row per country × item × year with four columns: import Q, import V, export Q, export V.</li>
+            <li>Remove live animals (CPC 021…). They are reported in head, not tonnes, so their unit values are not comparable.</li>
+            <li>Fix one-sided zeros: if Q = 0 but V &gt; 0, Q is set to missing; if V = 0 but Q &gt; 0, V is set to missing. The other side still counts in its own total.</li>
+          </ol>
+          <div class="callout"><b>No data are filtered.</b> Every record is used as reported, even when the source data look problematic: very small records (Q &lt; 10 t or V &lt; 10 thousand USD), unusual unit values, and estimated, imputed or missing-flagged records all stay in. Records flagged as missing (M) that carry a 0 enter as 0. There is no coverage rule and no minimum number of base years. The other pages of this dashboard flag values for review; they never remove them.</div>
+        </div>
+
+        <div class="doc-grp" id="m-pr">Reference</div>
+
+        <div class="doc-sec" id="m-dec">
+          <h2><span class="n">6</span>Decisions at a glance</h2>
+          <table class="plain">
+            <tbody>
+              <tr class="grp"><td colspan="2">Data</td></tr>
+              <tr><td>Base period</td><td>2014–2016 = 100</td></tr>
+              <tr><td>Live animals</td><td>Excluded</td></tr>
+              <tr><td>One-sided zeros</td><td>Zero side set to missing</td></tr>
+              <tr><td>Filtering of problematic data</td><td>None — flagged for review only</td></tr>
+              <tr><td>Minimum base years</td><td>None</td></tr>
+              <tr><td>Output scope</td><td>Disseminated areas; aggregates only, built from all items; 11 item groups excluded (section 4); "excluding intra-trade" regions not published; base years published too</td></tr>
+              <tr class="grp"><td colspan="2">Aggregates</td></tr>
+              <tr><td>Item factor</td><td>Quantity only</td></tr>
+              <tr><td>Aggregate base</td><td>2014–16 average of the aggregate</td></tr>
+              <tr><td>Excluded item groups</td><td>11 groups not calculated (section 4); their items still count in other groups. Natural rubber and Textile fibres may be added next year</td></tr>
+              <tr class="grp"><td colspan="2">Indices</td></tr>
+              <tr><td>Level</td><td>Aggregates only (item groups for countries and regions)</td></tr>
+              <tr><td>Produced</td><td>Value index and quantity index</td></tr>
+              <tr><td>Not produced</td><td>Item indices, unit value indices, real value indices</td></tr>
+              <tr><td>Aggregate quantity index</td><td>Sum of tonnes × item factor, unweighted</td></tr>
+              <tr class="grp"><td colspan="2">Dashboard checks (review only)</td></tr>
+              <tr><td>Indices</td><td>Critical: index &gt; 5,000 or &lt; 1 · Warning: index &gt; 1,000 or &lt; 10, or a 10× change from the previous year</td></tr>
+              <tr><td>Dissemination groups</td><td>Open — chosen on the Dissemination groups tab, from the size and reliability of each group and area level. The 11 excluded groups are listed there in their own section</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="doc-sec" id="m-out">
+          <h2><span class="n">7</span>Outputs</h2>
+          <p class="what">One result file in <code>results/</code>: <code>indices_aggregates.csv</code>. One row per area × item group × year, 2000–2024, with import and export columns side by side. Item groups for countries and for regions, built from all items; only disseminated areas. The 11 excluded item groups (section 4) are not in the file. Identifier columns: Level (Country or Region), Area Code (M49), Area, Item Group Code, Item Group, Year.</p>
+          <table class="plain out">
+            <thead><tr><th>Column</th><th>Unit</th><th>Calculation</th></tr></thead>
+            <tbody>
+              <tr class="grp fn"><td colspan="3">Indices — indices_aggregates.csv</td></tr>
+              <tr><td>Import Value Index</td><td>2014–16 = 100</td><td>Aggregate value ÷ its 2014–16 average <span class="ref">2</span></td></tr>
+              <tr><td>Import Quantity Index</td><td>2014–16 = 100</td><td>Aggregate tonnes ÷ its 2014–16 average <span class="ref">3</span></td></tr>
+              <tr><td>Export Value Index</td><td>2014–16 = 100</td><td>As for imports <span class="ref">2</span></td></tr>
+              <tr><td>Export Quantity Index</td><td>2014–16 = 100</td><td>As for imports <span class="ref">3</span></td></tr>
+            </tbody>
+          </table>
+          <p class="note">Numbers in grey boxes refer to the sections above.</p>
+        </div>
+
+        <div class="doc-sec" id="m-dec19">
+          <h2><span class="n">8</span>Decisions on indices, 19 Oct 2026</h2>
+          <ul>
+            <li>All indices will be produced for aggregates only.</li>
+            <li>Unit value index will not be calculated at all.</li>
+            <li>Real value index will not be calculated at all.</li>
+            <li>We don't filter any data if the source data is problematic.</li>
+            <li>Birkan will create a new dashboard upon these decisions.</li>
+            <li>We will try to identify at which aggregate level we will publish these all; it's possible to remove tiny groups.</li>
+          </ul>
+          <p class="note">Decisions of that day on real values and base unit values are no longer part of this pipeline (5 Nov 2026).</p>
+        </div>
+
+        <div class="doc-sec" id="m-dec27">
+          <h2><span class="n">9</span>Decisions on indices, 27 Oct 2026</h2>
+          <ul>
+            <li>We will not publish results for “Excluding intra-trade” regions.</li>
+          </ul>
+          <p class="note">Decisions of that day on real values and base unit values (the 3× rule, weighted median, fallback hierarchy) are no longer part of this pipeline (5 Nov 2026).</p>
+        </div>
+
+      </div>
+    </div>
+    </section>
+  </div>
+
+  <div class="loading" id="loading">Loading data…</div>
+
+  <!-- =============================== INDICES (aggregates) =============================== -->
+  <div class="page" id="p-agg">
+    <div class="pagebar">
+      <div class="subnav" id="aSubnav">
+        <button data-s="summary" class="on">Summary</button>
+        <button data-s="groups">Real examples by cause</button>
+        <button data-s="list">All issues</button>
+        <button data-s="lookup">Look up a series</button>
+      </div>
+      <a class="btn cmt" data-cmt="agg" href="#" target="_blank" rel="noopener" title="Opens a new GitHub issue about this page. Needs a GitHub account.">Comment on GitHub ↗</a>
+    </div>
+    <p class="scope">Value and quantity indices of item groups, for single countries and for regions. Indices are produced for aggregates only.</p>
+
+    <div class="sp on" id="as-summary">
+      <div class="keyf" id="aKey"></div>
+      <div class="tiles" id="aTiles"></div>
+      <section class="card">
+        <h2>Data points by year</h2>
+        <p class="sub">Every calculated index value, by flow and index (rows) and year (columns). Shading shows the share that is problematic (critical or warning).</p>
+        <div class="seg" data-grid="gridAgg"><button data-m="pct" class="on">% problematic</button><button data-m="bad">Problematic</button><button data-m="all">All data points</button></div>
+        <div id="gridAgg"></div>
+      </section>
+      <section class="card">
+        <h2>Causes of extreme values</h2>
+        <p class="sub">Every flagged index value is assigned one cause. Each card shows the rule, what it usually means and a simple made-up example.</p>
+        <div id="aCauseCards"></div>
+      </section>
+      <section class="card">
+        <h2>Start here — most important issues</h2>
+        <p class="sub">Critical issues in order of importance: base problems first, then coverage and single-member causes, then larger trade. Click a row to see the data behind it.</p>
+        <div id="aTop"></div>
+      </section>
+      <section class="card">
+        <h2>How the checks work</h2>
+        <p class="sub">Applied to every aggregate value index and quantity index value. Flags are for review only — no data are removed.</p>
+        <div class="grid2">
+          <div>
+            <h3>Reproduction</h3>
+            <ul class="tight" id="aVerify"></ul>
+            <h3>Flags</h3>
+            <ul class="tight">
+              <li><span class="sev c">Critical</span>&nbsp; index above <b id="cfgCh"></b> or below <b id="cfgCl"></b></li>
+              <li><span class="sev w">Warning</span>&nbsp; index above <b id="cfgWh"></b> or below <b id="cfgWl"></b>, or a year-on-year change of <b id="cfgY"></b>× or more</li>
+              <li>Index = 0 (no trade) is not flagged.</li>
+            </ul>
+            <h3>Members</h3>
+            <ul class="tight">
+              <li>Country aggregate = its items. Region aggregate = its member countries.</li>
+              <li>The change between the 2014–16 average and the flagged year is split across members.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Finding the cause — in this order</h3>
+            <ul class="tight">
+              <li><b>Negligible base:</b> the group's 2014–16 average is below 10 t or 10 thousand USD.</li>
+              <li><b>Coverage:</b> at least half of the year's total comes from members with no 2014–16 data, or at least half of the base comes from members missing that year.</li>
+              <li><b>One member:</b> a single item or country explains at least half of the change. Its own pattern is shown.</li>
+              <li>Otherwise the aggregate series itself is split into base / one-off / sustained parts: base vs the level around it (2011–13 and 2017–19), the year vs the surrounding years (±3), and those years vs the level around the base.</li>
+            </ul>
+            <h3>Order of importance</h3>
+            <ul class="tight">
+              <li>Critical before warning → base → coverage → one member → one-off years → sustained change → larger trade (average value of the latest five years).</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Issues by cause</h2>
+        <p class="sub">One issue = one aggregate (country or region × item group × flow) with one cause. Click a cause to open the list.</p>
+        <div class="legend-row"><span><i style="background:var(--crit)"></i>Critical</span><span><i style="background:var(--warn)"></i>Warning</span></div>
+        <div class="hbar" id="aBars"></div>
+      </section>
+    </div>
+
+    <div class="sp" id="as-groups"><div id="aGroupsCard"></div></div>
+
+    <div class="sp" id="as-list">
+      <section class="card">
+        <div class="filters">
+          <label>Severity<select id="aSev"><option value="">All</option><option value="2">Critical</option><option value="1">Warning</option></select></label>
+          <label>Cause<select id="aCat"><option value="">All</option></select></label>
+          <label>Level<select id="aLvl"><option value="">All</option><option value="0">Country</option><option value="1">Region</option></select></label>
+          <label>Flow<select id="aFlow"><option value="">All</option><option value="0">Import</option><option value="1">Export</option></select></label>
+          <label>Index<select id="aType"><option value="">All</option><option value="V">Value</option><option value="Q">Quantity</option></select></label>
+          <label>Area<select id="aArea"><option value="">All</option></select></label>
+          <label>Item group<select id="aGrp"><option value="">All</option></select></label>
+          <label>Sort<select id="aSort"><option value="rank">Importance</option><option value="mag">Most extreme index</option><option value="size">Trade size</option><option value="n">Most flagged values</option></select></label>
+          <button class="btn" id="aReset" type="button">Reset</button>
+        </div>
+        <div class="count-line" id="aListCount"></div>
+        <div id="aListTable"></div>
+        <div class="pager" id="aPager"></div>
+      </section>
+    </div>
+
+    <div class="sp" id="as-lookup">
+      <section class="card">
+        <div class="filters">
+          <label>Area<select id="aLArea"></select></label>
+          <label>Item group<select id="aLGrp"></select></label>
+          <label>Flow<select id="aLFlow"><option value="0">Import</option><option value="1">Export</option></select></label>
+          <button class="btn primary" id="aLGo" type="button">Show</button>
+        </div>
+        <div id="aLookupOut"><p class="note">Pick a country or region, an item group and a flow.</p></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- =============================== PUBLICATION LEVEL =============================== -->
+  <div class="page" id="p-pub">
+    <div class="pagebar">
+      <span class="pb-title">Dissemination groups</span>
+      <a class="btn cmt" data-cmt="pub" href="#" target="_blank" rel="noopener" title="Opens a new GitHub issue about this page. Needs a GitHub account.">Comment on GitHub ↗</a>
+    </div>
+    <p class="scope">Tick the item groups to disseminate. The tables show how big and how reliable each item group and each area level is — to decide at which level the indices are published, and which tiny groups to drop. Ticking does not change the outputs. The item groups already excluded from the calculations are listed in their own section below.</p>
+    <div class="keyf" id="pKey"></div>
+    <div class="tiles" id="pTiles"></div>
+    <section class="card">
+      <h2>Item groups</h2>
+      <p class="sub">Items with data = how many of the group's items (aggregation table) have any trade data, for any country and year: 19 of 20 means one item of the group has no data at all, so it adds nothing. Trade size = imports + exports: the average value of each series' latest five years with data, added up over all countries. Problem shares are the share of country series (country × flow) with at least one flag on the Indices page. Value with a quantity = the share of the group's value that has a quantity too, i.e. how much of the group the quantity index covers. Level = FAOSTAT product group level (0 = broadest); "not listed" = the group is not in the levels file. Click a column to sort. Shaded: share of Agricultural Products below <b id="pTinyLbl"></b>, or a problem share of a third or more.</p>
+      <div class="selbar" id="pSel"></div>
+      <div id="pGroups"></div>
+    </section>
+    <section class="card">
+      <h2>Area levels</h2>
+      <p class="sub">The same reliability measures for countries and for each kind of region. Series = area × item group × flow.</p>
+      <div id="pLevels"></div>
+    </section>
+    <section class="card">
+      <h2>Excluded from the calculations</h2>
+      <p class="sub">These item groups are in DisseminationList.csv but are not calculated: no indices, for countries or for regions, so they are not in the table above and cannot be ticked. Their items still count in every other group they belong to. Trade size is measured on the item data directly: imports + exports, the average value of each series' latest five years with data, added up over all countries.</p>
+      <div id="pExcl"></div>
+    </section>
+  </div>
+
+  <!-- =============================== DETAIL (full page) =============================== -->
+  <div class="page" id="p-detail">
+    <div class="dbar">
+      <button class="btn back" id="dBack" type="button">← Back</button>
+      <a class="btn" id="dComment" href="#" target="_blank" rel="noopener" title="Opens a new GitHub issue for this series, with its name and a link back here filled in. Needs a GitHub account.">Comment on GitHub ↗</a>
+    </div>
+    <section class="card" id="dBody"></section>
+  </div>
+</main>
+<footer class="foot-meta" id="meta"></footer>
+
+<script>
+const PAYLOAD = "__PAYLOAD__";
+const PAYLOAD_AGG = "__PAYLOAD_AGG__";
+let D = null, AD = null, NY, Y0, READY = false;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const has = x => x !== null && x !== undefined;
+const PER = 50;
+
+// ---------------------------------------------------------------- formatting
+function fmt(x, kind) {
+  if (x === null || x === undefined || Number.isNaN(x)) return "";
+  if (x === 0) return "0";
+  const a = Math.abs(x);
+  if (a >= 1000) return Math.round(x).toLocaleString("en-US");
+  if (a >= 100) return (kind === "idx" ? x.toFixed(0) : x.toLocaleString("en-US", { maximumFractionDigits: 1 }));
+  if (a >= 10) return x.toFixed(1);
+  if (a >= 1) return x.toFixed(2).replace(/\.?0+$/, "");
+  if (a >= 0.001) return x.toPrecision(2).replace(/\.?0+$/, "");
+  return x.toExponential(1);
+}
+const fmtN = n => (n ?? 0).toLocaleString("en-US");
+const ratio = r => { if (!isFinite(r) || r <= 0) return "?"; return r >= 100 ? Math.round(r).toLocaleString("en-US") : r.toFixed(r >= 10 ? 0 : 1); };
+// a ratio written as ×12 or 1/12
+const rt = r => !has(r) || !isFinite(r) || r <= 0 ? "–" : r >= 1 ? `×${ratio(r)}` : `1/${ratio(1 / r)}`;
+const pct = x => !has(x) ? "–" : Math.round(Math.abs(x) * 100) + "%";
+const pct1 = x => !has(x) ? "–" : (x * 100 < 10 && x > 0 ? (x * 100).toFixed(1) : Math.round(x * 100)) + "%";
+function yrsRange(yrs) {
+  if (!yrs.length) return ""; if (yrs.length === 1) return String(yrs[0]);
+  const parts = []; let s = yrs[0], p = yrs[0];
+  for (let i = 1; i <= yrs.length; i++) { const y = yrs[i]; if (y === p + 1) { p = y; continue; } parts.push(s === p ? `${s}` : `${s}–${p}`); s = p = y; }
+  return parts.length > 4 ? `${parts.slice(0, 4).join(", ")} …` : parts.join(", ");
+}
+function exampleTable(e) {
+  if (!e) return "";
+  let h = `<div class="ex"><table><thead><tr><th></th>${e.cols.map((c, j) => `<th class="${e.b.includes(j) ? "b" : ""}">${c}</th>`).join("")}</tr></thead><tbody>`;
+  e.rows.forEach(([lab, vals], i) => {
+    h += `<tr><td>${lab}</td>${vals.map((v, j) => { let cl = e.b.includes(j) ? "b" : ""; if (e.hl[0] === i && e.hl[1] === j) cl = e.hl[2] === "c" ? "hc" : "hw"; return `<td class="${cl}">${v}</td>`; }).join("")}</tr>`;
+  });
+  return h + `</tbody></table></div><div class="exn">${e.note}</div>`;
+}
+const sevChip = s => `<span class="sev ${s === 2 ? "c" : "w"}">${s === 2 ? "Critical" : "Warning"}</span>`;
+const bc = y => D.base_years.includes(y) ? " bcol" : "";
+function tsHead(label) {
+  let h = `<div class="ts-wrap"><table class="ts"><thead><tr><th class="lab">${label}</th>`;
+  for (let yi = 0; yi < NY; yi++) h += `<th class="${bc(Y0 + yi).trim()}">${Y0 + yi}</th>`;
+  return h + `</tr></thead><tbody>`;
+}
+const tsRow = (label, fn) => { let r = `<tr><td class="lab">${label}</td>`; for (let yi = 0; yi < NY; yi++) r += fn(yi, Y0 + yi); return r + `</tr>`; };
+const tsGrp = label => `<tr class="grp"><td class="lab">${label}</td><td colspan="${NY}"></td></tr>`;
+function scrollFocus(el) { const f = el.querySelector("td.focus"), wrap = el.querySelector(".ts-wrap"); if (f && wrap) wrap.scrollLeft = Math.max(0, f.offsetLeft - wrap.clientWidth / 2); }
+// items never used as examples (27 Oct 2026); they stay in the lists, the look-ups and the counts
+const NOEX = [["02959.30", "Hides nes; dry salted"], ["02955.01", "Skins; karakul"], ["02955.90", "Skins; furs"], ["21932.02", "Residues of fatty substances"]];
+const NOEX_CODE = new Set(NOEX.map(x => x[0])), NOEX_NAME = new Set(NOEX.map(x => x[1].toLowerCase()));
+const noexItem = (code, name) => NOEX_CODE.has(code) || (!!name && NOEX_NAME.has(String(name).toLowerCase()));
+const aEx = o => { const tk = TOPBY.get(o.rank - 1) || []; return !(tk.length && noexItem(null, AD.mnames[AD.top.m[tk[0]]])); };
+function picks3(L, sizeOf, areaOf) {
+  const pool = L.filter(o => o.sev === 2 && sizeOf(o) > 0).concat(L), out = [], seenS = new Set(), seenA = new Set();
+  for (const pass of [true, false]) for (const o of pool) {
+    if (out.length >= 3) break;
+    const key = o.s + "|" + (o.y ?? ""), a = areaOf(o);
+    if (seenS.has(key) || (pass && seenA.has(a))) continue;
+    out.push(o); seenS.add(key); seenA.add(a);
+  }
+  return out;
+}
+function pager(el, page, pages, go) {
+  el.innerHTML = `<button class="btn" data-pg="-1" ${page ? "" : "disabled"}>‹ Previous</button><span>Page ${page + 1} of ${fmtN(pages)}</span><button class="btn" data-pg="1" ${page < pages - 1 ? "" : "disabled"}>Next ›</button>`;
+  el.querySelectorAll("[data-pg]").forEach(b => b.onclick = () => { go(page + +b.dataset.pg); window.scrollTo(0, 0); });
+}
+
+// ================================================================ ITEM SERIES (items behind a flagged index)
+function raw(sid, yi) { const k = sid * NY + yi; return { q: D.q[k], v: D.v[k], qf: D.qf[k], vf: D.vf[k], G: D.G[k] }; }
+function clean(sid, yi) {
+  let { q, v } = raw(sid, yi);
+  if (q === 0 && v > 0) q = null;
+  if (v === 0 && q > 0) v = null;
+  return { q, v };
+}
+function iuv(sid, yi) { const { q, v } = clean(sid, yi); return q > 0 && v > 0 ? v / q : null; }
+function flagStr(fi) { return has(fi) ? D.flags[fi] : null; }
+function flagChips(fi) {
+  const f = flagStr(fi); if (!f) return "";
+  const [o, m] = f.split("|");
+  return (o ? `<span class="fl">${esc(o)}</span>` : "") + (m && m !== "-" ? `<span class="fl">${esc(m)}</span>` : "");
+}
+function seriesName(sid) {
+  const S = D.series;
+  return { area: D.areas.name[S.a[sid]], acode: D.areas.code[S.a[sid]], item: D.items.name[S.i[sid]], icode: D.items.code[S.i[sid]], flow: S.f[sid] ? "Export" : "Import" };
+}
+function renderItem(sid, focus) {
+  const S = D.series, nm = seriesName(sid), compact = !!(focus && focus.compact);
+  // the item's own indices (2014–16 = 100), from the base years with data
+  const by = D.base_years.map(y => clean(sid, y - Y0));
+  const bm = k => { const x = by.map(o => o[k]).filter(v => v > 0); return x.length ? x.reduce((a, b) => a + b, 0) / x.length : null; };
+  const bq = bm("q"), bv = bm("v");
+  let h = `<div class="dd-head"><div class="t"><span class="code">[${esc(nm.acode)}]</span> ${esc(nm.area)}, <span class="code">[${esc(nm.icode)}]</span> ${esc(nm.item)} — ${nm.flow}</div><span class="drv">Country × item</span>
+    ${compact ? `<span class="spacer"></span><button class="btn" data-iopen="${sid}">Open full view →</button>` : ""}</div>`;
+  h += `<div class="kv">
+    <div><div class="k">Base value (2014–16 avg)</div><div class="v">${fmt(bv) || "—"} <span>thousand USD</span></div></div>
+    <div><div class="k">Base quantity</div><div class="v">${fmt(bq) || "—"} <span>t</span></div></div>
+    <div><div class="k">Trade size</div><div class="v">${fmt(S.size[sid]) || "—"} <span>thousand USD / year</span></div></div>
+  </div>`;
+  h += `<p class="note" style="margin:0 0 22px">Shown because this item drives a flagged index of its item group. A unit value far from all countries' (shaded) usually means the quantity or the value is on another scale that year.</p>`;
+  h += tsHead(`${esc(nm.area)}, ${esc(nm.item)}`);
+  h += tsGrp("Source data");
+  h += tsRow(`${nm.flow} Quantity <span class="u">[t]</span>`, (yi, y) => { const r = raw(sid, yi); return `<td class="v${bc(y)}">${has(r.q) ? fmt(r.q) : ""}${flagChips(r.qf)}</td>`; });
+  h += tsRow(`${nm.flow} Value <span class="u">[1000 $]</span>`, (yi, y) => { const r = raw(sid, yi); return `<td class="v${bc(y)}">${has(r.v) ? fmt(r.v) : ""}${flagChips(r.vf)}</td>`; });
+  h += tsRow(`${nm.flow} Unit value <span class="u">[$/t]</span>`, (yi, y) => {
+    const u = iuv(sid, yi), G = raw(sid, yi).G; let cls = "v" + bc(y), tip = "";
+    if (u !== null && has(G) && G > 0 && (u / G >= 10 || u / G <= 0.1)) { cls += " cw"; tip = ` title="${rt(u / G)} all countries this year"`; }
+    return `<td class="${cls}"${tip}>${u === null ? "" : fmt(u * 1000)}</td>`;
+  });
+  h += tsRow(`All countries' unit value <span class="u">[$/t, median]</span>`, (yi, y) => { const G = raw(sid, yi).G; return `<td class="v${bc(y)}">${has(G) ? fmt(G * 1000) : ""}</td>`; });
+  h += tsGrp("The item's own indices · 2014–16 = 100");
+  h += tsRow(`Value index`, (yi, y) => { const v = clean(sid, yi).v; return `<td class="v${bc(y)}">${has(v) && bv > 0 ? fmt(v / bv * 100, "idx") : ""}</td>`; });
+  h += tsRow(`Quantity index`, (yi, y) => { const q = clean(sid, yi).q; return `<td class="v${bc(y)}">${has(q) && bq > 0 ? fmt(q / bq * 100, "idx") : ""}</td>`; });
+  return h + `</tbody></table></div>`;
+}
+function iMount(el, sid, focus) {
+  el.innerHTML = renderItem(sid, focus); scrollFocus(el);
+  el.querySelectorAll("[data-iopen]").forEach(b => b.onclick = () => openDetail("i", +b.dataset.iopen));
+}
+const GCLS = { Base: "g-base", Coverage: "g-coverage", Member: "g-member", Year: "g-year", Level: "g-level", Shared: "g-level", Tiny: "g-coverage" };
+function drawGroupsGeneric(el, o) {
+  // o: { order, label(ci), def(ci) -> [rule, means], ex(ci), group(ci) -> driver, gname, list(ci), picks(ci), goList(ci), mount(el, pick), idp }
+  // causes with the most issues first
+  o = { ...o, order: o.order.slice().sort((a, b) => o.list(b).length - o.list(a).length) };
+  let h = `<section class="card"><h2>Real examples by cause</h2><p class="sub">${o.intro}</p>
+    <div class="jump">${o.order.map((ci, k) => `<button class="${GCLS[o.group(ci)]}" data-jmp="${ci}"><span class="no">${k + 1}</span>${esc(o.label(ci))}</button>`).join("")}</div></section>`;
+  o.order.forEach((ci, k) => {
+    const L = o.list(ci), crit = L.filter(x => x.sev === 2).length, picks = o.picks(ci), d = o.def(ci);
+    h += `<section class="card cause-sec ${GCLS[o.group(ci)]}" id="${o.idp}-${ci}">
+      <div class="cs-head"><span class="no">${k + 1}</span><div class="ttl"><span class="grp">Cause ${k + 1} of ${o.order.length} · ${o.gname(ci)}</span><span class="name">${esc(o.label(ci))}</span></div>
+        <span class="spacer"></span><span class="cnt"><b>${fmtN(L.length)}</b> ${o.unit} · <b>${fmtN(crit)}</b> critical</span><button class="btn" data-go="${ci}">See all ${fmtN(L.length)} →</button></div>
+      <div class="cs-body">
+        <div class="cs-what"><div><p class="rule">${d[0]}</p><p class="means">${d[1]}</p></div>
+          <div><div class="exl">What it looks like (illustrative)</div>${exampleTable(o.ex(ci))}</div></div>
+        ${picks.map((p, j) => `<div class="cs-real">Real case ${j + 1} of ${picks.length} — ${esc(o.label(ci))}</div><div class="rcase" data-ci="${ci}" data-j="${j}"></div>`).join("")}
+      </div></section>`;
+  });
+  el.innerHTML = h;
+  el.querySelectorAll("[data-go]").forEach(b => b.onclick = () => o.goList(+b.dataset.go));
+  el.querySelectorAll("[data-jmp]").forEach(b => b.onclick = () => document.getElementById(o.idp + "-" + b.dataset.jmp).scrollIntoView({ behavior: "smooth" }));
+  el.querySelectorAll(".rcase").forEach(e => o.mount(e, o.picks(+e.dataset.ci)[+e.dataset.j]));
+}
+// ================================================================ INDICES (aggregates)
+let AISS, ACBS, AISSIDX, ACAT_ORDER, AGROUPS_DRAWN = false, APAGE = 0;
+const ATYPE = ["V", "Q"], ATYPE_NAME = ["Value", "Quantity"], AUNIT = ["thousand USD", "t"];
+const ACAT_DEF = {
+  a_tiny_base: ["The group's 2014–16 average is below the negligible level (10 t or 10 thousand USD).", "Any normal year divided by it explodes."],
+  a_low_base: ["The group's base average is far below the level just around it.", "The base years were unusually low for the group as a whole."],
+  a_high_base: ["The group's base average is far above the level just around it.", "A base-year spike for the group: other years look tiny."],
+  a_new: ["At least half of the year's total comes from members with no data in 2014–16.", "Items or countries that enter after the base push the index up — the base does not include them."],
+  a_lost: ["At least half of the base comes from members with no data in the flagged year.", "The index drops because members are missing that year, not because trade fell."],
+  a_one_item: ["A single item explains at least half of the change from the base.", "The group index inherits that item's pattern — shown with it."],
+  a_one_country: ["A single country explains at least half of the change from the base.", "The region inherits that country's problem — its own diagnosis is shown."],
+  a_spike: ["One year is far above the surrounding years for the group as a whole.", "A one-off spread across items — check that year's records."],
+  a_dip: ["One year is far below the surrounding years for the group as a whole.", "A one-off spread across items — check that year's records."],
+  a_tiny_flow: ["The aggregate in the flagged year is negligible.", "Small numbers swing wildly; the index carries little information."],
+  a_trend: ["The group's level moved away from the base and stayed there.", "Probably a real change: trade started, stopped, grew or collapsed."]
+};
+const EXA = {
+  a_tiny_base: { cols: ["2014", "2015", "2016", "2020"], b: [0, 1, 2], rows: [["Aggregate value (1000 $)", ["4", "3", "5", "12,000"]], ["Value index", ["100", "75", "125", "300,000"]]], hl: [1, 3, "c"], note: "The group's base is 4 thousand USD, so a normal 2020 explodes." },
+  a_low_base: { cols: ["2013", "2014", "2015", "2016", "2019"], b: [1, 2, 3], rows: [["Aggregate value (1000 $)", ["40,000", "1,500", "–", "–", "45,000"]], ["Value index", ["2,667", "100", "", "", "3,000"]]], hl: [1, 4, "w"], note: "Only 2014 has data and it is 27× below the years around it." },
+  a_high_base: { cols: ["2013", "2014", "2015", "2016", "2019"], b: [1, 2, 3], rows: [["Aggregate value (1000 $)", ["900", "250,000", "1,000", "1,100", "950"]], ["Value index", ["1.07", "297", "1.19", "1.31", "1.13"]]], hl: [1, 4, "w"], note: "One 250,000 record lifts the base to 84,033; normal years are ~1,000." },
+  a_new: { cols: ["Base", "2020"], b: [0], rows: [["Item A", ["1,000", "1,100"]], ["Item B", ["–", "40,000"]], ["Aggregate value", ["1,000", "41,100"]], ["Value index", ["100", "4,110"]]], hl: [3, 1, "w"], note: "97% of 2020 comes from Item B, which had no trade in 2014–16." },
+  a_lost: { cols: ["Base", "2005"], b: [0], rows: [["Item A", ["9,000", "–"]], ["Item B", ["1,000", "900"]], ["Aggregate value", ["10,000", "900"]], ["Value index", ["100", "9.0"]]], hl: [3, 1, "w"], note: "90% of the base came from Item A, which has no data in 2005." },
+  a_one_item: { cols: ["Base", "2020"], b: [0], rows: [["Item A", ["5,000", "5,500"]], ["Item B", ["20", "60,000"]], ["Aggregate value", ["5,020", "65,500"]], ["Value index", ["100", "1,305"]]], hl: [3, 1, "w"], note: "Item B explains 99% of the change; its own pattern: base unusually low." },
+  a_one_country: { cols: ["Base", "2019"], b: [0], rows: [["Country X", ["80,000", "82,000"]], ["Country Y", ["2,000", "900,000"]], ["Region value", ["82,000", "982,000"]], ["Value index", ["100", "1,198"]]], hl: [3, 1, "w"], note: "Country Y explains 99.8% of the change; its own diagnosis: one-year spike." },
+  a_spike: { cols: ["Base", "2018", "2019", "2020"], b: [0], rows: [["Aggregate value (1000 $)", ["3,000", "3,100", "420,000", "3,200"]], ["Value index", ["100", "103", "14,000", "107"]]], hl: [1, 2, "c"], note: "2019 jumps for the group as a whole; no single item explains most of it." },
+  a_dip: { cols: ["Base", "2018", "2019", "2020"], b: [0], rows: [["Aggregate value (1000 $)", ["5,000", "5,200", "30", "5,100"]], ["Value index", ["100", "104", "0.6", "102"]]], hl: [1, 2, "c"], note: "2019 collapses for the group as a whole, then recovers." },
+  a_tiny_flow: { cols: ["Base", "2018", "2019", "2020"], b: [0], rows: [["Aggregate value (1000 $)", ["6,000", "5,800", "2", "6,100"]], ["Value index", ["100", "97", "0.03", "102"]]], hl: [1, 2, "c"], note: "2 thousand USD is a negligible total for the year." },
+  a_trend: { cols: ["Base", "2017", "2018", "2019", "2020"], b: [0], rows: [["Aggregate value (1000 $)", ["2,000", "9,000", "15,000", "22,000", "26,000"]], ["Value index", ["100", "450", "750", "1,100", "1,300"]]], hl: [1, 4, "w"], note: "The group grew year after year and stayed high — most likely real." }
+};
+const AGROUPS = [
+  { d: "Base", t: "Base problems", s: "the group's 2014–16 denominator is wrong" },
+  { d: "Coverage", t: "Coverage", s: "members enter or leave the group" },
+  { d: "Member", t: "One member", s: "a single item or country explains most of the change" },
+  { d: "Year", t: "One-off years", s: "a single year is out of line for the group" },
+  { d: "Level", t: "Real change", s: "no data problem found" }
+];
+const AGNAME = { Base: "Base problem", Coverage: "Coverage", Member: "One member", Year: "One-off year", Level: "Real change" };
+const acatLabel = ci => AD.cats.label[ci];
+function aName(gs) {
+  const S = AD.series, ai = S.a[gs];
+  return { lvl: S.lv[gs] ? "Region" : "Country", area: AD.areas.name[ai], acode: AD.areas.code[ai], grp: AD.groups.name[S.g[gs]], gcode: AD.groups.code[S.g[gs]], flow: S.f[gs] ? "Export" : "Import" };
+}
+function aVals(gs, yi) {
+  const S = AD.series, k = gs * NY + yi, V = AD.V[k], Q = AD.Q[k];
+  return { V, Q, xV: has(V) && S.bv[gs] > 0 ? V / S.bv[gs] * 100 : null, xQ: has(Q) && S.bq[gs] > 0 ? Q / S.bq[gs] * 100 : null };
+}
+const aIdx = (v, t) => [v.xV, v.xQ][t];
+const aCur = (v, t) => [v.V, v.Q][t];
+function aExplain(gs, c) {
+  const C = AD.cells, ci = C.c[c], id = AD.cats.id[ci], t = C.t[c], y = C.y[c], yi = y - Y0, S = AD.series;
+  const v = aVals(gs, yi), x = aIdx(v, t), m = ATYPE_NAME[t].toLowerCase(), u = AUNIT[t];
+  const base = [S.bv[gs], S.bq[gs]][t], typ = [S.tv[gs], S.tq[gs]][t];
+  const cur = aCur(v, t), nbm = C.nbm[c], op = C.op[c] === 1, py = y - 1;
+  const lvl = S.lv[gs] ? "country" : "item", lvls = S.lv[gs] ? "countries" : "items";
+  const idxTxt = `${ATYPE_NAME[t]} index ${y} = <b>${fmt(x, "idx")}</b>.`;
+  const pv = yy => aCur(aVals(gs, yy - Y0), t), uu = " " + u;
+  switch (id) {
+    case "a_tiny_base": return `Base ${m} of this group is only <b>${fmt(base)}${uu}</b> (2014–16 average). Every year is divided by this tiny base.${t === 1 && S.bv[gs] > 1000 ? ` The group's base value is ${fmt(S.bv[gs])} thousand USD, so most of its trade has no quantity — the quantity index covers only a sliver of it.` : ""} ${idxTxt}`;
+    case "a_new": return `<b>${pct(C.sn[c])}</b> of ${y}'s ${m} comes from ${C.nn[c]} ${C.nn[c] === 1 ? lvl : lvls} with no ${m} in 2014–16. They are not in the base, so the index jumps. ${idxTxt}`;
+    case "a_lost": return `<b>${pct(C.sl[c])}</b> of the base ${m} came from ${C.nl[c]} ${C.nl[c] === 1 ? lvl : lvls} with no data in ${y}. The index drops because they are missing that year, not because trade fell. ${idxTxt}`;
+    case "a_one_item": case "a_one_country": {
+      const iss = AISSIDX.get(gs + "|" + ci), tk = iss ? (TOPBY.get(iss.rank - 1) || []) : [];
+      const top = tk.length && iss.ry === y && iss.rt === t ? AD.mnames[AD.top.m[tk[0]]] : "One " + lvl;
+      const sub = id === "a_one_item" ? (has(C.si[c]) ? D.cats.label[C.si[c]] : null) : (has(C.sc[c]) ? AD.cats.label[C.sc[c]] : null);
+      return `<b>${esc(top)}</b> explains <b>${pct(C.sh[c])}</b> of the change in ${m} between the base and ${y}. ${sub ? `${id === "a_one_item" ? "Its own pattern" : "Its own diagnosis"}: <b>${esc(sub)}</b>.` : `Its own series is not out of line — the change is large compared with the group's base.`} ${idxTxt}`;
+    }
+    case "a_low_base": return `Base ${m} (<b>${fmt(base)}${uu}</b>) is ${ratio(typ / base)}× lower than the level around it (${fmt(typ)}${uu}). Every other year is inflated by the same factor. ${idxTxt}`;
+    case "a_high_base": return `Base ${m} (<b>${fmt(base)}${uu}</b>) is ${ratio(base / typ)}× higher than the level around it (${fmt(typ)}${uu}). Every other year looks small against it. ${idxTxt}`;
+    case "a_spike": return op ? `${py} ${m} (${fmt(pv(py))}${uu}) is ${ratio(pv(py) / nbm)}× the surrounding years (${fmt(nbm)}${uu}), so ${y} drops back sharply.`
+      : `${y} ${m} (<b>${fmt(cur)}${uu}</b>) is ${ratio(cur / nbm)}× the median of the surrounding years (${fmt(nbm)}${uu}), and no single ${lvl} explains most of it. ${idxTxt}`;
+    case "a_dip": return op ? `${py} ${m} (${fmt(pv(py))}${uu}) is only 1/${ratio(nbm / pv(py))} of the surrounding years (${fmt(nbm)}${uu}), so ${y} jumps back up.`
+      : `${y} ${m} (<b>${fmt(cur)}${uu}</b>) is only 1/${ratio(nbm / cur)} of the surrounding years (${fmt(nbm)}${uu}), and no single ${lvl} explains most of it. ${idxTxt}`;
+    case "a_tiny_flow": return `${y} ${m} of the group is only <b>${fmt(cur)}${uu}</b> — negligible, so index moves around it are not meaningful. ${idxTxt}`;
+    default: return `Around ${y} the group runs at ${fmt(nbm !== null ? nbm : cur)}${uu}, against ${fmt(typ)}${uu} around the base. The level itself has moved and stayed there — most likely a real change. ${idxTxt}`;
+  }
+}
+function aSplit(c) {
+  const id = AD.cats.id[AD.cells.c[c]];
+  if (!["a_low_base", "a_high_base", "a_spike", "a_dip", "a_trend"].includes(id)) return "";
+  const g = k => AD.cells[k][c] || 0;
+  const sg = Math.sign(g("cb") + g("co") + g("cp") + g("cs")) || 1;
+  const b = Math.max(0, g("cb") * sg), o = Math.max(0, Math.max(g("co") * sg, g("cp") * sg)), s = Math.max(0, g("cs") * sg);
+  const tot = b + o + s; if (!(tot > 0)) return "";
+  const p = v => Math.round(v / tot * 100);
+  return `<div class="split"><span>What drives it:</span><span class="bar">${b ? `<i class="p-base" style="width:${p(b)}%"></i>` : ""}${o ? `<i class="p-one" style="width:${p(o)}%"></i>` : ""}${s ? `<i class="p-sus" style="width:${p(s)}%"></i>` : ""}</span>
+    <span class="lg"><i class="p-base"></i>base ${p(b)}%<i class="p-one"></i>one-off ${p(o)}%<i class="p-sus"></i>sustained ${p(s)}%</span></div>`;
+}
+let TOPBY = new Map();
+function memberLink(nm, ms, mg) {
+  return has(ms) ? `<a data-ms="${ms}">${nm}</a>` : has(mg) ? `<a data-mg="${mg}">${nm}</a>` : nm;
+}
+function aInside(gs, ci) {
+  const iss = AISSIDX.get(gs + "|" + ci); if (!iss) return "";
+  if (!["a_new", "a_lost", "a_one_item", "a_one_country"].includes(AD.cats.id[ci])) return "";
+  const tk = TOPBY.get(iss.rank - 1) || []; if (!tk.length) return "";
+  const t = iss.rt, y = iss.ry, T = AD.top, lvl = AD.series.lv[gs] ? "Country" : "Item", S = AD.series;
+  const D0 = aCur(aVals(gs, y - Y0), t) - [S.bv[gs], S.bq[gs]][t];
+  let h = `<div class="inside"><div class="lbl">What's inside — ${ATYPE_NAME[t].toLowerCase()}, ${y} (largest contributions)</div><table><thead><tr><th>${lvl}</th><th>2014–16 avg</th><th>${y}</th><th>Change</th><th>Share of change</th></tr></thead><tbody>`;
+  tk.forEach((k, j) => {
+    h += `<tr class="${j === 0 ? "top1" : ""}"><td>${memberLink(esc(AD.mnames[T.m[k]]), T.ms[k], T.mg[k])}</td><td>${fmt(T.b[k]) || "–"}</td><td>${fmt(T.a[k]) || "–"}</td><td>${T.d[k] > 0 ? "+" : ""}${fmt(T.d[k])}</td><td>${D0 ? Math.round(T.d[k] / D0 * 100) + "%" : ""}</td></tr>`;
+  });
+  return h + `</tbody></table></div>`;
+}
+function aRender(gs, focus) {
+  const S = AD.series, nm = aName(gs), cells = ACBS.get(gs) || [];
+  const cellAt = new Map(); for (const c of cells) cellAt.set(AD.cells.t[c] + "|" + AD.cells.y[c], c);
+  const byCat = new Map();
+  for (const c of cells) {
+    const ci = AD.cells.c[c], cur = byCat.get(ci), x = aIdx(aVals(gs, AD.cells.y[c] - Y0), AD.cells.t[c]);
+    const mag = Math.abs(Math.log10(x / 100)) + AD.cells.sev[c] * 100;
+    if (!cur) byCat.set(ci, { worst: c, mag, cells: [c], sev: AD.cells.sev[c] });
+    else { cur.cells.push(c); if (mag > cur.mag) { cur.mag = mag; cur.worst = c; } cur.sev = Math.max(cur.sev, AD.cells.sev[c]); }
+  }
+  for (const [ci, g] of byCat) { const iss = AISSIDX.get(gs + "|" + ci); if (iss) { const c = cellAt.get(iss.rt + "|" + iss.ry); if (c !== undefined) g.worst = c; } }
+  let cats = [...byCat.entries()].sort((a, b) => b[1].sev - a[1].sev || (AD.cats.artefact[b[0]] - AD.cats.artefact[a[0]]) || b[1].mag - a[1].mag);
+  if (focus && has(focus.cat)) cats.sort((a, b) => (b[0] === focus.cat) - (a[0] === focus.cat));
+  const compact = !!(focus && focus.compact), otherN = compact ? cats.length - 1 : 0;
+  if (compact) cats = cats.slice(0, 1);
+  const wf = cats[0] ? cats[0][1].worst : null;
+  let h = `<div class="dd-head"><div class="t"><span class="code">[${esc(nm.acode)}]</span> ${esc(nm.area)} — <span class="code">[${esc(nm.gcode)}]</span> ${esc(nm.grp)} — ${nm.flow}</div><span class="drv">${nm.lvl} aggregate</span>
+    ${compact ? `<span class="spacer"></span><button class="btn" data-aopen="${gs}" data-oc="${focus.cat}">Open full view${otherN ? ` · ${otherN} more cause${otherN > 1 ? "s" : ""}` : ""} →</button>` : ""}</div>`;
+  h += `<div class="kv">
+    <div><div class="k">Base value (2014–16 avg)</div><div class="v">${fmt(S.bv[gs]) || "—"} <span>thousand USD</span></div></div>
+    <div><div class="k">Base quantity</div><div class="v">${fmt(S.bq[gs]) || "—"} <span>t</span></div></div>
+    <div><div class="k">Level around base (value)</div><div class="v">${fmt(S.tv[gs]) || "—"} <span>thousand USD</span></div></div>
+    <div><div class="k">Trade size</div><div class="v">${fmt(S.size[gs]) || "—"} <span>thousand USD / year</span></div></div>
+  </div>`;
+  if (cats.length) {
+    h += `<div class="why">`;
+    for (const [ci, g] of cats) {
+      const yrs = [...new Set(g.cells.map(c => AD.cells.y[c]))].sort((a, b) => a - b);
+      const tys = [...new Set(g.cells.map(c => AD.cells.t[c]))].sort().map(t => ATYPE_NAME[t].toLowerCase()).join(", ");
+      h += `<div class="item ${g.sev === 2 ? "c" : "w"}"><div class="hd">${sevChip(g.sev)}<b>${esc(acatLabel(ci))}</b><span class="drv">${AD.cats.driver[ci]}</span><span class="yrs">${tys} index · ${yrs.length} value${yrs.length > 1 ? "s" : ""} · ${yrsRange(yrs)}</span></div>
+        <p>${aExplain(gs, g.worst)}</p>${aSplit(g.worst)}${aInside(gs, ci)}</div>`;
+    }
+    h += `</div>`;
+  } else h += `<p class="note" style="margin:0 0 22px">No flagged value or quantity index values in this aggregate.</p>`;
+  const fy = wf !== null ? AD.cells.y[wf] : null, ft = wf !== null ? AD.cells.t[wf] : null;
+  h += tsHead(`${esc(nm.area)}, ${esc(nm.grp)}`);
+  h += tsGrp("Aggregated data");
+  h += tsRow(`${nm.flow} Value <span class="u">[1000 $]</span>`, (yi, y) => { const v = aVals(gs, yi).V; return `<td class="v${bc(y)}">${has(v) ? fmt(v) : ""}</td>`; });
+  h += tsRow(`${nm.flow} Quantity <span class="u">[t]</span>`, (yi, y) => { const v = aVals(gs, yi).Q; return `<td class="v${bc(y)}">${has(v) ? fmt(v) : ""}</td>`; });
+  h += tsGrp("Indices · 2014–16 = 100");
+  for (let t = 0; t < 2; t++) {
+    h += tsRow(`${ATYPE_NAME[t]} index`, (yi, y) => {
+      const x = aIdx(aVals(gs, yi), t), c = cellAt.get(t + "|" + y);
+      let cls = "v" + bc(y), tip = "";
+      if (c !== undefined) { cls += AD.cells.sev[c] === 2 ? " cc" : " cw"; tip = ` title="${esc((AD.cells.sev[c] === 2 ? "Critical" : "Warning") + " · " + acatLabel(AD.cells.c[c]))}"`; }
+      if (fy === y && ft === t) cls += " focus";
+      return `<td class="${cls}"${tip}>${x === null ? "" : fmt(x, "idx")}</td>`;
+    });
+  }
+  return h + `</tbody></table></div>`;
+}
+function bindMembers(el) {
+  el.querySelectorAll("[data-ms]").forEach(a => a.onclick = () => openDetail("i", +a.dataset.ms));
+  el.querySelectorAll("[data-mg]").forEach(a => a.onclick = () => openDetail("a", +a.dataset.mg));
+}
+function aMount(el, gs, focus) {
+  el.innerHTML = aRender(gs, focus); scrollFocus(el);
+  el.querySelectorAll("[data-aopen]").forEach(b => b.onclick = () => openDetail("a", +b.dataset.aopen, { cat: +b.dataset.oc }));
+  bindMembers(el);
+}
+function aRows(list) {
+  const S = AD.series;
+  let h = `<div class="tblx"><table class="list"><thead><tr><th class="r">#</th><th>Severity</th><th>Cause</th><th>Level</th><th>Area</th><th>Item group</th><th>Flow</th><th>Indices</th><th>Years</th><th class="r">Most extreme</th><th class="r">Trade size, 1000 USD/yr</th></tr></thead><tbody>`;
+  for (const o of list) {
+    const nm = aName(o.s);
+    h += `<tr data-g="${o.s}" data-c="${o.c}"><td class="r num" style="color:var(--muted)">${o.rank}</td><td>${sevChip(o.sev)}</td>
+      <td>${esc(acatLabel(o.c))}</td><td>${nm.lvl}</td>
+      <td><span class="area">${esc(nm.area)}</span><span class="code">${esc(nm.acode)}</span></td>
+      <td>${esc(nm.grp)}<span class="code">${esc(nm.gcode)}</span></td><td>${nm.flow}</td>
+      <td>${o.ty.split(" ").map(t => `<span class="tag">${t}</span>`).join("")}</td>
+      <td class="num">${o.y0 === o.y1 ? o.y0 : o.y0 + "–" + o.y1}<span class="code">(${o.n})</span></td>
+      <td class="r num">${ATYPE[o.wt]} ${o.wy}: <b>${fmt(o.wx, "idx")}</b></td><td class="r num">${fmt(S.size[o.s])}</td></tr>`;
+  }
+  return h + `</tbody></table></div>`;
+}
+function aBind(el) { el.querySelectorAll("tbody tr[data-g]").forEach(tr => tr.addEventListener("click", () => openDetail("a", +tr.dataset.g, { cat: +tr.dataset.c }))); }
+function aFiltered() {
+  const v = id => $("#" + id).value, S = AD.series;
+  const sev = v("aSev"), cat = v("aCat"), lv = v("aLvl"), fl = v("aFlow"), ty = v("aType"), ar = v("aArea"), gr = v("aGrp"), so = v("aSort");
+  let L = AISS.filter(o => (!sev || o.sev === +sev) && (cat === "" || o.c === +cat) && (lv === "" || S.lv[o.s] === +lv) && (fl === "" || S.f[o.s] === +fl) &&
+    (!ty || o.ty.split(" ").includes(ty)) && (ar === "" || S.a[o.s] === +ar) && (gr === "" || S.g[o.s] === +gr));
+  if (so === "mag") L = L.slice().sort((a, b) => Math.abs(Math.log10(b.wx / 100)) - Math.abs(Math.log10(a.wx / 100)));
+  else if (so === "size") L = L.slice().sort((a, b) => (S.size[b.s] || 0) - (S.size[a.s] || 0));
+  else if (so === "n") L = L.slice().sort((a, b) => b.n - a.n);
+  return L;
+}
+function aRenderList() {
+  const L = aFiltered(), pages = Math.max(1, Math.ceil(L.length / PER));
+  APAGE = Math.min(APAGE, pages - 1);
+  $("#aListCount").textContent = `${fmtN(L.length)} issues · ${fmtN(L.reduce((a, o) => a + (o.sev === 2), 0))} critical`;
+  $("#aListTable").innerHTML = aRows(L.slice(APAGE * PER, APAGE * PER + PER)); aBind($("#aListTable"));
+  pager($("#aPager"), APAGE, pages, p => { APAGE = p; aRenderList(); });
+}
+function aGoList(f) {
+  ["aSev", "aCat", "aLvl", "aFlow", "aType", "aArea", "aGrp"].forEach(id => $("#" + id).value = "");
+  $("#aSort").value = "rank";
+  Object.entries(f || {}).forEach(([k, v]) => $("#" + k).value = v);
+  APAGE = 0; aRenderList(); showSub("a", "list"); showPage("agg"); window.scrollTo(0, 0);
+}
+const aPicks = ci => picks3(AISS.filter(o => o.c === ci && aEx(o)), o => AD.series.size[o.s] || 0, o => AD.series.a[o.s]);
+function aDrawSummary() {
+  const GA = aggGrid(); dataGrid("gridAgg", GA);
+  const nS = AD.series.a.length, nCrit = new Set(AISS.filter(o => o.sev === 2).map(o => o.s)).size, nAny = new Set(AISS.map(o => o.s)).size;
+  const vOK = AD.verify.max_rel.every((r, i) => r < 1e-9 && AD.verify.na_mismatch[i] === 0);
+  $("#aTiles").innerHTML = `
+    <div class="tile"><div class="k">Data points</div><div class="val">${fmtN(GA.all)}</div><div class="hint">value and quantity index values · ${fmtN(nS)} aggregates (country and region × item group × flow)</div></div>
+    <div class="tile"><div class="k">Problematic data points</div><div class="val">${fmtN(GA.bad)}</div><div class="hint">${(GA.bad / GA.all * 100).toFixed(1)}% · ${fmtN(GA.crit)} critical</div></div>
+    <div class="tile"><div class="k">Aggregates with a critical issue</div><div class="val">${fmtN(nCrit)}</div><div class="hint">${Math.round(nCrit / nS * 100)}% of aggregates</div></div>
+    <div class="tile"><div class="k">Aggregates with any issue</div><div class="val">${fmtN(nAny)}</div><div class="hint">${Math.round(nAny / nS * 100)}% of aggregates</div></div>`;
+  $("#aVerify").innerHTML = `<li>Aggregate indices are recomputed from the aggregated value and quantity of the run (built ${AD.built}).</li><li>${vOK ? "Match" : "<b>Do not match</b>"} the pipeline's indices — largest relative difference ${Math.max(...AD.verify.max_rel).toExponential(1)}.</li>`;
+  const C = AD.cfg;
+  $("#cfgCh").textContent = fmtN(C.crit_hi); $("#cfgCl").textContent = C.crit_lo; $("#cfgWh").textContent = fmtN(C.warn_hi); $("#cfgWl").textContent = C.warn_lo; $("#cfgY").textContent = C.yoy;
+  let h = "";
+  for (const g of AGROUPS) {
+    const cis = ACAT_ORDER.filter(ci => AD.cats.driver[ci] === g.d); if (!cis.length) continue;
+    h += `<div class="cause-group"><div class="gh"><span class="t">${g.t}</span><span class="d">— ${g.s}</span></div><div class="causes">`;
+    for (const ci of cis) {
+      const id = AD.cats.id[ci], L = AISS.filter(o => o.c === ci), crit = L.filter(o => o.sev === 2).length;
+      h += `<div class="cause"><div class="hd"><span class="name">${esc(acatLabel(ci))}</span><span class="spacer"></span><span class="cnt"><b>${fmtN(L.length)}</b> issues · <b>${fmtN(crit)}</b> critical</span></div>
+        <p class="rule">${ACAT_DEF[id][0]}</p><p class="means">${ACAT_DEF[id][1]}</p>
+        <div class="exl">Example (illustrative)</div>${exampleTable(EXA[id])}
+        <div class="foot"><button class="btn link" data-ago="${ci}">See the ${fmtN(L.length)} issues →</button>&nbsp;&nbsp;<button class="btn link" data-areal="${ci}">Real example →</button></div></div>`;
+    }
+    h += `</div></div>`;
+  }
+  $("#aCauseCards").innerHTML = h;
+  $("#aCauseCards").querySelectorAll("[data-ago]").forEach(b => b.onclick = () => aGoList({ aCat: b.dataset.ago }));
+  $("#aCauseCards").querySelectorAll("[data-areal]").forEach(b => b.onclick = () => { const p = aPicks(+b.dataset.areal)[0]; if (p) openDetail("a", p.s, { cat: p.c }); });
+  $("#aTop").innerHTML = aRows(AISS.filter(aEx).slice(0, 10)); aBind($("#aTop"));
+  aKeyFindings(GA, nCrit, nS);
+  const cnt = ACAT_ORDER.map(ci => ({ ci, c: AISS.filter(o => o.c === ci && o.sev === 2).length, w: AISS.filter(o => o.c === ci && o.sev === 1).length }));
+  const mx = Math.max(...cnt.map(o => o.c + o.w));
+  $("#aBars").innerHTML = cnt.map(o => `<div class="lbl" data-c="${o.ci}">${esc(acatLabel(o.ci))}</div>
+    <div class="track" data-c="${o.ci}" title="${fmtN(o.c)} critical · ${fmtN(o.w)} warning"><i style="width:${o.c / mx * 100}%;background:var(--crit)"></i><i style="width:${o.w / mx * 100}%;background:var(--warn)"></i></div>
+    <div class="n num">${fmtN(o.c + o.w)}</div>`).join("");
+  $("#aBars").querySelectorAll("[data-c]").forEach(el => el.onclick = () => aGoList({ aCat: el.dataset.c }));
+}
+function aDrawGroups() {
+  AGROUPS_DRAWN = true;
+  drawGroupsGeneric($("#aGroupsCard"), {
+    intro: "One section per cause, most frequent cause first, each with its own number and colour, and the three most important real cases. The header stays at the top while you scroll through it. Member names in \"What's inside\" open that item or country.",
+    order: ACAT_ORDER, label: acatLabel, def: ci => ACAT_DEF[AD.cats.id[ci]], ex: ci => EXA[AD.cats.id[ci]], group: ci => AD.cats.driver[ci],
+    gname: ci => AGNAME[AD.cats.driver[ci]], unit: "issues", idp: "acause",
+    list: ci => AISS.filter(o => o.c === ci), picks: aPicks, goList: ci => aGoList({ aCat: ci }), mount: (el, p) => aMount(el, p.s, { cat: p.c, compact: true })
+  });
+}
+function aFillSelects() {
+  const ao = AD.areas.name.map((n, i) => `<option value="${i}">${esc(n)}${AD.areas.lvl[i] === "Region" ? " (region)" : ""}</option>`).join("");
+  const go = AD.groups.name.map((n, i) => `<option value="${i}">${esc(n)}</option>`).join("");
+  $("#aArea").insertAdjacentHTML("beforeend", ao); $("#aGrp").insertAdjacentHTML("beforeend", go);
+  $("#aLArea").innerHTML = ao; $("#aLGrp").innerHTML = go;
+  ["aSev", "aCat", "aLvl", "aFlow", "aType", "aArea", "aGrp", "aSort"].forEach(id => $("#" + id).onchange = () => { APAGE = 0; aRenderList(); });
+  $("#aReset").onclick = () => aGoList({});
+  $("#aCat").insertAdjacentHTML("beforeend", ACAT_ORDER.map(ci => `<option value="${ci}">${esc(acatLabel(ci))}</option>`).join(""));
+  $("#aLGo").onclick = () => {
+    const s = AKEY.get($("#aLArea").value + "|" + $("#aLGrp").value + "|" + $("#aLFlow").value);
+    if (s === undefined) $("#aLookupOut").innerHTML = `<p class="note">No data for this area, item group and flow.</p>`;
+    else aMount($("#aLookupOut"), s);
+  };
+}
+let AKEY = new Map();
+
+// ================================================================ DISSEMINATION GROUPS
+let PSORT = { k: "world_value", d: -1 };
+const PCOLS = [
+  { k: "tick", t: "", tick: true, v: r => PSEL.has(r.grp) ? 1 : 0, h: "Ticked for dissemination" },
+  { k: "grp_name", t: "Item group", f: (r) => `${esc(r.grp_name)}<span class="code">${esc(r.grp)}</span>`, s: "str", cls: "gname" },
+  { k: "lvl", t: "Level", f: r => has(r.lvl) ? String(r.lvl) : "not listed", h: "FAOSTAT product group level from faostat_product_group_levels.xlsx (0 = broadest). Not listed = the group is not in that file" },
+  { k: "n_items", t: "Items with data", f: r => `${fmtN(r.n_items_data ?? 0)}<span class="code">of ${fmtN(r.n_items)}</span>`, h: "Items of the group that have trade data (any country, any year), of all items in the group in the aggregation table" },
+  { k: "world_value", t: "Trade size (imports + exports), 1000 USD/yr", f: r => fmt(r.world_value), h: "Imports + exports: average value of each series' latest five years with data, added up over all countries" },
+  { k: "world_share", t: "Share of Agric. Products", f: r => pct1(r.world_share), tiny: r => r.world_share < PUB_TINY },
+  { k: "n_countries", t: "Countries", f: r => fmtN(r.n_countries) },
+  { k: "p_crit", t: "Critical index issue", f: r => pct(r.p_crit), bad: true },
+  { k: "p_any", t: "Any index issue", f: r => pct(r.p_any) },
+  { k: "r_crit", t: "Regions: critical index issue", f: r => pct(r.r_crit), bad: true },
+  { k: "q_cover", t: "Value with a quantity", f: r => pct(r.q_cover), low: true, h: "Share of the group's value (latest five years) from records that also have a quantity: how much of the group the quantity index covers" }
+];
+const PUB_TINY = 0.001;
+// ticked groups: kept in this browser (localStorage); default = DisseminationList.csv
+const PSEL_KEY = "trv.disseminationGroups.v1";
+let PSEL = new Set();
+function pDefaultSel() { const P = AD.pub; return P.grp.filter((g, i) => P.diss ? P.diss[i] === 1 : P.world_value[i] > 0); }
+function pLoadSel() {
+  let v = null; try { v = JSON.parse(localStorage.getItem(PSEL_KEY)); } catch (e) {}
+  PSEL = new Set(Array.isArray(v) ? v.filter(g => AD.pub.grp.includes(g)) : pDefaultSel());
+}
+function pSaveSel() { try { localStorage.setItem(PSEL_KEY, JSON.stringify([...PSEL])); } catch (e) {} }
+function pDrawSel() {
+  const P = AD.pub, n = P.grp.length, def = new Set(pDefaultSel()), same = def.size === PSEL.size && [...def].every(g => PSEL.has(g));
+  $("#pSel").innerHTML = `<span><b>${PSEL.size}</b> of ${n} item groups ticked for dissemination${same ? " · same as DisseminationList.csv" : ""}</span><span class="sp2"></span>
+    <button class="btn" data-sel="all">Tick all</button><button class="btn" data-sel="none">Untick all</button><button class="btn" data-sel="reset">Reset to DisseminationList.csv</button>
+    <span class="hint" style="flex-basis:100%">Ticks are kept in this browser only.</span>`;
+  $("#pSel").querySelectorAll("[data-sel]").forEach(b => b.onclick = () => {
+    const a = b.dataset.sel;
+    PSEL = new Set(a === "all" ? P.grp : a === "none" ? [] : pDefaultSel());
+    pSaveSel(); pDrawSel(); pDrawGroups();
+  });
+}
+function pRows() {
+  const P = AD.pub, n = P.grp.length, rows = [];
+  for (let i = 0; i < n; i++) { const r = {}; for (const k of Object.keys(P)) r[k] = P[k][i]; rows.push(r); }
+  return rows;
+}
+function pDrawGroups() {
+  const rows = pRows(), c = PCOLS.find(x => x.k === PSORT.k), val = r => c.v ? c.v(r) : r[c.k];
+  rows.sort((a, b) => { const x = val(a), y = val(b); if (c.s === "str") return PSORT.d * String(x).localeCompare(String(y)); return PSORT.d * ((x ?? -1) - (y ?? -1)); });
+  const allOn = rows.length && rows.every(r => PSEL.has(r.grp));
+  let h = `<div class="tblx"><table class="list pub"><thead><tr>${PCOLS.map(col => col.tick
+    ? `<th class="tick" title="${esc(col.h)}"><input type="checkbox" id="pAll" ${allOn ? "checked" : ""} aria-label="Tick all groups"></th>`
+    : `<th class="${col.s === "str" ? "" : "r"} sortable${PSORT.k === col.k ? " sorted" : ""}" data-k="${col.k}" title="${esc(col.h || "")}">${col.t}${PSORT.k === col.k ? (PSORT.d > 0 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr></thead><tbody>`;
+  for (const r of rows) {
+    const nodata = !r.world_value, on = PSEL.has(r.grp);
+    h += `<tr class="${nodata ? "nodata" : ""}${on ? "" : " off"}">${PCOLS.map(col => {
+      if (col.tick) return `<td class="tick"><input type="checkbox" data-g="${esc(r.grp)}" ${on ? "checked" : ""} aria-label="Disseminate ${esc(r.grp_name)}"></td>`;
+      const v = col.v ? col.v(r) : r[col.k]; let cl = (col.s === "str" ? "" : "r num") + (col.cls ? " " + col.cls : "");
+      if (col.tiny && col.tiny(r)) cl += " tinyc";
+      if (col.bad && v >= 1 / 3) cl += " badc";
+      if (col.low && has(v) && v < 0.5) cl += " badc";
+      return `<td class="${cl}">${nodata && !["grp_name", "lvl", "n_items", "diss"].includes(col.k) ? "–" : col.f(r)}</td>`;
+    }).join("")}</tr>`;
+  }
+  $("#pGroups").innerHTML = h + `</tbody></table></div>`;
+  $("#pGroups").querySelectorAll("th[data-k]").forEach(th => th.onclick = () => { const k = th.dataset.k; PSORT = { k, d: PSORT.k === k ? -PSORT.d : (k === "grp_name" ? 1 : -1) }; pDrawGroups(); });
+  $("#pGroups").querySelectorAll("input[data-g]").forEach(cb => cb.onchange = () => {
+    if (cb.checked) PSEL.add(cb.dataset.g); else PSEL.delete(cb.dataset.g);
+    pSaveSel(); pDrawSel(); cb.closest("tr").classList.toggle("off", !cb.checked);
+    $("#pAll").checked = AD.pub.grp.every(g => PSEL.has(g));
+  });
+  $("#pAll").onchange = e => { PSEL = new Set(e.target.checked ? AD.pub.grp : []); pSaveSel(); pDrawSel(); pDrawGroups(); };
+}
+function pDrawExcl() {
+  const X = AD.pubx;
+  if (!X || !X.grp || !X.grp.length) {
+    $("#pExcl").innerHTML = `<p class="note">No data for the excluded item groups in this build. Run trade_indices.R again to fill this table.</p>`;
+    return;
+  }
+  const n = X.grp.length, rows = [];
+  for (let i = 0; i < n; i++) { const r = {}; for (const k of Object.keys(X)) r[k] = X[k][i]; rows.push(r); }
+  rows.sort((a, b) => (b.world_value ?? 0) - (a.world_value ?? 0));
+  let h = `<div class="tblx"><table class="list pubx"><thead><tr><th>Item group</th><th class="r">Level</th><th class="r">Items with data</th><th class="r">Trade size (imports + exports), 1000 USD/yr</th><th class="r">Share of Agric. Products</th><th class="r">Countries</th><th>Note</th></tr></thead><tbody>`;
+  for (const r of rows) {
+    const nodata = !r.world_value;
+    h += `<tr class="${nodata ? "nodata" : ""}"><td class="gname">${esc(r.grp_name)}<span class="code">${esc(r.grp)}</span></td>
+      <td class="r num">${has(r.lvl) ? String(r.lvl) : "not listed"}</td>
+      <td class="r num">${fmtN(r.n_items_data ?? 0)}<span class="code">of ${fmtN(r.n_items ?? 0)}</span></td>
+      <td class="r num">${nodata ? "–" : fmt(r.world_value)}</td><td class="r num">${nodata ? "–" : pct1(r.world_share)}</td>
+      <td class="r num">${nodata ? "–" : fmtN(r.n_countries)}</td><td>${r.note ? `<span class="tag">${esc(r.note)}</span>` : ""}</td></tr>`;
+  }
+  $("#pExcl").innerHTML = h + `</tbody></table></div><p class="note" style="margin:10px 0 0"><b>Note for next year:</b> Natural rubber (F1900) and Textile fibres (F1901) may be added to the calculations next year.</p>`;
+}
+function pDrawLevels() {
+  const P = AD.publ;
+  let h = `<div class="tblx"><table class="list"><thead><tr><th>Level</th><th class="r">Areas</th><th class="r">Series</th><th class="r">Median size, 1000 USD/yr</th><th class="r">Critical index issue</th><th class="r">Any index issue</th></tr></thead><tbody>`;
+  for (let i = 0; i < P.ltype.length; i++) {
+    const b = v => v >= 1 / 3 ? " badc" : "";
+    h += `<tr><td>${esc(P.ltype[i])}</td><td class="r num">${fmtN(P.n_areas[i])}</td><td class="r num">${fmtN(P.n_series[i])}</td><td class="r num">${fmt(P.median_size[i])}</td>
+      <td class="r num${b(P.p_crit[i])}">${pct(P.p_crit[i])}</td><td class="r num">${pct(P.p_any[i])}</td></tr>`;
+  }
+  $("#pLevels").innerHTML = h + `</tbody></table></div><p class="note" style="margin:10px 0 0">Region levels follow the regional groups of the aggregation table; "Special groupings" are EU (27), LDCs, LLDCs, SIDS, LIFDCs and NFIDCs.</p>`;
+}
+function pDraw() {
+  const P = AD.pub, n = P.grp.length, noLvl = P.lvl ? P.lvl.filter(v => !has(v)).length : 0, withData = P.world_value.filter(v => v > 0).length;
+  const L = AD.publ, ci = L.ltype.indexOf("Countries");
+  $("#pTiles").innerHTML = `
+    <div class="tile"><div class="k">Item groups</div><div class="val">${n}</div><div class="hint">${withData} with trade data · ${n - withData} without${noLvl ? ` · ${noLvl} without a level` : ""}${AD.pubx && AD.pubx.grp && AD.pubx.grp.length ? ` · ${AD.pubx.grp.length} more excluded from the calculations` : ""}</div></div>
+    <div class="tile"><div class="k">Country series with an index issue</div><div class="val">${ci >= 0 ? pct(L.p_any[ci]) : "–"}</div><div class="hint">${ci >= 0 ? pct(L.p_crit[ci]) + " critical · " + fmtN(L.n_series[ci]) + " series" : ""}</div></div>`;
+  $("#pTinyLbl").textContent = pct1(PUB_TINY);
+  pLoadSel(); pDrawSel(); pDrawGroups(); pDrawExcl(); pDrawLevels(); pKeyFindings();
+}
+
+
+// ---------------------------------------------------------------- key findings (the message of each page, from this run's data)
+const kfBox = (id, items) => { const el = $("#" + id); if (!el) return; const L = items.filter(Boolean); el.style.display = L.length ? "" : "none"; el.innerHTML = `<div class="kh">Key findings</div><ul>${L.map(x => `<li>${x}</li>`).join("")}</ul>`; };
+const kfPct = (a, b, d = 0) => b ? (a / b * 100).toFixed(d) + "%" : "–";
+function aKeyFindings(GA, nCrit, nS) {
+  const tot = AISS.length, byD = d => AISS.filter(o => AD.cats.driver[o.c] === d).length;
+  const T = GA.tot, yp = i => T.all[i] ? T.bad[i] / T.all[i] * 100 : null;
+  let lo = -1; for (let i = 0; i < NY; i++) if (yp(i) !== null && T.all[i] > 0 && (lo < 0 || yp(i) < yp(lo))) lo = i;
+  const fy = [...Array(NY).keys()].find(i => T.all[i] > 0), ly = [...Array(NY).keys()].reverse().find(i => T.all[i] > 0);
+  const mem = byD("Member"), cov = byD("Coverage"), lev = byD("Level");
+  kfBox("aKey", [
+    `<b>${kfPct(GA.bad, GA.all, 1)}</b> of index values are problematic; <b>${fmtN(nCrit)}</b> aggregates (${kfPct(nCrit, nS)}) have at least one critical value.`,
+    tot && `Most issues come from the make-up of the group, not from a wrong total: <b>${kfPct(mem, tot)}</b> are driven by a single item or country and <b>${kfPct(cov, tot)}</b> by members missing in a year or not traded in 2014–16.${lev ? ` Only ${kfPct(lev, tot)} look like a real, sustained change.` : ""}`,
+    fy !== undefined && lo >= 0 && yp(fy) > 2 * yp(lo) && `The further from 2014–16, the more problems: <b>${yp(lo).toFixed(1)}%</b> of values are problematic in ${Y0 + lo}, against <b>${yp(fy).toFixed(0)}%</b> in ${Y0 + fy}${ly > lo && yp(ly) !== null ? ` and <b>${yp(ly).toFixed(0)}%</b> in ${Y0 + ly}` : ""}.`
+  ]);
+}
+function pKeyFindings() {
+  const L = AD.publ, i = k => L.ltype.indexOf(k), ci = i("Countries");
+  const others = ["Sub-regions", "Continents", "World"].filter(k => i(k) >= 0).map(k => `${k.toLowerCase()} ${pct(L.p_crit[i(k)])}`);
+  const tiny = pRows().filter(r => has(r.world_share) && r.world_share < PUB_TINY).map(r => esc(r.grp_name));
+  kfBox("pKey", [
+    ci >= 0 && `Countries are the weak level: <b>${pct(L.p_crit[ci])}</b> of country series have a critical index issue, against ${others.join(", ")}.`,
+    tiny.length && `${tiny.length === 1 ? "One item group is" : tiny.length + " item groups are"} below ${pct1(PUB_TINY)} of Agricultural Products: <b>${tiny.join(", ")}</b> — a candidate to drop.`
+  ]);
+}
+// ---------------------------------------------------------------- data points by year
+const DG_STEPS = [[0, "#ffffff"], [0.5, "#e6effb"], [1, "#cde2fb"], [2, "#9ec5f4"], [5, "#6da7ec"], [10, "#3987e5"], [20, "#256abf"], [40, "#184f95"]];
+function dgColor(p) { let c = DG_STEPS[0]; for (const st of DG_STEPS) if (p >= st[0] && p > 0) c = st; return c; }
+function mkRows(labels) { return labels.map(l => ({ label: l, all: new Array(NY).fill(0), bad: new Array(NY).fill(0), crit: new Array(NY).fill(0) })); }
+function finishGrid(rows) {
+  const tot = { label: "All", all: new Array(NY).fill(0), bad: new Array(NY).fill(0), crit: new Array(NY).fill(0) };
+  for (const r of rows) for (let i = 0; i < NY; i++) { tot.all[i] += r.all[i]; tot.bad[i] += r.bad[i]; tot.crit[i] += r.crit[i]; }
+  const sum = a => a.reduce((x, y) => x + y, 0);
+  return { rows, tot, all: sum(tot.all), bad: sum(tot.bad), crit: sum(tot.crit) };
+}
+function aggGrid() {
+  const S = AD.series, rows = mkRows(["Import · Value index", "Import · Quantity index", "Export · Value index", "Export · Quantity index"]);
+  for (let s = 0; s < S.a.length; s++) {
+    const f = S.f[s];
+    for (let yi = 0; yi < NY; yi++) { const v = aVals(s, yi); if (v.xV !== null) rows[f * 2].all[yi]++; if (v.xQ !== null) rows[f * 2 + 1].all[yi]++; }
+  }
+  const C = AD.cells;
+  for (let k = 0; k < C.s.length; k++) { const r = rows[S.f[C.s[k]] * 2 + C.t[k]]; r.bad[C.y[k] - Y0]++; if (C.sev[k] === 2) r.crit[C.y[k] - Y0]++; }
+  return finishGrid(rows);
+}
+const DG_MODE = {};
+function dataGrid(id, G, what = "problematic") {
+  const el = document.getElementById(id), seg = document.querySelector(`.seg[data-grid="${id}"]`);
+  const mode = DG_MODE[id] || "pct", sum = a => a.reduce((x, y) => x + y, 0);
+  const cell = (all, bad, crit, extra = "") => {
+    const p = all ? bad / all * 100 : 0, [lim, bg] = dgColor(p);
+    const k = x => x >= 9950 ? Math.round(x / 1000) + "k" : x >= 1000 ? (x / 1000).toFixed(1) + "k" : fmtN(x);
+    const txt = !all ? "" : mode === "pct" ? (p === 0 ? "0" : p < 0.1 ? "<0.1" : p.toFixed(p < 10 ? 1 : 0)) : k(mode === "bad" ? bad : all);
+    return `<td class="${extra}${lim >= 10 ? " dk" : ""}" style="background:${all ? bg : "transparent"}" title="${fmtN(all)} data points · ${fmtN(bad)} ${what} (${p.toFixed(1)}%) · ${fmtN(crit)} critical">${txt}</td>`;
+  };
+  let h = `<div class="ts-wrap"><table class="dg"><thead><tr><th class="lab">${mode === "pct" ? "% " + what : mode === "bad" ? what[0].toUpperCase() + what.slice(1) : "All data points"}</th>`;
+  for (let yi = 0; yi < NY; yi++) h += `<th>${Y0 + yi}</th>`;
+  h += `<th>Total</th></tr></thead><tbody>`;
+  for (const r of [...G.rows, G.tot]) {
+    h += `<tr class="${r === G.tot ? "tot" : ""}"><td class="lab">${r.label}</td>`;
+    for (let yi = 0; yi < NY; yi++) h += cell(r.all[yi], r.bad[yi], r.crit[yi]);
+    h += cell(sum(r.all), sum(r.bad), sum(r.crit), "rt ") + `</tr>`;
+  }
+  h += `</tbody></table></div><div class="dg-legend">Share ${what}:${DG_STEPS.slice(1).map((st, i) => `<i style="background:${st[1]}"></i><span>${i === DG_STEPS.length - 2 ? "≥ " + st[0] : st[0] + "–" + DG_STEPS[i + 2][0]}%</span>`).join("")}<span style="margin-left:10px">Hover a cell for counts.</span></div>`;
+  el.innerHTML = h;
+  if (seg && !seg.dataset.bound) {
+    seg.dataset.bound = "1";
+    seg.querySelectorAll("button").forEach(b => b.onclick = () => { DG_MODE[id] = b.dataset.m; seg.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); dataGrid(id, G, what); });
+  }
+}
+
+// ---------------------------------------------------------------- navigation
+try { history.scrollRestoration = "manual"; } catch (e) {}
+const setHdr = () => document.documentElement.style.setProperty("--hdr", $("header.top").offsetHeight + "px");
+setHdr(); window.addEventListener("resize", setHdr);
+const SUBS = { a: { page: "agg", nav: "#aSubnav", pre: "as-" } };
+let CUR = { page: "method", sub: { a: "summary" } }, RETURN = null;
+function showPage(p) {
+  CUR.page = p;
+  const needs = p !== "method";
+  $("#loading").style.display = needs && !READY ? "block" : "none";
+  const tabOf = p === "detail" && RETURN ? RETURN.page : p;
+  document.querySelectorAll("#tabs button[data-p]").forEach(b => b.classList.toggle("on", b.dataset.p === tabOf));
+  document.querySelectorAll(".page").forEach(el => el.classList.toggle("on", el.id === "p-" + p && (!needs || READY)));
+  if (READY) drawLazy();
+}
+function drawLazy() {
+  if (CUR.page === "agg" && CUR.sub.a === "groups" && !AGROUPS_DRAWN) aDrawGroups();
+}
+function showSub(k, s) {
+  CUR.sub[k] = s; const o = SUBS[k];
+  document.querySelectorAll(o.nav + " button").forEach(b => b.classList.toggle("on", b.dataset.s === s));
+  document.querySelectorAll(`#p-${o.page} .sp`).forEach(el => el.classList.toggle("on", el.id === o.pre + s));
+  if (READY) drawLazy();
+}
+for (const k of Object.keys(SUBS)) document.querySelectorAll(SUBS[k].nav + " button").forEach(b => b.onclick = () => showSub(k, b.dataset.s));
+const MOUNT = { a: aMount, i: iMount };
+function openDetail(k, id, focus) {
+  if (CUR.page !== "detail") RETURN = { page: CUR.page, y: window.scrollY };
+  showPage("detail"); window.scrollTo(0, 0);
+  MOUNT[k]($("#dBody"), id, focus);
+  history.pushState({ detail: { k, id, focus: focus || null } }, "", "#" + setComment(k, id, focus));
+}
+function closeDetail() {
+  const r = RETURN || { page: "agg", y: 0 };
+  RETURN = null; showPage(r.page); window.scrollTo(0, r.y || 0);
+}
+$("#dBack").onclick = () => history.back();
+window.addEventListener("popstate", e => {
+  const d = e.state && e.state.detail;
+  if (d) {
+    if (CUR.page !== "detail") showPage("detail");
+    MOUNT[d.k]($("#dBody"), d.id, d.focus || undefined);
+    setComment(d.k, d.id, d.focus); window.scrollTo(0, 0);
+  } else if (CUR.page === "detail") closeDetail();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && CUR.page === "detail") history.back(); });
+document.querySelectorAll("#tabs button[data-p]").forEach(b => b.onclick = () => {
+  if (CUR.page === "detail") { RETURN = null; history.replaceState(null, ""); }
+  showPage(b.dataset.p); window.scrollTo(0, 0);
+});
+document.querySelectorAll(".toc a").forEach(a => a.onclick = e => { e.preventDefault(); document.querySelector(a.getAttribute("href")).scrollIntoView({ behavior: "smooth" }); });
+
+// ---------------------------------------------------------------- comments on GitHub and links to one series
+const GH_REPO = "https://github.com/mbirkand/Trade-Real-Value-and-Indices";
+const PAGE_URL = "https://mbirkand.github.io/Trade-Real-Value-and-Indices/results/diagnostics_dashboard.html";
+const flowKey = f => f === "Export" ? "x" : "m";
+function detailRef(k, id, focus) {
+  if (k === "i") {
+    const n = seriesName(id);
+    return { hash: ["i", n.acode, n.icode, flowKey(n.flow)].map(encodeURIComponent).join("/"), title: `${n.area} [${n.acode}] · ${n.item} [${n.icode}] · ${n.flow}`, where: "Indices · item behind an index" };
+  }
+  const n = aName(id), base = [n.lvl === "Region" ? "r" : "c", n.acode, n.gcode, flowKey(n.flow)];
+  return { hash: ["a", ...base].map(encodeURIComponent).join("/"), title: `${n.area} [${n.acode}] · ${n.grp} [${n.gcode}] · ${n.flow}`, where: "Indices" };
+}
+function setComment(k, id, focus) {
+  const r = detailRef(k, id, focus);
+  const body = `**Series:** ${r.title}\n**Dashboard view:** ${r.where}\n**Link:** ${PAGE_URL}#${r.hash}\n**Outputs of:** ${D.meta.outputs_date}\n\n**Comment:**\n\n`;
+  $("#dComment").href = `${GH_REPO}/issues/new?title=${encodeURIComponent(r.title)}&body=${encodeURIComponent(body)}`;
+  return r.hash;
+}
+const SUB_LABEL = { summary: "Summary", groups: "Real examples by cause", list: "All", lookup: "Look up a series" };
+const PAGE_LABEL = { agg: ["Indices", "a"], pub: ["Dissemination groups", null] };
+function viewIssueUrl(k) {
+  const [tab, sk] = PAGE_LABEL[k], sub = sk ? " · " + SUB_LABEL[CUR.sub[sk]] : "";
+  const title = `${tab}${sub}`;
+  const body = `**Dashboard view:** ${tab}${sub}\n**Link:** ${PAGE_URL}\n**Outputs of:** ${D ? D.meta.outputs_date : ""}\n\n**Comment:**\n\n`;
+  return `${GH_REPO}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+}
+document.querySelectorAll("a.cmt").forEach(a => a.addEventListener("click", () => { a.href = viewIssueUrl(a.dataset.cmt); }));
+// a link such as …diagnostics_dashboard.html#a/c/360/F1717/m opens that series directly
+function openFromHash() {
+  const p = location.hash.slice(1).split("/").map(x => decodeURIComponent(x));
+  if (!["a", "i"].includes(p[0])) return;
+  history.replaceState(null, "", location.pathname + location.search);
+  if (p[0] === "i") {
+    const S = D.series;
+    for (let s = 0; s < S.a.length; s++) if (S.f[s] === (p[3] === "x" ? 1 : 0) && D.areas.code[S.a[s]] === p[1] && D.items.code[S.i[s]] === p[2]) { showPage("agg"); openDetail("i", s); return; }
+    return;
+  }
+  const S = AD.series, lv = p[1] === "r" ? 1 : 0, f = p[4] === "x" ? 1 : 0;
+  for (let g = 0; g < S.a.length; g++) if (S.f[g] === f && S.lv[g] === lv && AD.areas.code[S.a[g]] === p[2] && AD.groups.code[S.g[g]] === p[3]) {
+    showPage("agg"); openDetail("a", g);
+    return;
+  }
+}
+
+// ---------------------------------------------------------------- boot
+async function decode(s) {
+  const bin = atob(s.trim()), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return JSON.parse(await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream("deflate"))).text());
+}
+async function boot() {
+  D = await decode(PAYLOAD);
+  AD = await decode(PAYLOAD_AGG);
+  Y0 = D.years[0]; NY = D.years.length;
+  // aggregates: indices
+  const I = AD.issues;
+  AISS = I.s.map((s, k) => ({ rank: k + 1, s, c: I.c[k], sev: I.sev[k], n: I.n[k], nc: I.nc[k], ty: I.ty[k], y0: I.y0[k], y1: I.y1[k], wt: I.wt[k], wy: I.wy[k], wx: I.wx[k], ry: I.ry[k], rt: I.rt[k] }));
+  AISSIDX = new Map(); AISS.forEach(o => AISSIDX.set(o.s + "|" + o.c, o));
+  ACBS = new Map(); AD.cells.s.forEach((s, k) => { let a = ACBS.get(s); if (!a) ACBS.set(s, a = []); a.push(k); });
+  TOPBY = new Map(); AD.top.r.forEach((r, k) => { let a = TOPBY.get(r); if (!a) TOPBY.set(r, a = []); a.push(k); });
+  const crit = new Map(); AISS.forEach(o => { if (o.sev === 2) crit.set(o.c, (crit.get(o.c) || 0) + 1); });
+  const tier = ci => AD.cats.id[ci] === "a_tiny_flow" ? 3.5 : ["Base", "Coverage", "Member", "Year", "Level"].indexOf(AD.cats.driver[ci]);
+  ACAT_ORDER = AD.cats.id.map((_, i) => i).filter(ci => AISS.some(o => o.c === ci)).sort((a, b) => tier(a) - tier(b) || (crit.get(b) || 0) - (crit.get(a) || 0));
+  AKEY = new Map(); const S = AD.series; for (let s = 0; s < S.a.length; s++) AKEY.set(S.a[s] + "|" + S.g[s] + "|" + S.f[s], s);
+  $("#meta").textContent = `Outputs of ${D.meta.outputs_date} · diagnostics built ${D.meta.generated}`;
+  aFillSelects(); aDrawSummary(); aRenderList();
+  pDraw();
+  READY = true; window.READY_FLAG = true;
+  showPage(CUR.page);
+  openFromHash();
+}
+boot().catch(e => { $("#loading").style.display = "block"; $("#loading").textContent = "Could not load the data: " + e.message + ". Use a current version of Chrome, Edge, Safari or Firefox."; console.error(e); });
+</script>
+</body>
+</html>

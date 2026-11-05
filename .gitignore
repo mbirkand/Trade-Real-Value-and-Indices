@@ -4,17 +4,16 @@
 !/.gitignore
 !/README.md
 !/index.html
-!/trade_calculations.R
 !/RealValue.R
-!/methodology_notes.md
-!/METHODOLOGY.md
-!/Trade_RealValues_Methodology.pptx
-!/Results_Guide_for_Review.docx
-!/diagnostics/
+# old dashboard address: a redirect page to the indices dashboard
 !/results/
 /results/*
-!/results/OUTPUTS_README.md
 !/results/diagnostics_dashboard.html
+# indices pipeline and dashboard (since 5 Nov 2026)
+!/Indices/
+/Indices/results/*
+!/Indices/results/diagnostics_dashboard.html
+!/Indices/results/OUTPUTS_README.md
 .DS_Store
 .Rhistory
 .Rproj.user/
